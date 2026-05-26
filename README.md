@@ -26,7 +26,7 @@ A cross-platform Flutter app to **calculate, track, and obsess over your One-Rep
 
 - **12 built-in exercises** — Back Squat, Bench Press, Deadlift, and 9 more
 - **Epley 1RM calculation** — enter weight × reps, get your estimated max
-- **Percentage working-weight table** — 50–100% in 5% steps, rounded to nearest 2.5 kg
+- **Percentage working-weight table** — 50–100% in 5% steps, rounded to nearest 1 kg
 - **Dark theme** — because you lift in the dungeon, not a tanning bed
 - **Per-exercise history** — chronologically sorted with relative dates
 - **Delete entries** — long-press to yeet that failed set into oblivion
@@ -43,7 +43,7 @@ The app uses the **Epley Formula** — one of the most widely used 1RM estimatio
 
 > For reps ≤ 1, the raw weight is returned as the 1RM.
 
-Working weights are rounded to the nearest **2.5 kg** (because your gym doesn't have 1.27 kg plates).
+Working weights are rounded to the nearest **1 kg**.
 
 ## 🚀 Getting Started
 

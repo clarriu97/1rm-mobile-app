@@ -34,6 +34,6 @@ List<PercentageEntry> generatePercentageTable(double oneRM) {
   ];
 }
 
-double roundToNearest(double value, [double increment = 2.5]) {
+double roundToNearest(double value, [double increment = 1.0]) {
   return (value / increment).round() * increment;
 }

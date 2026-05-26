@@ -128,8 +128,8 @@ void main() {
   });
 
   group('roundToNearest', () {
-    test('rounds to nearest 2.5', () {
-      expect(roundToNearest(123.0), 122.5);
+    test('rounds to nearest 1', () {
+      expect(roundToNearest(123.0), 123.0);
     });
 
     test('rounds to nearest 5', () => expect(roundToNearest(138.0, 5), 140.0));

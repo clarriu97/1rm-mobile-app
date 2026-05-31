@@ -1,39 +1,33 @@
-# 🏋️ One Rep Max Tracker
+# One Rep Max Tracker
 
 > *Because the only thing better than a new PR is a beautiful app to log it.*
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/carlos/one_rm_mobile/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/clarriu97/1rm-mobile-app/flutter.yml?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/clarriu97/1rm-mobile-app/actions)
 [![Flutter](https://img.shields.io/badge/flutter-3.x-02569B?style=flat-square&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/dart-3.11-0175C2?style=flat-square&logo=dart&logoColor=white)](https://dart.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-
 [![Platform](https://img.shields.io/badge/platform-android%20|%20ios-blue?style=flat-square)]()
 [![Code Style](https://img.shields.io/badge/code%20style-flutter_lints-8B5CF6?style=flat-square)]()
 
-[![Lifts](https://img.shields.io/badge/lifts-heavy-FF6B6B?style=flat-square)]()
-[![Reps](https://img.shields.io/badge/reps-for%20days-FFA94D?style=flat-square)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-FF69B4?style=flat-square)]()
-
 ---
 
-## 💪 What is this?
+## What is this?
 
 A cross-platform Flutter app to **calculate, track, and obsess over your One-Rep Max** — the heaviest weight you can move exactly once. Log sets with weight and reps, and let the [Epley formula](#-the-science) do the math.
 
-![Home Screen](https://img.shields.io/badge/screenshot-coming%20soon-lightgrey?style=social)
+## Features
 
-## 🎯 Features
-
-- **12 built-in exercises** — Back Squat, Bench Press, Deadlift, and 9 more
+- **6 built-in exercises** — Back Squat, Front Squat, Bench Press, Deadlift, Power Clean, Snatch
 - **Epley 1RM calculation** — enter weight × reps, get your estimated max
 - **Percentage working-weight table** — 50–100% in 5% steps, rounded to nearest 1 kg
-- **Dark theme** — because you lift in the dungeon, not a tanning bed
 - **Per-exercise history** — chronologically sorted with relative dates
-- **Delete entries** — long-press to yeet that failed set into oblivion
+- **Delete entries** — tap the trash icon or long-press a row
 - **Comma & dot decimal support** — `112,5` kg works just like `112.5`
+- **Persistent storage** — all data saved automatically, survives app restarts
+- **Dark theme** — because you lift in the dungeon, not a tanning bed
 - **2 platforms** — Android & iOS
 
-## 🔬 The Science
+## The Science
 
 The app uses the **Epley Formula** — one of the most widely used 1RM estimation equations:
 
@@ -45,12 +39,12 @@ The app uses the **Epley Formula** — one of the most widely used 1RM estimatio
 
 Working weights are rounded to the nearest **1 kg**.
 
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/one_rm_mobile.git
-cd one_rm_mobile
+git clone https://github.com/clarriu97/1rm-mobile-app.git
+cd 1rm-mobile-app
 
 # Get dependencies
 flutter pub get
@@ -66,11 +60,11 @@ flutter run -d ios     # iOS (macOS only)
 flutter run -d android # Android
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
-# Run all tests with coverage
-flutter test --coverage
+# Run all tests
+flutter test
 
 # Check formatting
 dart format --set-exit-if-changed .
@@ -79,16 +73,17 @@ dart format --set-exit-if-changed .
 flutter analyze
 ```
 
-## 🧰 Built With
+## Built With
 
 | Tool | Purpose |
 |---|---|
 | [Flutter](https://flutter.dev) | UI framework |
 | [Dart](https://dart.dev) | Language |
+| [path_provider](https://pub.dev/packages/path_provider) | Persistent JSON storage |
 | [flutter_lints](https://pub.dev/packages/flutter_lints) | Strict lint rules |
 | [GitHub Actions](https://github.com/features/actions) | CI/CD |
 
-## 🤝 Contributing
+## Contributing
 
 PRs are welcome! If you find a bug:
 
@@ -98,7 +93,7 @@ PRs are welcome! If you find a bug:
 
 The project follows strict lint rules — `dart format .` and `flutter analyze` must pass.
 
-## 📄 License
+## License
 
 MIT License — see the [LICENSE](LICENSE) file for details.
 

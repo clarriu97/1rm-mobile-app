@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/exercise.dart';
+import '../services/storage_service.dart';
 import 'exercise_detail_screen.dart';
 import 'app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    required this.initialRecords,
+    required this.storage,
+  });
+
+  final Map<String, List<ExerciseRecord>> initialRecords;
+  final StorageService storage;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Map<String, List<ExerciseRecord>> _records = {};
+  late Map<String, List<ExerciseRecord>> _records;
+
+  @override
+  void initState() {
+    super.initState();
+    _records = widget.initialRecords;
+  }
+
+  Future<void> _persist() => widget.storage.save(_records);
 
   Future<void> _openDetail(
     String exerciseName,
@@ -38,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _records[exerciseName] = updatedRecords;
         }
       });
+      _persist();
     }
   }
 
@@ -113,10 +131,14 @@ class _ExerciseCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                template.icon,
-                size: 28,
-                color: hasData ? AppColors.cta : AppColors.accent,
+              SvgPicture.asset(
+                template.assetPath,
+                width: 28,
+                height: 28,
+                colorFilter: ColorFilter.mode(
+                  hasData ? AppColors.cta : AppColors.accent,
+                  BlendMode.srcIn,
+                ),
               ),
               const SizedBox(height: 8),
               Text(

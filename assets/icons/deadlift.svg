@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Head -->
+  <circle cx="65" cy="20" r="8" fill="currentColor" stroke="none"/>
+  <!-- Body (Hinge Torso -> Slight knee bend -> Vertical calf) -->
+  <path d="M65 30 L35 60 L50 75 L45 95" />
+  <!-- Arm (Straight down to bar) -->
+  <line x1="65" y1="30" x2="55" y2="75" />
+  <!-- Barbell -->
+  <line x1="15" y1="75" x2="95" y2="75" stroke-width="6"/>
+  <!-- Plates (Resting exactly on ground) -->
+  <path d="M25 61 v28 M85 61 v28" stroke-width="12"/>
+  <!-- Ground -->
+  <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+</svg>

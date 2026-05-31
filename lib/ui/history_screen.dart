@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
 import 'app_theme.dart';
 
@@ -7,12 +8,12 @@ class HistoryScreen extends StatefulWidget {
   const HistoryScreen({
     super.key,
     required this.exerciseName,
-    required this.icon,
+    required this.assetPath,
     required this.records,
   });
 
   final String exerciseName;
-  final IconData icon;
+  final String assetPath;
   final List<ExerciseRecord> records;
 
   @override
@@ -95,7 +96,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(widget.icon, size: 20, color: AppColors.accent),
+              SvgPicture.asset(
+                widget.assetPath,
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.accent,
+                  BlendMode.srcIn,
+                ),
+              ),
               const SizedBox(width: 8),
               Text('${widget.exerciseName} History'),
             ],

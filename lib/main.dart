@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'models/exercise.dart';
+import 'services/storage_service.dart';
 import 'ui/app_theme.dart';
 import 'ui/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OneRMApp());
+  final storage = await StorageService.getInstance();
+  final initialRecords = await storage.load();
+
+  runApp(OneRMApp(initialRecords: initialRecords, storage: storage));
 }
 
 class OneRMApp extends StatelessWidget {
-  const OneRMApp({super.key});
+  const OneRMApp({
+    super.key,
+    required this.initialRecords,
+    required this.storage,
+  });
+
+  final Map<String, List<ExerciseRecord>> initialRecords;
+  final StorageService storage;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +28,7 @@ class OneRMApp extends StatelessWidget {
       title: '1RM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const HomeScreen(),
+      home: HomeScreen(initialRecords: initialRecords, storage: storage),
     );
   }
 }

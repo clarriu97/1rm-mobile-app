@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Plates -->
+  <path d="M16 16 v28 M84 16 v28" stroke-width="12"/>
+  <!-- Barbell -->
+  <line x1="16" y1="30" x2="84" y2="30" stroke-width="6"/>
+  <!-- Head -->
+  <circle cx="45" cy="15" r="8" fill="currentColor" stroke="none"/>
+  <!-- Body (Torso -> Catch dip -> Calf) -->
+  <path d="M45 25 L40 60 L60 70 L55 95" />
+  <!-- Arm (Front rack position) -->
+  <path d="M45 25 L65 30 L50 26" stroke-width="6"/> 
+  <!-- Explosive motion lines -->
+  <path d="M16 80 L16 55 M10 65 L16 55 L22 65" stroke-width="4" stroke-linejoin="miter"/>
+  <path d="M84 80 L84 55 M78 65 L84 55 L90 65" stroke-width="4" stroke-linejoin="miter"/>
+  <!-- Ground -->
+  <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+</svg>

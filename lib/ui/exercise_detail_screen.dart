@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/exercise.dart';
 import '../utils/formulas.dart';
@@ -44,7 +45,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       MaterialPageRoute<ExerciseRecord>(
         builder: (context) => AddEntryScreen(
           exerciseName: widget.template.name,
-          icon: widget.template.icon,
+          assetPath: widget.template.assetPath,
         ),
       ),
     );
@@ -62,7 +63,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           MaterialPageRoute<List<ExerciseRecord>>(
             builder: (context) => HistoryScreen(
               exerciseName: widget.template.name,
-              icon: widget.template.icon,
+              assetPath: widget.template.assetPath,
               records: _records,
             ),
           ),
@@ -99,7 +100,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(widget.template.icon, size: 22, color: AppColors.accent),
+              SvgPicture.asset(
+                widget.template.assetPath,
+                width: 22,
+                height: 22,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.accent,
+                  BlendMode.srcIn,
+                ),
+              ),
               const SizedBox(width: 8),
               Text(widget.template.name),
             ],
@@ -325,10 +334,14 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              widget.template.icon,
-              size: 64,
-              color: AppColors.accent.withAlpha(100),
+            SvgPicture.asset(
+              widget.template.assetPath,
+              width: 64,
+              height: 64,
+              colorFilter: ColorFilter.mode(
+                AppColors.accent.withAlpha(100),
+                BlendMode.srcIn,
+              ),
             ),
             const SizedBox(height: 24),
             Text(

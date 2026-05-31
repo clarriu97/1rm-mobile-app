@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
 import '../utils/formulas.dart';
 import 'app_theme.dart';
@@ -8,11 +9,11 @@ class AddEntryScreen extends StatefulWidget {
   const AddEntryScreen({
     super.key,
     required this.exerciseName,
-    required this.icon,
+    required this.assetPath,
   });
 
   final String exerciseName;
-  final IconData icon;
+  final String assetPath;
 
   @override
   State<AddEntryScreen> createState() => _AddEntryScreenState();
@@ -61,7 +62,15 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, size: 20, color: AppColors.accent),
+            SvgPicture.asset(
+              widget.assetPath,
+              width: 20,
+              height: 20,
+              colorFilter: const ColorFilter.mode(
+                AppColors.accent,
+                BlendMode.srcIn,
+              ),
+            ),
             const SizedBox(width: 8),
             Text(widget.exerciseName),
           ],

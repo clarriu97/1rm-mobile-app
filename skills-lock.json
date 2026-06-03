@@ -16,10 +16,29 @@
       "sourceType": "autoskills-registry",
       "computedHash": "37da3773e51308a56bfc011659ba609b658be3308f9282b4e4d028da88bdeba2"
     },
+    "flutter-add-integration-test": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-add-integration-test/SKILL.md",
+      "computedHash": "9ead37fef54371fed6ad07a9ba3de7a908135a0867b05baf74c28b7095343999"
+    },
+    "flutter-add-widget-test": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-add-widget-test/SKILL.md",
+      "computedHash": "c4f263c59cfe331ef42dba2aa81e25142aa4f7284518907c6b847e04502676b0"
+    },
     "flutter-animations": {
       "source": "madteacher/mad-agents-skills",
-      "sourceType": "autoskills-registry",
-      "computedHash": "bb61dc664754acb797b37ffe2ce2a42212eb7f92eeab575797a05413b2ef134b"
+      "sourceType": "github",
+      "skillPath": "flutter-animations/SKILL.md",
+      "computedHash": "a0f81c4bbff81b43be42cd11ebf33b6a4e50e2f94134d3071e441785fc4872e8"
+    },
+    "flutter-apply-architecture-best-practices": {
+      "source": "flutter/skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-apply-architecture-best-practices/SKILL.md",
+      "computedHash": "2b1b63214d6b153c50aacd4bbcb76ce91dece449de9e06f477f8aad3163d667f"
     },
     "flutter-expert": {
       "source": "jeffallan/claude-skills",
@@ -30,6 +49,12 @@
       "source": "madteacher/mad-agents-skills",
       "sourceType": "autoskills-registry",
       "computedHash": "9de813d81db8ad38630a28b893494c1ebfe5def0e5d47cfb46c632ea7d2d92e5"
+    },
+    "flutter-ui-ux": {
+      "source": "ajianaz/skills-collection",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-ui-ux/SKILL.md",
+      "computedHash": "a0fc21d9328f80ab16c3e3463a12f4fd86462bc6370fe0ea016dc06ae1616654"
     },
     "frontend-design": {
       "source": "anthropics/skills",

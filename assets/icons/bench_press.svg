@@ -1,19 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Bench Surface -->
-  <line x1="10" y1="65" x2="80" y2="65" stroke-width="10"/>
-  <!-- Bench Legs -->
-  <line x1="25" y1="65" x2="25" y2="95" />
-  <line x1="65" y1="65" x2="65" y2="95" />
-  <!-- Head -->
-  <circle cx="25" cy="52" r="8" fill="currentColor" stroke="none"/>
-  <!-- Body (Lying Torso -> Leg drop -> Foot) -->
-  <path d="M35 55 L70 55 L85 75 L75 95" />
-  <!-- Arm (Straight up pushing) -->
-  <line x1="40" y1="55" x2="40" y2="25" />
-  <!-- Barbell -->
-  <line x1="10" y1="25" x2="90" y2="25" stroke-width="6"/>
-  <!-- Plates -->
-  <path d="M20 10 v30 M80 10 v30" stroke-width="12"/>
-  <!-- Ground -->
-  <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  <!-- Lifter, Bench & Environment (Opacity 0.3) -->
+  <g opacity="0.3">
+    <!-- Bench Surface -->
+    <line x1="10" y1="65" x2="80" y2="65" stroke-width="10"/>
+    <!-- Bench Legs -->
+    <line x1="25" y1="65" x2="25" y2="95" />
+    <line x1="65" y1="65" x2="65" y2="95" />
+    <!-- Head -->
+    <circle cx="25" cy="52" r="8" fill="currentColor" stroke="none"/>
+    <!-- Body (Lying Torso -> Leg drop -> Foot) -->
+    <path d="M35 55 L70 55 L85 75 L75 95" />
+    <!-- Arm (Straight up pushing) -->
+    <line x1="40" y1="55" x2="40" y2="25" />
+    <!-- Ground -->
+    <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  </g>
+  <!-- The Iron (Opacity 1.0) -->
+  <g opacity="1.0">
+    <!-- Barbell -->
+    <line x1="10" y1="25" x2="90" y2="25" stroke-width="6"/>
+    <!-- Plates -->
+    <path d="M20 10 v30 M80 10 v30" stroke-width="12"/>
+  </g>
 </svg>

@@ -1,14 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Plates -->
-  <path d="M16 16 v28 M84 16 v28" stroke-width="12"/>
-  <!-- Barbell -->
-  <line x1="16" y1="30" x2="84" y2="30" stroke-width="6"/>
-  <!-- Head -->
-  <circle cx="55" cy="15" r="8" fill="currentColor" stroke="none"/>
-  <!-- Body (Torso -> Thigh -> Calf) -->
-  <path d="M55 25 L35 65 L65 65 L55 95" />
-  <!-- Arm (Hand holding bar behind neck) -->
-  <path d="M55 25 L45 40 L60 30" stroke-width="6"/> 
-  <!-- Ground -->
-  <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  <!-- Lifter & Environment (Opacity 0.3) -->
+  <g opacity="0.3">
+    <!-- Head -->
+    <circle cx="55" cy="15" r="8" fill="currentColor" stroke="none"/>
+    <!-- Body (Torso -> Thigh -> Calf) -->
+    <path d="M55 25 L35 65 L65 65 L55 95" />
+    <!-- Arm (Hand holding bar behind neck) -->
+    <path d="M55 25 L45 40 L60 30" stroke-width="6"/> 
+    <!-- Ground -->
+    <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  </g>
+  <!-- The Iron (Opacity 1.0) -->
+  <g opacity="1.0">
+    <!-- Plates -->
+    <path d="M16 16 v28 M84 16 v28" stroke-width="12"/>
+    <!-- Barbell -->
+    <line x1="16" y1="30" x2="84" y2="30" stroke-width="6"/>
+  </g>
 </svg>

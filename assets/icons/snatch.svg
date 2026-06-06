@@ -1,14 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Plates (High up) -->
-  <path d="M12 6 v28 M88 6 v28" stroke-width="12"/>
-  <!-- Barbell -->
-  <line x1="12" y1="20" x2="88" y2="20" stroke-width="6"/>
-  <!-- Head -->
-  <circle cx="50" cy="30" r="8" fill="currentColor" stroke="none"/>
-  <!-- Body (Overhead squat: Torso -> Deep Thigh -> Calf) -->
-  <path d="M50 40 L40 70 L70 70 L60 95" />
-  <!-- Arms (Wide snatch grip) -->
-  <path d="M50 40 L25 20 M50 40 L75 20" />
-  <!-- Ground -->
-  <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  <!-- Lifter & Environment (Opacity 0.3) -->
+  <g opacity="0.3">
+    <!-- Head -->
+    <circle cx="50" cy="30" r="8" fill="currentColor" stroke="none"/>
+    <!-- Body (Overhead squat: Torso -> Deep Thigh -> Calf) -->
+    <path d="M50 40 L40 70 L70 70 L60 95" />
+    <!-- Arms (Wide snatch grip) -->
+    <path d="M50 40 L25 20 M50 40 L75 20" />
+    <!-- Ground -->
+    <line x1="10" y1="95" x2="90" y2="95" stroke-width="4"/>
+  </g>
+  <!-- The Iron (Opacity 1.0) -->
+  <g opacity="1.0">
+    <!-- Plates (High up) -->
+    <path d="M12 6 v28 M88 6 v28" stroke-width="12"/>
+    <!-- Barbell -->
+    <line x1="12" y1="20" x2="88" y2="20" stroke-width="6"/>
+  </g>
 </svg>

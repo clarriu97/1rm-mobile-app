@@ -1,3 +1,5 @@
+import '../models/weight_unit.dart';
+
 class PercentageEntry {
   const PercentageEntry({required this.percentage, required this.weight});
 
@@ -22,13 +24,17 @@ double calculateWeightForPercentage(double oneRM, double percentage) {
   return oneRM * percentage / 100;
 }
 
-List<PercentageEntry> generatePercentageTable(double oneRM) {
+List<PercentageEntry> generatePercentageTable(
+  double oneRM, [
+  WeightUnit unit = WeightUnit.kg,
+]) {
   return [
     for (var pct = 100; pct >= 50; pct -= 5)
       PercentageEntry(
         percentage: pct,
         weight: roundToNearest(
           calculateWeightForPercentage(oneRM, pct.toDouble()),
+          unit.roundingIncrement,
         ),
       ),
   ];
@@ -36,4 +42,11 @@ List<PercentageEntry> generatePercentageTable(double oneRM) {
 
 double roundToNearest(double value, [double increment = 1.0]) {
   return (value / increment).round() * increment;
+}
+
+String formatWeight(double weightInKg, WeightUnit unit, [int decimals = 1]) {
+  final displayValue = unit == WeightUnit.lbs
+      ? kgToLbs(weightInKg)
+      : weightInKg;
+  return '${displayValue.toStringAsFixed(decimals)} ${unit.displayName}';
 }

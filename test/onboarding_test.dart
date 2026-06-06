@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/main.dart';
 import 'package:one_rm_mobile/services/onboarding_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
+import 'package:one_rm_mobile/services/unit_service.dart';
 import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/onboarding_screen.dart';
 
@@ -168,12 +169,14 @@ void main() {
 
     testWidgets('shows onboarding when not completed', (tester) async {
       final onboarding = OnboardingService.forTesting();
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pumpAndSettle();
@@ -186,12 +189,14 @@ void main() {
       tester,
     ) async {
       final onboarding = OnboardingService.forTesting(completed: true);
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pumpAndSettle();
@@ -204,12 +209,14 @@ void main() {
       tester,
     ) async {
       final onboarding = OnboardingService.forTesting();
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pumpAndSettle();
@@ -227,12 +234,14 @@ void main() {
       tester,
     ) async {
       final onboarding = OnboardingService.forTesting();
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pumpAndSettle();
@@ -250,12 +259,14 @@ void main() {
 
     testWidgets('persists onboarding completion via service', (tester) async {
       final onboarding = OnboardingService.forTesting();
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pumpAndSettle();
@@ -272,12 +283,14 @@ void main() {
       tester,
     ) async {
       final onboarding = _SlowOnboardingService();
+      final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
         OneRMApp(
           initialRecords: const {},
           storage: storage,
           onboarding: onboarding,
+          unitService: unitService,
         ),
       );
       await tester.pump();

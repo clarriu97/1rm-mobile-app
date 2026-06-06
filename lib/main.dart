@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'models/exercise.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
+import 'services/unit_service.dart';
 import 'ui/app_theme.dart';
 import 'ui/home_screen.dart';
 import 'ui/onboarding_screen.dart';
@@ -11,12 +12,14 @@ void main() async {
   final storage = await StorageService.getInstance();
   final initialRecords = await storage.load();
   final onboarding = await OnboardingService.getInstance();
+  final unitService = await UnitService.getInstance();
 
   runApp(
     OneRMApp(
       initialRecords: initialRecords,
       storage: storage,
       onboarding: onboarding,
+      unitService: unitService,
     ),
   );
 }
@@ -27,11 +30,13 @@ class OneRMApp extends StatelessWidget {
     required this.initialRecords,
     required this.storage,
     required this.onboarding,
+    required this.unitService,
   });
 
   final Map<String, List<ExerciseRecord>> initialRecords;
   final StorageService storage;
   final OnboardingService onboarding;
+  final UnitService unitService;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +48,7 @@ class OneRMApp extends StatelessWidget {
         onboarding: onboarding,
         initialRecords: initialRecords,
         storage: storage,
+        unitService: unitService,
       ),
     );
   }
@@ -53,11 +59,13 @@ class _AppGate extends StatefulWidget {
     required this.onboarding,
     required this.initialRecords,
     required this.storage,
+    required this.unitService,
   });
 
   final OnboardingService onboarding;
   final Map<String, List<ExerciseRecord>> initialRecords;
   final StorageService storage;
+  final UnitService unitService;
 
   @override
   State<_AppGate> createState() => _AppGateState();
@@ -95,6 +103,7 @@ class _AppGateState extends State<_AppGate> {
     return HomeScreen(
       initialRecords: widget.initialRecords,
       storage: widget.storage,
+      unitService: widget.unitService,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/exercise.dart';
+import '../models/weight_unit.dart';
 import '../utils/formulas.dart';
 import 'add_entry_screen.dart';
 import 'app_theme.dart';
@@ -12,10 +13,12 @@ class ExerciseDetailScreen extends StatefulWidget {
     super.key,
     required this.template,
     required this.records,
+    required this.unit,
   });
 
   final ExerciseTemplate template;
   final List<ExerciseRecord> records;
+  final WeightUnit unit;
 
   @override
   State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
@@ -46,6 +49,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         builder: (context) => AddEntryScreen(
           exerciseName: widget.template.name,
           assetPath: widget.template.assetPath,
+          unit: widget.unit,
         ),
       ),
     );
@@ -65,6 +69,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               exerciseName: widget.template.name,
               assetPath: widget.template.assetPath,
               records: _records,
+              unit: widget.unit,
             ),
           ),
         );
@@ -198,7 +203,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${best.toStringAsFixed(1)} kg',
+            formatWeight(best, widget.unit),
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               color: AppColors.cta,
               fontSize: 48,
@@ -227,7 +232,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Latest: ${latest.weight.toStringAsFixed(1)} kg × ${latest.reps} reps → ${latest.oneRM.toStringAsFixed(1)} kg',
+                        'Latest: ${formatWeight(latest.weight, widget.unit)} × ${latest.reps} reps → ${formatWeight(latest.oneRM, widget.unit)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -245,7 +250,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   Widget _buildPercentageTable(BuildContext context, double best) {
-    final table = generatePercentageTable(best);
+    final table = generatePercentageTable(best, widget.unit);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,7 +329,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ),
           Expanded(
             child: Text(
-              '${entry.weight.toStringAsFixed(1)} kg',
+              formatWeight(entry.weight, widget.unit),
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: isHundred ? AppColors.cta : AppColors.textPrimary,

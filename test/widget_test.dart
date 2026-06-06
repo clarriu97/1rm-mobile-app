@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
+import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/ui/add_entry_screen.dart';
 import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
@@ -41,6 +42,7 @@ void main() {
           const AddEntryScreen(
             exerciseName: 'Back Squat',
             assetPath: 'assets/icons/back_squat.svg',
+            unit: WeightUnit.kg,
           ),
         ),
       );
@@ -57,6 +59,7 @@ void main() {
           const AddEntryScreen(
             exerciseName: 'Test',
             assetPath: 'assets/icons/back_squat.svg',
+            unit: WeightUnit.kg,
           ),
         ),
       );
@@ -80,6 +83,7 @@ void main() {
                     builder: (_) => const AddEntryScreen(
                       exerciseName: 'Deadlift',
                       assetPath: 'assets/icons/deadlift.svg',
+                      unit: WeightUnit.kg,
                     ),
                   ),
                 );
@@ -119,6 +123,7 @@ void main() {
                     builder: (_) => const AddEntryScreen(
                       exerciseName: 'Bench Press',
                       assetPath: 'assets/icons/bench_press.svg',
+                      unit: WeightUnit.kg,
                     ),
                   ),
                 );
@@ -174,6 +179,7 @@ void main() {
             ExerciseDetailScreen(
               template: dummyExercise,
               records: [massiveRecord],
+              unit: WeightUnit.kg,
             ),
           ),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
+import '../models/weight_unit.dart';
 import '../utils/formulas.dart';
 import 'app_theme.dart';
 
@@ -10,10 +11,12 @@ class AddEntryScreen extends StatefulWidget {
     super.key,
     required this.exerciseName,
     required this.assetPath,
+    required this.unit,
   });
 
   final String exerciseName;
   final String assetPath;
+  final WeightUnit unit;
 
   @override
   State<AddEntryScreen> createState() => _AddEntryScreenState();
@@ -37,12 +40,15 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
     FocusScope.of(context).unfocus();
     HapticFeedback.mediumImpact();
 
-    final weight = parseWeight(_weightController.text);
+    final displayWeight = parseWeight(_weightController.text);
+    final weightInKg = widget.unit == WeightUnit.lbs
+        ? lbsToKg(displayWeight)
+        : displayWeight;
     final reps = int.parse(_repsController.text);
-    final oneRM = calculateOneRM(weight, reps);
+    final oneRM = calculateOneRM(weightInKg, reps);
 
     final record = ExerciseRecord(
-      weight: weight,
+      weight: weightInKg,
       reps: reps,
       oneRM: oneRM,
       date: DateTime.now(),
@@ -93,10 +99,13 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _weightController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Weight',
-                        hintText: '112.5',
-                        prefixIcon: Icon(Icons.monitor_weight_rounded),
+                        hintText: widget.unit == WeightUnit.lbs
+                            ? '225'
+                            : '112.5',
+                        prefixIcon: const Icon(Icons.monitor_weight_rounded),
+                        suffixText: widget.unit.displayName,
                       ),
                       style: const TextStyle(color: AppColors.textPrimary),
                       keyboardType: const TextInputType.numberWithOptions(

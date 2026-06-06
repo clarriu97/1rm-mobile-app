@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
+import '../models/weight_unit.dart';
+import '../utils/formulas.dart';
 import 'app_theme.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -10,11 +12,13 @@ class HistoryScreen extends StatefulWidget {
     required this.exerciseName,
     required this.assetPath,
     required this.records,
+    required this.unit,
   });
 
   final String exerciseName;
   final String assetPath;
   final List<ExerciseRecord> records;
+  final WeightUnit unit;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -42,8 +46,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
-          '${record.weight.toStringAsFixed(0)} kg × ${record.reps} reps\n'
-          '1RM: ${record.oneRM.toStringAsFixed(1)} kg',
+          '${formatWeight(record.weight, widget.unit, 0)} × ${record.reps} reps\n'
+          '1RM: ${formatWeight(record.oneRM, widget.unit)}',
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
@@ -152,7 +156,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${record.weight.toStringAsFixed(1)} kg × ${record.reps} reps',
+                        '${formatWeight(record.weight, widget.unit)} × ${record.reps} reps',
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w500,
@@ -161,7 +165,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '1RM: ${record.oneRM.toStringAsFixed(1)} kg',
+                        '1RM: ${formatWeight(record.oneRM, widget.unit)}',
                         style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 13,

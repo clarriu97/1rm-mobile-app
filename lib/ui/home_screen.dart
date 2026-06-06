@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/exercise.dart';
+import '../models/weight_unit.dart';
 import '../services/storage_service.dart';
+import '../services/unit_service.dart';
+import '../utils/formulas.dart';
 import 'exercise_detail_screen.dart';
+import 'settings_screen.dart';
 import 'app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -11,10 +15,12 @@ class HomeScreen extends StatefulWidget {
     super.key,
     required this.initialRecords,
     required this.storage,
+    required this.unitService,
   });
 
   final Map<String, List<ExerciseRecord>> initialRecords;
   final StorageService storage;
+  final UnitService unitService;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -22,11 +28,28 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Map<String, List<ExerciseRecord>> _records;
+  WeightUnit _unit = WeightUnit.kg;
 
   @override
   void initState() {
     super.initState();
     _records = widget.initialRecords;
+    _loadUnit();
+  }
+
+  Future<void> _loadUnit() async {
+    final unit = await widget.unitService.getUnit();
+    if (mounted) setState(() => _unit = unit);
+  }
+
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) =>
+            SettingsScreen(unitService: widget.unitService, currentUnit: _unit),
+      ),
+    );
+    _loadUnit();
   }
 
   Future<void> _persist() => widget.storage.save(_records);
@@ -43,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context) => ExerciseDetailScreen(
               template: template,
               records: existingRecords,
+              unit: _unit,
             ),
           ),
         );
@@ -62,7 +86,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('1RM')),
+      appBar: AppBar(
+        title: const Text('1RM'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            tooltip: 'Settings',
+            onPressed: _openSettings,
+          ),
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -85,6 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return _ExerciseCard(
                   template: template,
                   bestOneRM: bestOneRM,
+                  unit: _unit,
                   onTap: () => _openDetail(template.name, template),
                 );
               }, childCount: defaultExercises.length),
@@ -100,11 +134,13 @@ class _ExerciseCard extends StatelessWidget {
   const _ExerciseCard({
     required this.template,
     required this.bestOneRM,
+    required this.unit,
     required this.onTap,
   });
 
   final ExerciseTemplate template;
   final double? bestOneRM;
+  final WeightUnit unit;
   final VoidCallback onTap;
 
   @override
@@ -158,7 +194,7 @@ class _ExerciseCard extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    '${bestOneRM!.toStringAsFixed(1)} kg',
+                    formatWeight(bestOneRM!, unit),
                     style: const TextStyle(
                       color: AppColors.cta,
                       fontSize: 14,

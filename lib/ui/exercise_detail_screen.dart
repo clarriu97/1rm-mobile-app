@@ -110,7 +110,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(widget.template.name),
+              Flexible(child: Text(widget.template.name, overflow: TextOverflow.ellipsis)),
             ],
           ),
           actions: [

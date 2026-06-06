@@ -155,12 +155,15 @@ class _ExerciseCard extends StatelessWidget {
               ),
               if (hasData) ...[
                 const SizedBox(height: 4),
-                Text(
-                  '${bestOneRM!.toStringAsFixed(0)} kg',
-                  style: const TextStyle(
-                    color: AppColors.cta,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${bestOneRM!.toStringAsFixed(1)} kg',
+                    style: const TextStyle(
+                      color: AppColors.cta,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],

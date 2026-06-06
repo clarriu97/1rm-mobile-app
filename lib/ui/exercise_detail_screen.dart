@@ -217,11 +217,17 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     color: AppColors.textMuted,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    'Latest: ${latest.weight.toStringAsFixed(1)} kg × ${latest.reps} reps → ${latest.oneRM.toStringAsFixed(1)} kg',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Latest: ${latest.weight.toStringAsFixed(1)} kg × ${latest.reps} reps → ${latest.oneRM.toStringAsFixed(1)} kg',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
                 ],

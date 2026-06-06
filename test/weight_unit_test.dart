@@ -19,6 +19,21 @@ void main() {
     test('lbs rounding increment is 5.0', () {
       expect(WeightUnit.lbs.roundingIncrement, 5.0);
     });
+
+    test('kg maxWeight is 1000', () {
+      expect(WeightUnit.kg.maxWeight, 1000.0);
+    });
+
+    test('lbs maxWeight is 2204.62', () {
+      expect(WeightUnit.lbs.maxWeight, 2204.62);
+    });
+
+    test('lbs maxWeight equals kgToLbs of kg maxWeight', () {
+      expect(
+        WeightUnit.lbs.maxWeight,
+        closeTo(kgToLbs(WeightUnit.kg.maxWeight), 0.01),
+      );
+    });
   });
 
   group('kgToLbs', () {

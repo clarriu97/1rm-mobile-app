@@ -116,6 +116,9 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                         if (value == null || value.isEmpty) return 'Required';
                         final v = tryParseWeight(value);
                         if (v == null || v <= 0) return 'Invalid';
+                        if (v > widget.unit.maxWeight) {
+                          return 'Max ${widget.unit.maxWeight.toStringAsFixed(0)} ${widget.unit.displayName}';
+                        }
                         return null;
                       },
                     ),
@@ -135,6 +138,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                         if (value == null || value.isEmpty) return 'Required';
                         final v = int.tryParse(value);
                         if (v == null || v <= 0) return 'Invalid';
+                        if (v > maxReps) return 'Max $maxReps reps';
                         return null;
                       },
                     ),

@@ -1,5 +1,7 @@
 import '../models/weight_unit.dart';
 
+const int maxReps = 50;
+
 class PercentageEntry {
   const PercentageEntry({required this.percentage, required this.weight});
 

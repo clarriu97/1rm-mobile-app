@@ -19,6 +19,15 @@ enum WeightUnit {
         return 5.0;
     }
   }
+
+  double get maxWeight {
+    switch (this) {
+      case WeightUnit.kg:
+        return 1000.0;
+      case WeightUnit.lbs:
+        return 2204.62;
+    }
+  }
 }
 
 const double _kgToLbsFactor = 2.20462;

@@ -149,6 +149,221 @@ void main() {
       expect(savedRecord!.reps, 8);
       expect(savedRecord!.oneRM, closeTo(142.5, 0.01));
     });
+
+    group('weight max validation (kg)', () {
+      Future<void> openAndSubmit(
+        WidgetTester tester, {
+        required String weight,
+        required String reps,
+      }) async {
+        await tester.pumpWidget(
+          _buildApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  await Navigator.of(context).push<ExerciseRecord>(
+                    MaterialPageRoute(
+                      builder: (_) => const AddEntryScreen(
+                        exerciseName: 'Test',
+                        assetPath: 'assets/icons/back_squat.svg',
+                        unit: WeightUnit.kg,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField).at(0), weight);
+        await tester.enterText(find.byType(TextFormField).at(1), reps);
+        await tester.tap(find.text('Calculate 1RM'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('accepts exactly 1000 kg', (tester) async {
+        ExerciseRecord? savedRecord;
+        await tester.pumpWidget(
+          _buildApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  savedRecord = await Navigator.of(context)
+                      .push<ExerciseRecord>(
+                        MaterialPageRoute(
+                          builder: (_) => const AddEntryScreen(
+                            exerciseName: 'Test',
+                            assetPath: 'assets/icons/back_squat.svg',
+                            unit: WeightUnit.kg,
+                          ),
+                        ),
+                      );
+                },
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField).at(0), '1000');
+        await tester.enterText(find.byType(TextFormField).at(1), '1');
+        await tester.tap(find.text('Calculate 1RM'));
+        await tester.pumpAndSettle();
+        expect(savedRecord, isNotNull);
+        expect(savedRecord!.weight, 1000.0);
+      });
+
+      testWidgets('accepts 999.9 kg (just under max)', (tester) async {
+        await openAndSubmit(tester, weight: '999.9', reps: '1');
+        expect(find.text('Max 1000 kg'), findsNothing);
+      });
+
+      testWidgets('rejects 1000.1 kg (just over max)', (tester) async {
+        await openAndSubmit(tester, weight: '1000.1', reps: '1');
+        expect(find.text('Max 1000 kg'), findsOneWidget);
+      });
+
+      testWidgets('rejects 9999 kg (way over max)', (tester) async {
+        await openAndSubmit(tester, weight: '9999', reps: '1');
+        expect(find.text('Max 1000 kg'), findsOneWidget);
+      });
+
+      testWidgets('rejects negative weight', (tester) async {
+        await openAndSubmit(tester, weight: '-100', reps: '1');
+        expect(find.text('Invalid'), findsOneWidget);
+      });
+    });
+
+    group('reps max validation', () {
+      Future<void> openAndSubmit(
+        WidgetTester tester, {
+        required String weight,
+        required String reps,
+      }) async {
+        await tester.pumpWidget(
+          _buildApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  await Navigator.of(context).push<ExerciseRecord>(
+                    MaterialPageRoute(
+                      builder: (_) => const AddEntryScreen(
+                        exerciseName: 'Test',
+                        assetPath: 'assets/icons/back_squat.svg',
+                        unit: WeightUnit.kg,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField).at(0), weight);
+        await tester.enterText(find.byType(TextFormField).at(1), reps);
+        await tester.tap(find.text('Calculate 1RM'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('accepts exactly 50 reps', (tester) async {
+        ExerciseRecord? savedRecord;
+        await tester.pumpWidget(
+          _buildApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  savedRecord = await Navigator.of(context)
+                      .push<ExerciseRecord>(
+                        MaterialPageRoute(
+                          builder: (_) => const AddEntryScreen(
+                            exerciseName: 'Test',
+                            assetPath: 'assets/icons/back_squat.svg',
+                            unit: WeightUnit.kg,
+                          ),
+                        ),
+                      );
+                },
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField).at(0), '100');
+        await tester.enterText(find.byType(TextFormField).at(1), '50');
+        await tester.tap(find.text('Calculate 1RM'));
+        await tester.pumpAndSettle();
+        expect(savedRecord, isNotNull);
+        expect(savedRecord!.reps, 50);
+      });
+
+      testWidgets('accepts 1 rep (minimum valid)', (tester) async {
+        await openAndSubmit(tester, weight: '100', reps: '1');
+        expect(find.text('Invalid'), findsNothing);
+        expect(find.text('Max 50 reps'), findsNothing);
+      });
+
+      testWidgets('rejects 51 reps (just over max)', (tester) async {
+        await openAndSubmit(tester, weight: '100', reps: '51');
+        expect(find.text('Max 50 reps'), findsOneWidget);
+      });
+
+      testWidgets('rejects 999 reps (way over max)', (tester) async {
+        await openAndSubmit(tester, weight: '100', reps: '999');
+        expect(find.text('Max 50 reps'), findsOneWidget);
+      });
+
+      testWidgets('rejects 0 reps', (tester) async {
+        await openAndSubmit(tester, weight: '100', reps: '0');
+        expect(find.text('Invalid'), findsOneWidget);
+      });
+
+      testWidgets('rejects negative reps', (tester) async {
+        await openAndSubmit(tester, weight: '100', reps: '-5');
+        expect(find.text('Invalid'), findsOneWidget);
+      });
+    });
+
+    testWidgets('shows both errors when weight and reps exceed max', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _buildApp(
+          Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                await Navigator.of(context).push<ExerciseRecord>(
+                  MaterialPageRoute(
+                    builder: (_) => const AddEntryScreen(
+                      exerciseName: 'Test',
+                      assetPath: 'assets/icons/back_squat.svg',
+                      unit: WeightUnit.kg,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), '5000');
+      await tester.enterText(find.byType(TextFormField).at(1), '100');
+      await tester.tap(find.text('Calculate 1RM'));
+      await tester.pumpAndSettle();
+      expect(find.text('Max 1000 kg'), findsOneWidget);
+      expect(find.text('Max 50 reps'), findsOneWidget);
+    });
   });
 
   group('ExerciseDetailScreen', () {

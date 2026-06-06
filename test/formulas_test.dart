@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/utils/formulas.dart';
 
 void main() {
+  group('maxReps', () {
+    test('is 50', () {
+      expect(maxReps, 50);
+    });
+  });
+
   group('parseWeight', () {
     test('parses integer string', () {
       expect(parseWeight('100'), 100.0);

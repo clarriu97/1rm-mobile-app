@@ -147,50 +147,53 @@ void main() {
   });
 
   group('ExerciseDetailScreen', () {
-    testWidgets('does not overflow with extremely large latest record text (uses FittedBox)', (tester) async {
-      // Simulate a small screen width
-      tester.view.physicalSize = const Size(300, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets(
+      'does not overflow with extremely large latest record text (uses FittedBox)',
+      (tester) async {
+        // Simulate a small screen width
+        tester.view.physicalSize = const Size(300, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      final dummyExercise = const ExerciseTemplate(
-        name: 'Super Long Name Exercise',
-        category: ExerciseCategory.legs,
-        assetPath: 'assets/icons/back_squat.svg', // Just a placeholder
-      );
+        const dummyExercise = ExerciseTemplate(
+          name: 'Super Long Name Exercise',
+          category: ExerciseCategory.legs,
+          assetPath: 'assets/icons/back_squat.svg',
+        );
 
-      final massiveRecord = ExerciseRecord(
-        weight: 123456.7,
-        reps: 9999,
-        oneRM: 987654.3,
-        date: DateTime.now(),
-      );
+        final massiveRecord = ExerciseRecord(
+          weight: 123456.7,
+          reps: 9999,
+          oneRM: 987654.3,
+          date: DateTime.now(),
+        );
 
-      await tester.pumpWidget(
-        _buildApp(
-          ExerciseDetailScreen(
-            template: dummyExercise,
-            records: [massiveRecord],
+        await tester.pumpWidget(
+          _buildApp(
+            ExerciseDetailScreen(
+              template: dummyExercise,
+              records: [massiveRecord],
+            ),
           ),
-        ),
-      );
+        );
 
-      // Verify the widget tree doesn't throw a FlutterError (overflows throw in test mode)
-      await tester.pumpAndSettle();
+        // Verify the widget tree doesn't throw a FlutterError (overflows throw in test mode)
+        await tester.pumpAndSettle();
 
-      // Find the text we added FittedBox to.
-      final latestText = 'Latest: 123456.7 kg × 9999 reps → 987654.3 kg';
-      expect(find.text(latestText), findsOneWidget);
+        // Find the text we added FittedBox to.
+        const latestText = 'Latest: 123456.7 kg × 9999 reps → 987654.3 kg';
+        expect(find.text(latestText), findsOneWidget);
 
-      // Verify that a FittedBox wraps this specific Text
-      final fittedBoxFinder = find.ancestor(
-        of: find.text(latestText),
-        matching: find.byType(FittedBox),
-      );
-      
-      expect(fittedBoxFinder, findsWidgets);
-    });
+        // Verify that a FittedBox wraps this specific Text
+        final fittedBoxFinder = find.ancestor(
+          of: find.text(latestText),
+          matching: find.byType(FittedBox),
+        );
+
+        expect(fittedBoxFinder, findsWidgets);
+      },
+    );
   });
 
   group('ExerciseRecord serialization', () {

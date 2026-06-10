@@ -1,4 +1,4 @@
-package com.example.one_rm_mobile
+package dev.larri.onerm
 
 import io.flutter.embedding.android.FlutterActivity
 

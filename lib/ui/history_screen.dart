@@ -241,21 +241,19 @@ class _HistoryEntry extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Flexible(
-                              child: Text(
-                                '${formatWeight(record.weight, unit)} × ${record.reps} reps',
-                                style: text.titleMedium,
-                              ),
+                            Text(
+                              '${formatWeight(record.weight, unit)} × ${record.reps} reps',
+                              style: text.titleMedium,
                             ),
-                            if (isPR) ...[
-                              const SizedBox(width: AppSpacing.sm),
-                              const _PrBadge(),
-                            ],
+                            if (isPR) const _PrBadge(),
                           ],
                         ),
                         const SizedBox(height: 2),
@@ -267,7 +265,13 @@ class _HistoryEntry extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
-                  Text(dateLabel, style: text.bodySmall),
+                  Expanded(
+                    child: Text(
+                      dateLabel,
+                      style: text.bodySmall,
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
                   IconButton(
                     constraints: const BoxConstraints(
                       minWidth: kMinTapTarget,

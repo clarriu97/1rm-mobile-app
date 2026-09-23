@@ -24,7 +24,7 @@ E2E_TIMEOUT=${E2E_TIMEOUT:-600}
 # Once the app is built, flutter prints something at least every ~60 s (each
 # finished test on CI, progress locally). Silence this long means the tool is
 # stuck attaching to the app.
-STALL_TIMEOUT=${STALL_TIMEOUT:-180}
+STALL_TIMEOUT=${STALL_TIMEOUT:-120}
 
 step() { printf '\n\033[1;33m▶ %s\033[0m\n' "$*"; }
 
@@ -142,28 +142,13 @@ boot_ios() {
 
 e2e_ios() {
   local udid
-  udid=$(boot_ios "$1")
-  step "e2e on $(xcrun simctl list devices | grep "$udid" | sed 's/ (.*//;s/^ *//') ($1)"
+  # CI boots the simulator in an earlier step and passes its id along:
+  # listing simulators while one boots can take minutes.
+  udid=${SIM_UDID:-$(boot_ios "$1")}
+  step "e2e on the $1 iPhone simulator ($udid)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
   wait_for_log_stream "$udid"
-  if [[ -n "${CI:-}" ]]; then
-    first_launch "$udid"
-  fi
   run_e2e "$udid"
-}
-
-# On a fresh CI simulator, the first launch of the app is the one that hangs
-# while flutter attaches; the second never does. Build, install and open the
-# app once so the test run gets the second launch. The build also warms up
-# Xcode, so the test build afterwards only recompiles Dart.
-first_launch() {
-  local udid=$1
-  step "first launch of the app on the new simulator"
-  flutter build ios --simulator --debug
-  xcrun simctl install "$udid" build/ios/iphonesimulator/Runner.app
-  xcrun simctl launch "$udid" dev.larri.onerm >/dev/null || true
-  sleep 10
-  xcrun simctl terminate "$udid" dev.larri.onerm >/dev/null 2>&1 || true
 }
 
 # Flutter attaches to the app through the simulator's `log stream`, which on

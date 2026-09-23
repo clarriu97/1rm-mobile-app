@@ -39,7 +39,7 @@ jobs:
       # Boots in the background during pub get and the build. Not earlier:
       # booting slows restoring the 2 GB SDK cache from ~1.5 to ~5 min.
       - name: Start simulator
-        run: tool/ci.sh boot-ios ${{ matrix.size }}
+        run: echo "SIM_UDID=$(tool/ci.sh boot-ios ${{ matrix.size }})" >> "$GITHUB_ENV"
 
       - run: tool/ci.sh e2e-ios ${{ matrix.size }}
 

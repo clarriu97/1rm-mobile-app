@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/main.dart';
+import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/onboarding_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
@@ -161,10 +162,10 @@ void main() {
   });
 
   group('OneRMApp onboarding gate', () {
-    late StorageService storage;
+    late RecordsRepository records;
 
-    setUp(() async {
-      storage = await StorageService.getInstanceForTesting();
+    setUp(() {
+      records = RecordsRepository(StorageService.inMemoryForTesting());
     });
 
     testWidgets('shows onboarding when not completed', (tester) async {
@@ -173,8 +174,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -193,8 +193,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -213,8 +212,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -238,8 +236,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -263,8 +260,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -287,8 +283,7 @@ void main() {
 
       await tester.pumpWidget(
         OneRMApp(
-          initialRecords: const {},
-          storage: storage,
+          records: records,
           onboarding: onboarding,
           unitService: unitService,
         ),

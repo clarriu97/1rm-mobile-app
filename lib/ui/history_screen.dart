@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
+import '../repositories/records_repository.dart';
 import '../utils/formulas.dart';
 import 'app_theme.dart';
 
-class HistoryScreen extends StatefulWidget {
+class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
     super.key,
     required this.exerciseName,
@@ -17,23 +18,10 @@ class HistoryScreen extends StatefulWidget {
 
   final String exerciseName;
   final String assetPath;
-  final List<ExerciseRecord> records;
+  final RecordsRepository records;
   final WeightUnit unit;
 
-  @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
-}
-
-class _HistoryScreenState extends State<HistoryScreen> {
-  late List<ExerciseRecord> _records;
-
-  @override
-  void initState() {
-    super.initState();
-    _records = List.from(widget.records);
-  }
-
-  void _delete(ExerciseRecord record) async {
+  Future<void> _delete(BuildContext context, ExerciseRecord record) async {
     HapticFeedback.lightImpact();
 
     final confirmed = await showDialog<bool>(
@@ -46,8 +34,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
-          '${formatWeight(record.weight, widget.unit, 0)} × ${record.reps} reps\n'
-          '1RM: ${formatWeight(record.oneRM, widget.unit)}',
+          '${formatWeight(record.weight, unit, 0)} × ${record.reps} reps\n'
+          '1RM: ${formatWeight(record.oneRM, unit)}',
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
@@ -69,66 +57,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
 
-    if (confirmed == true) {
-      setState(() {
-        _records.remove(record);
-      });
-    }
-  }
-
-  void _back() {
-    Navigator.of(context).pop(_records);
+    if (confirmed == true) await records.delete(exerciseName, record);
   }
 
   @override
   Widget build(BuildContext context) {
-    final sorted = List<ExerciseRecord>.from(_records)
-      ..sort((a, b) => b.date.compareTo(a.date));
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        _back();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: _back,
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                widget.assetPath,
-                width: 20,
-                height: 20,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.accent,
-                  BlendMode.srcIn,
-                ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              assetPath,
+              width: 20,
+              height: 20,
+              colorFilter: const ColorFilter.mode(
+                AppColors.accent,
+                BlendMode.srcIn,
               ),
-              const SizedBox(width: 8),
-              Text('${widget.exerciseName} History'),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Text('$exerciseName History'),
+          ],
         ),
-        body: sorted.isEmpty
-            ? Center(
-                child: Text(
-                  'No records yet',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                itemCount: sorted.length,
-                itemBuilder: (context, index) {
-                  final record = sorted[index];
-                  return _buildEntry(context, record);
-                },
+      ),
+      body: ListenableBuilder(
+        listenable: records,
+        builder: (context, _) {
+          final sorted = List<ExerciseRecord>.from(
+            records.recordsFor(exerciseName),
+          )..sort((a, b) => b.date.compareTo(a.date));
+
+          if (sorted.isEmpty) {
+            return Center(
+              child: Text(
+                'No records yet',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            itemCount: sorted.length,
+            itemBuilder: (context, index) =>
+                _buildEntry(context, sorted[index]),
+          );
+        },
       ),
     );
   }
@@ -146,7 +120,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onLongPress: () => _delete(record),
+          onLongPress: () => _delete(context, record),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -156,7 +130,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${formatWeight(record.weight, widget.unit)} × ${record.reps} reps',
+                        '${formatWeight(record.weight, unit)} × ${record.reps} reps',
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w500,
@@ -165,7 +139,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '1RM: ${formatWeight(record.oneRM, widget.unit)}',
+                        '1RM: ${formatWeight(record.oneRM, unit)}',
                         style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 13,
@@ -190,7 +164,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.delete_outline_rounded, size: 20),
                     color: AppColors.textMuted,
-                    onPressed: () => _delete(record),
+                    onPressed: () => _delete(context, record),
                     tooltip: 'Delete',
                   ),
                 ),

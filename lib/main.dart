@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'models/exercise.dart';
+import 'repositories/records_repository.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
 import 'services/unit_service.dart';
@@ -9,15 +9,15 @@ import 'ui/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final storage = await StorageService.getInstance();
-  final initialRecords = await storage.load();
+  final records = await RecordsRepository.load(
+    await StorageService.getInstance(),
+  );
   final onboarding = await OnboardingService.getInstance();
   final unitService = await UnitService.getInstance();
 
   runApp(
     OneRMApp(
-      initialRecords: initialRecords,
-      storage: storage,
+      records: records,
       onboarding: onboarding,
       unitService: unitService,
     ),
@@ -27,14 +27,12 @@ void main() async {
 class OneRMApp extends StatelessWidget {
   const OneRMApp({
     super.key,
-    required this.initialRecords,
-    required this.storage,
+    required this.records,
     required this.onboarding,
     required this.unitService,
   });
 
-  final Map<String, List<ExerciseRecord>> initialRecords;
-  final StorageService storage;
+  final RecordsRepository records;
   final OnboardingService onboarding;
   final UnitService unitService;
 
@@ -46,8 +44,7 @@ class OneRMApp extends StatelessWidget {
       theme: AppTheme.dark,
       home: _AppGate(
         onboarding: onboarding,
-        initialRecords: initialRecords,
-        storage: storage,
+        records: records,
         unitService: unitService,
       ),
     );
@@ -57,14 +54,12 @@ class OneRMApp extends StatelessWidget {
 class _AppGate extends StatefulWidget {
   const _AppGate({
     required this.onboarding,
-    required this.initialRecords,
-    required this.storage,
+    required this.records,
     required this.unitService,
   });
 
   final OnboardingService onboarding;
-  final Map<String, List<ExerciseRecord>> initialRecords;
-  final StorageService storage;
+  final RecordsRepository records;
   final UnitService unitService;
 
   @override
@@ -100,10 +95,6 @@ class _AppGateState extends State<_AppGate> {
       return OnboardingScreen(onComplete: _completeOnboarding);
     }
 
-    return HomeScreen(
-      initialRecords: widget.initialRecords,
-      storage: widget.storage,
-      unitService: widget.unitService,
-    );
+    return HomeScreen(records: widget.records, unitService: widget.unitService);
   }
 }

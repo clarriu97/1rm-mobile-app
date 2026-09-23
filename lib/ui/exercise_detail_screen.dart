@@ -3,12 +3,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
+import '../repositories/records_repository.dart';
 import '../utils/formulas.dart';
 import 'add_entry_screen.dart';
 import 'app_theme.dart';
 import 'history_screen.dart';
 
-class ExerciseDetailScreen extends StatefulWidget {
+class ExerciseDetailScreen extends StatelessWidget {
   const ExerciseDetailScreen({
     super.key,
     required this.template,
@@ -17,153 +18,106 @@ class ExerciseDetailScreen extends StatefulWidget {
   });
 
   final ExerciseTemplate template;
-  final List<ExerciseRecord> records;
+  final RecordsRepository records;
   final WeightUnit unit;
 
-  @override
-  State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
-}
-
-class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
-  late List<ExerciseRecord> _records;
-
-  @override
-  void initState() {
-    super.initState();
-    _records = List.from(widget.records);
-  }
-
-  double? get _bestOneRM {
-    if (_records.isEmpty) return null;
-    return _records.map((r) => r.oneRM).reduce((a, b) => a > b ? a : b);
-  }
-
-  ExerciseRecord? get _latestEntry {
-    if (_records.isEmpty) return null;
-    return _records.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
-  }
-
-  Future<void> _addEntry() async {
+  Future<void> _addEntry(BuildContext context) async {
     final record = await Navigator.of(context).push<ExerciseRecord>(
       MaterialPageRoute<ExerciseRecord>(
         builder: (context) => AddEntryScreen(
-          exerciseName: widget.template.name,
-          assetPath: widget.template.assetPath,
-          unit: widget.unit,
+          exerciseName: template.name,
+          assetPath: template.assetPath,
+          unit: unit,
         ),
       ),
     );
 
-    if (record != null) {
-      setState(() {
-        _records.add(record);
-      });
-    }
+    if (record != null) await records.add(template.name, record);
   }
 
-  Future<void> _openHistory() async {
-    final updatedRecords = await Navigator.of(context)
-        .push<List<ExerciseRecord>>(
-          MaterialPageRoute<List<ExerciseRecord>>(
-            builder: (context) => HistoryScreen(
-              exerciseName: widget.template.name,
-              assetPath: widget.template.assetPath,
-              records: _records,
-              unit: widget.unit,
-            ),
-          ),
-        );
-
-    if (updatedRecords != null) {
-      setState(() {
-        _records = updatedRecords;
-      });
-    }
-  }
-
-  void _back() {
-    Navigator.of(context).pop(_records);
+  Future<void> _openHistory(BuildContext context) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => HistoryScreen(
+          exerciseName: template.name,
+          assetPath: template.assetPath,
+          records: records,
+          unit: unit,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final best = _bestOneRM;
-    final latest = _latestEntry;
+    return ListenableBuilder(
+      listenable: records,
+      builder: (context, _) {
+        final best = records.bestOneRMFor(template.name);
+        final latest = records.latestFor(template.name);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        _back();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: _back,
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                widget.template.assetPath,
-                width: 22,
-                height: 22,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.accent,
-                  BlendMode.srcIn,
+        return Scaffold(
+          appBar: AppBar(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  template.assetPath,
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.accent,
+                    BlendMode.srcIn,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  widget.template.name,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(template.name, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            actions: [
+              if (best != null)
+                IconButton(
+                  icon: const Icon(Icons.history_rounded),
+                  tooltip: 'History',
+                  onPressed: () => _openHistory(context),
+                ),
+            ],
+          ),
+          body: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    if (best != null) ...[
+                      const SizedBox(height: 8),
+                      _buildBestOneRM(context, best, latest),
+                      const SizedBox(height: 24),
+                      _buildPercentageTable(context, best),
+                      const SizedBox(height: 24),
+                    ] else ...[
+                      const SizedBox(height: 40),
+                      _buildEmptyState(context),
+                    ],
+                  ]),
                 ),
               ),
             ],
           ),
-          actions: [
-            if (_records.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.history_rounded),
-                tooltip: 'History',
-                onPressed: _openHistory,
-              ),
-          ],
-        ),
-        body: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  if (best != null) ...[
-                    const SizedBox(height: 8),
-                    _buildBestOneRM(context, best, latest),
-                    const SizedBox(height: 24),
-                    _buildPercentageTable(context, best),
-                    const SizedBox(height: 24),
-                  ] else ...[
-                    const SizedBox(height: 40),
-                    _buildEmptyState(context),
-                  ],
-                ]),
-              ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _addEntry(context),
+            backgroundColor: AppColors.cta,
+            foregroundColor: AppColors.background,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Entry'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _addEntry,
-          backgroundColor: AppColors.cta,
-          foregroundColor: AppColors.background,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Entry'),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -203,7 +157,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            formatWeight(best, widget.unit),
+            formatWeight(best, unit),
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               color: AppColors.cta,
               fontSize: 48,
@@ -232,7 +186,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Latest: ${formatWeight(latest.weight, widget.unit)} × ${latest.reps} reps → ${formatWeight(latest.oneRM, widget.unit)}',
+                        'Latest: ${formatWeight(latest.weight, unit)} × ${latest.reps} reps → ${formatWeight(latest.oneRM, unit)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -250,7 +204,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   Widget _buildPercentageTable(BuildContext context, double best) {
-    final table = generatePercentageTable(best, widget.unit);
+    final table = generatePercentageTable(best, unit);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,7 +283,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           ),
           Expanded(
             child: Text(
-              formatWeight(entry.weight, widget.unit),
+              formatWeight(entry.weight, unit),
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: isHundred ? AppColors.cta : AppColors.textPrimary,
@@ -351,7 +305,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              widget.template.assetPath,
+              template.assetPath,
               width: 64,
               height: 64,
               colorFilter: ColorFilter.mode(

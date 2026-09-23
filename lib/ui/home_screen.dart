@@ -7,7 +7,7 @@ import '../services/unit_service.dart';
 import '../utils/formulas.dart';
 import 'exercise_detail_screen.dart';
 import 'settings_screen.dart';
-import 'app_theme.dart';
+import 'theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -77,12 +77,17 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, _) => CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                80,
+              ),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
+                  mainAxisSpacing: AppSpacing.md,
+                  crossAxisSpacing: AppSpacing.md,
                   childAspectRatio: 0.85,
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
@@ -119,59 +124,53 @@ class _ExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData = bestOneRM != null;
+    final text = Theme.of(context).textTheme;
+    final radius = BorderRadius.circular(AppRadii.md);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: radius,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: hasData
-                ? AppColors.surface.withAlpha(120)
-                : AppColors.surface.withAlpha(60),
-            borderRadius: BorderRadius.circular(16),
-            border: hasData
-                ? Border.all(color: AppColors.cta.withAlpha(60))
-                : null,
+            color: hasData ? AppColors.surfaceRaised : AppColors.surface,
+            borderRadius: radius,
+            border: Border.all(
+              color: hasData ? AppColors.accent : AppColors.outline,
+            ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SvgPicture.asset(
                 template.assetPath,
-                width: 28,
-                height: 28,
+                width: 30,
+                height: 30,
                 colorFilter: ColorFilter.mode(
-                  hasData ? AppColors.cta : AppColors.accent,
+                  hasData ? AppColors.accent : AppColors.textSecondary,
                   BlendMode.srcIn,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 template.name,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  height: 1.2,
-                ),
+                style: text.titleSmall?.copyWith(fontSize: 13, height: 1.2),
               ),
               if (hasData) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     formatWeight(bestOneRM!, unit),
-                    style: const TextStyle(
-                      color: AppColors.cta,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+                    style: text.displaySmall?.copyWith(
+                      fontSize: 22,
+                      color: AppColors.accent,
                     ),
                   ),
                 ),

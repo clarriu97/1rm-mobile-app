@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../utils/formulas.dart';
-import 'app_theme.dart';
+import 'theme/app_theme.dart';
 
 class AddEntryScreen extends StatefulWidget {
   const AddEntryScreen({
@@ -59,6 +59,9 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final inputStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontSize: 22);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -77,13 +80,13 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                 BlendMode.srcIn,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Text(widget.exerciseName),
           ],
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Form(
           key: _formKey,
           child: Column(
@@ -93,7 +96,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                 'Enter your lift',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               Row(
                 children: [
                   Expanded(
@@ -107,7 +110,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                         prefixIcon: const Icon(Icons.monitor_weight_rounded),
                         suffixText: widget.unit.displayName,
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: inputStyle,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -123,7 +126,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: TextFormField(
                       controller: _repsController,
@@ -132,7 +135,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                         hintText: '5',
                         prefixIcon: Icon(Icons.repeat_rounded),
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: inputStyle,
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Required';
@@ -145,7 +148,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xxl),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

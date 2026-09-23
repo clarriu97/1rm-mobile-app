@@ -6,7 +6,7 @@ import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
 import '../utils/formulas.dart';
-import 'app_theme.dart';
+import 'theme/app_theme.dart';
 import 'save_error.dart';
 
 class HistoryScreen extends StatelessWidget {
@@ -27,31 +27,20 @@ class HistoryScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete entry?',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
+        title: const Text('Delete entry?'),
         content: Text(
           '${formatWeight(record.weight, unit, 0)} × ${record.reps} reps\n'
           '1RM: ${formatWeight(record.oneRM, unit)}',
-          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textMuted),
-            ),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppColors.error),
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -81,7 +70,7 @@ class HistoryScreen extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Text('${template.name} History'),
           ],
         ),
@@ -102,7 +91,12 @@ class HistoryScreen extends StatelessWidget {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
             itemCount: sorted.length,
             itemBuilder: (context, index) =>
                 _buildEntry(context, sorted[index]),
@@ -113,21 +107,26 @@ class HistoryScreen extends StatelessWidget {
   }
 
   Widget _buildEntry(BuildContext context, ExerciseRecord record) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      margin: const EdgeInsets.only(bottom: 8),
+    final text = Theme.of(context).textTheme;
+    final radius = BorderRadius.circular(AppRadii.md);
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(50),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: radius,
+        border: Border.all(color: AppColors.outline),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: radius,
           onLongPress: () => _delete(context, record),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.lg,
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -136,42 +135,27 @@ class HistoryScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${formatWeight(record.weight, unit)} × ${record.reps} reps',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
-                        ),
+                        style: text.titleMedium,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '1RM: ${formatWeight(record.oneRM, unit)}',
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 13,
-                        ),
+                        style: text.bodyMedium,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  _formatDate(record.date),
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
+                const SizedBox(width: AppSpacing.md),
+                Text(_formatDate(record.date), style: text.bodySmall),
+                IconButton(
+                  constraints: const BoxConstraints(
+                    minWidth: kMinTapTarget,
+                    minHeight: kMinTapTarget,
                   ),
-                ),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                    color: AppColors.textMuted,
-                    onPressed: () => _delete(context, record),
-                    tooltip: 'Delete',
-                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  color: AppColors.textMuted,
+                  onPressed: () => _delete(context, record),
+                  tooltip: 'Delete',
                 ),
               ],
             ),

@@ -32,18 +32,14 @@ class ExerciseDetailScreen extends StatelessWidget {
       ),
     );
 
-    if (record != null) await records.add(template.name, record);
+    if (record != null) await records.add(template.id, record);
   }
 
   Future<void> _openHistory(BuildContext context) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (context) => HistoryScreen(
-          exerciseName: template.name,
-          assetPath: template.assetPath,
-          records: records,
-          unit: unit,
-        ),
+        builder: (context) =>
+            HistoryScreen(template: template, records: records, unit: unit),
       ),
     );
   }
@@ -53,8 +49,8 @@ class ExerciseDetailScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: records,
       builder: (context, _) {
-        final best = records.bestOneRMFor(template.name);
-        final latest = records.latestFor(template.name);
+        final best = records.bestOneRMFor(template.id);
+        final latest = records.latestFor(template.id);
 
         return Scaffold(
           appBar: AppBar(

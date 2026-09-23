@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
@@ -26,10 +27,9 @@ void main() {
       await tester.pumpWidget(
         _buildApp(
           HistoryScreen(
-            exerciseName: 'Back Squat',
-            assetPath: 'assets/icons/back_squat.svg',
+            template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {
-              'Back Squat': records,
+              defaultExercises.first.id: records,
             }),
             unit: WeightUnit.kg,
           ),
@@ -53,10 +53,9 @@ void main() {
       await tester.pumpWidget(
         _buildApp(
           HistoryScreen(
-            exerciseName: 'Back Squat',
-            assetPath: 'assets/icons/back_squat.svg',
+            template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {
-              'Back Squat': records,
+              defaultExercises.first.id: records,
             }),
             unit: WeightUnit.lbs,
           ),
@@ -80,10 +79,9 @@ void main() {
       await tester.pumpWidget(
         _buildApp(
           HistoryScreen(
-            exerciseName: 'Back Squat',
-            assetPath: 'assets/icons/back_squat.svg',
+            template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {
-              'Back Squat': records,
+              defaultExercises.first.id: records,
             }),
             unit: WeightUnit.lbs,
           ),

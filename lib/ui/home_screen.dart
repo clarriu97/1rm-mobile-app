@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final template = defaultExercises[index];
                   return _ExerciseCard(
                     template: template,
-                    bestOneRM: widget.records.bestOneRMFor(template.name),
+                    bestOneRM: widget.records.bestOneRMFor(template.id),
                     unit: _unit,
                     onTap: () => _openDetail(template),
                   );

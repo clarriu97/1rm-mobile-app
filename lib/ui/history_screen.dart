@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../data/default_exercises.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
@@ -10,14 +11,12 @@ import 'app_theme.dart';
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
     super.key,
-    required this.exerciseName,
-    required this.assetPath,
+    required this.template,
     required this.records,
     required this.unit,
   });
 
-  final String exerciseName;
-  final String assetPath;
+  final ExerciseTemplate template;
   final RecordsRepository records;
   final WeightUnit unit;
 
@@ -57,7 +56,7 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
 
-    if (confirmed == true) await records.delete(exerciseName, record);
+    if (confirmed == true) await records.delete(template.id, record);
   }
 
   @override
@@ -68,7 +67,7 @@ class HistoryScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              assetPath,
+              template.assetPath,
               width: 20,
               height: 20,
               colorFilter: const ColorFilter.mode(
@@ -77,7 +76,7 @@ class HistoryScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text('$exerciseName History'),
+            Text('${template.name} History'),
           ],
         ),
       ),
@@ -85,7 +84,7 @@ class HistoryScreen extends StatelessWidget {
         listenable: records,
         builder: (context, _) {
           final sorted = List<ExerciseRecord>.from(
-            records.recordsFor(exerciseName),
+            records.recordsFor(template.id),
           )..sort((a, b) => b.date.compareTo(a.date));
 
           if (sorted.isEmpty) {

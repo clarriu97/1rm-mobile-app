@@ -251,6 +251,86 @@ void main() {
       expect(repo.recordsFor('Deadlift'), isEmpty);
     });
   });
+
+  group('RecordsRepository — personal records', () {
+    test('add reports a PR only when the previous best is beaten', () async {
+      final repo = RecordsRepository(StorageService.inMemoryForTesting());
+
+      expect(
+        await repo.add('Deadlift', _record(oneRM: 200)),
+        isFalse,
+        reason: 'first entry',
+      );
+      expect(
+        await repo.add('Deadlift', _record(oneRM: 190)),
+        isFalse,
+        reason: 'lower',
+      );
+      expect(
+        await repo.add('Deadlift', _record(oneRM: 200)),
+        isFalse,
+        reason: 'tie',
+      );
+      expect(
+        await repo.add('Deadlift', _record(oneRM: 200.5)),
+        isTrue,
+        reason: 'higher',
+      );
+    });
+
+    test(
+      'a PR is judged against the best that remains after deletes',
+      () async {
+        final best = _record(oneRM: 220);
+        final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+          'Deadlift': [_record(oneRM: 200), best],
+        });
+
+        await repo.delete('Deadlift', best);
+
+        expect(await repo.add('Deadlift', _record(oneRM: 210)), isTrue);
+      },
+    );
+
+    test('PRs are tracked per exercise', () async {
+      final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+        'Deadlift': [_record(oneRM: 250)],
+      });
+
+      expect(await repo.add('Snatch', _record(oneRM: 80)), isFalse);
+      expect(await repo.add('Snatch', _record(oneRM: 90)), isTrue);
+    });
+
+    test('personalRecordsFor marks chronological improvements only', () {
+      final first = _record(oneRM: 100, date: DateTime(2026, 1, 10));
+      final pr1 = _record(oneRM: 110, date: DateTime(2026, 2, 10));
+      final tie = _record(oneRM: 110, date: DateTime(2026, 3, 10));
+      final lower = _record(oneRM: 105, date: DateTime(2026, 4, 10));
+      final pr2 = _record(oneRM: 120, date: DateTime(2026, 5, 10));
+      final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+        // Deliberately out of order.
+        'Squat': [pr2, lower, first, tie, pr1],
+      });
+
+      final prs = repo.personalRecordsFor('Squat');
+
+      expect(prs, hasLength(2));
+      expect(prs.contains(pr1), isTrue);
+      expect(prs.contains(pr2), isTrue);
+    });
+
+    test(
+      'personalRecordsFor is empty for unknown or single-entry exercises',
+      () {
+        final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+          'Squat': [_record()],
+        });
+
+        expect(repo.personalRecordsFor('Squat'), isEmpty);
+        expect(repo.personalRecordsFor('Unknown'), isEmpty);
+      },
+    );
+  });
 }
 
 class _FlakyStorage implements StorageService {

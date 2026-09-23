@@ -37,11 +37,34 @@ class RecordsRepository extends ChangeNotifier {
     return records.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
   }
 
-  Future<void> add(String exercise, ExerciseRecord record) {
+  /// Adds [record] and completes with `true` when it is a new personal
+  /// record: strictly better than the previous best. The first entry of an
+  /// exercise is not a PR — there is nothing to beat yet.
+  Future<bool> add(String exercise, ExerciseRecord record) async {
+    final previousBest = bestOneRMFor(exercise);
     (_records[exercise] ??= []).add(record);
     notifyListeners();
-    return _storage.save(_records);
+    await _storage.save(_records);
+    return previousBest != null && record.oneRM > previousBest + _epsilon;
   }
+
+  /// Entries that beat every earlier entry (by date) when they were logged.
+  /// Ties don't count and neither does the very first entry.
+  Set<ExerciseRecord> personalRecordsFor(String exercise) {
+    final chronological = List.of(
+      _records[exercise] ?? const <ExerciseRecord>[],
+    )..sort((a, b) => a.date.compareTo(b.date));
+    final prs = Set<ExerciseRecord>.identity();
+    double? best;
+    for (final record in chronological) {
+      if (best != null && record.oneRM > best + _epsilon) prs.add(record);
+      if (best == null || record.oneRM > best) best = record.oneRM;
+    }
+    return prs;
+  }
+
+  /// Tolerance for float noise from unit conversions.
+  static const _epsilon = 1e-9;
 
   Future<void> delete(String exercise, ExerciseRecord record) async {
     final records = _records[exercise];

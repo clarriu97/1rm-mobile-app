@@ -82,6 +82,8 @@ class HistoryScreen extends StatelessWidget {
             records.recordsFor(template.id),
           )..sort((a, b) => b.date.compareTo(a.date));
 
+          final prs = records.personalRecordsFor(template.id);
+
           if (sorted.isEmpty) {
             return Center(
               child: Text(
@@ -98,15 +100,18 @@ class HistoryScreen extends StatelessWidget {
               AppSpacing.lg,
             ),
             itemCount: sorted.length,
-            itemBuilder: (context, index) =>
-                _buildEntry(context, sorted[index]),
+            itemBuilder: (context, index) => _buildEntry(
+              context,
+              sorted[index],
+              prs.contains(sorted[index]),
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildEntry(BuildContext context, ExerciseRecord record) {
+  Widget _buildEntry(BuildContext context, ExerciseRecord record, bool isPR) {
     final text = Theme.of(context).textTheme;
     final radius = BorderRadius.circular(AppRadii.md);
     return Container(
@@ -133,9 +138,19 @@ class HistoryScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${formatWeight(record.weight, unit)} × ${record.reps} reps',
-                        style: text.titleMedium,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${formatWeight(record.weight, unit)} × ${record.reps} reps',
+                              style: text.titleMedium,
+                            ),
+                          ),
+                          if (isPR) ...[
+                            const SizedBox(width: AppSpacing.sm),
+                            const _PrBadge(),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -172,5 +187,29 @@ class HistoryScreen extends StatelessWidget {
     if (diff.inDays == 1) return 'Yesterday';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${date.month}/${date.day}';
+  }
+}
+
+class _PrBadge extends StatelessWidget {
+  const _PrBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('pr-badge'),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+      ),
+      child: Text(
+        'PR',
+        semanticsLabel: 'Personal record',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: AppColors.onAccent,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

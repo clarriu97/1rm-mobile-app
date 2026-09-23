@@ -21,6 +21,11 @@ E2E=integration_test/app_test.dart
 # 3 min locally; past this, it is hung.
 E2E_TIMEOUT=${E2E_TIMEOUT:-600}
 
+# Once the app is built, flutter prints something at least every ~60 s (each
+# finished test on CI, progress locally). Silence this long means the tool is
+# stuck attaching to the app.
+STALL_TIMEOUT=${STALL_TIMEOUT:-180}
+
 step() { printf '\n\033[1;33m▶ %s\033[0m\n' "$*"; }
 
 lint() {
@@ -50,27 +55,49 @@ goldens() {
 }
 
 # Runs the e2e flows on a device. Simulators and emulators occasionally hang
-# while installing or attaching to the app; such a run is killed after
-# E2E_TIMEOUT seconds and retried once. A failing test is never retried.
+# while installing or attaching to the app ("Error waiting for a debug
+# connection"); such a run is killed as soon as it is detected (silent after
+# the build, or past E2E_TIMEOUT) and retried once. A failing test is never
+# retried.
 run_e2e() {
-  local device=$1 attempt status marker pid watchdog
+  local device=$1 attempt status log pid tailer hung built size last_size last_change start
   for attempt in 1 2; do
-    marker=$(mktemp -u)
-    flutter test "$E2E" -d "$device" &
+    log=$(mktemp)
+    flutter test "$E2E" -d "$device" >"$log" 2>&1 &
     pid=$!
-    (sleep "$E2E_TIMEOUT" && touch "$marker" && pkill -TERM -P "$pid"; kill -TERM "$pid") >/dev/null 2>&1 &
-    watchdog=$!
+    tail -n +1 -f "$log" &
+    tailer=$!
+    hung="" built="" last_size=0 last_change=$SECONDS start=$SECONDS
+    while kill -0 "$pid" 2>/dev/null; do
+      sleep 5
+      size=$(wc -c <"$log")
+      if ((size != last_size)); then
+        last_size=$size last_change=$SECONDS
+      fi
+      if [[ -z "$built" ]] && grep -qE "Xcode build done|Built build/" "$log"; then
+        built=1 last_change=$SECONDS
+      fi
+      if [[ -n "$built" ]] && ((SECONDS - last_change > STALL_TIMEOUT)); then
+        hung="no output for ${STALL_TIMEOUT}s after the build"
+      elif ((SECONDS - start > E2E_TIMEOUT)); then
+        hung="still running after ${E2E_TIMEOUT}s"
+      fi
+      if [[ -n "$hung" ]]; then
+        pkill -TERM -P "$pid" 2>/dev/null || true
+        kill -TERM "$pid" 2>/dev/null || true
+        break
+      fi
+    done
     status=0
     wait "$pid" || status=$?
-    # Stop the watchdog and its sleep, which would otherwise outlive us.
-    pkill -P "$watchdog" 2>/dev/null || true
-    kill "$watchdog" 2>/dev/null || true
-    wait "$watchdog" 2>/dev/null || true
-    if [[ ! -f "$marker" ]]; then
+    sleep 1
+    kill "$tailer" 2>/dev/null || true
+    wait "$tailer" 2>/dev/null || true
+    rm -f "$log"
+    if [[ -z "$hung" ]]; then
       return "$status"
     fi
-    rm -f "$marker"
-    echo "⚠︎ e2e hung for ${E2E_TIMEOUT}s on attempt $attempt; killed." >&2
+    echo "⚠︎ e2e hung ($hung) on attempt $attempt; killed." >&2
   done
   return 1
 }
@@ -108,11 +135,27 @@ e2e_ios() {
   udid=$(boot_ios "$1")
   step "e2e on $(xcrun simctl list devices | grep "$udid" | sed 's/ (.*//;s/^ *//') ($1)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
-  # Flutter attaches to the app through the simulator's log stream, which on
-  # a freshly booted CI simulator can fail on first use ("The log reader
-  # failed unexpectedly"); touch it once before the real run.
-  xcrun simctl spawn "$udid" log show --last 1m --style compact >/dev/null 2>&1 || true
+  wait_for_log_stream "$udid"
   run_e2e "$udid"
+}
+
+# Flutter attaches to the app through the simulator's `log stream`, which on
+# a freshly booted CI simulator can die right away ("The log reader failed
+# unexpectedly"). Wait until a log stream stays up.
+wait_for_log_stream() {
+  local udid=$1 pid _
+  for _ in $(seq 12); do
+    xcrun simctl spawn "$udid" log stream --style compact >/dev/null 2>&1 &
+    pid=$!
+    sleep 5
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      return 0
+    fi
+    wait "$pid" 2>/dev/null || true
+  done
+  echo "⚠︎ the simulator's log stream never stayed up; trying anyway." >&2
 }
 
 android_device() {

@@ -50,7 +50,15 @@ jobs:
             ~/Library/Caches/CocoaPods
           key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
 
-      - run: flutter pub get
+      # Compiled Xcode products, the Swift module cache and Flutter's build
+      # cache: the build only redoes what changed since the cached one.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            build/ios
+            .dart_tool/flutter_build
+          key: ios-build-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock', 'ios/Runner.xcodeproj/project.pbxproj') }}
 
       - run: tool/ci.sh e2e-ios ${{ matrix.size }}
 
@@ -95,7 +103,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - run: flutter pub get
+      # Gradle's build cache and Flutter's: the build only redoes what changed.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/build-cache-1
+            .dart_tool/flutter_build
+          key: android-build-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.lock', 'android/**/*.gradle*', 'android/gradle.properties') }}
 
       # A booted-emulator snapshot, created once per configuration: later runs
       # resume it in seconds instead of cold-booting.

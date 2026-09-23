@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:one_rm_mobile/main.dart';
+import 'package:one_rm_mobile/repositories/exercise_library.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
+import 'package:one_rm_mobile/services/exercise_library_service.dart';
 import 'package:one_rm_mobile/services/onboarding_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
@@ -29,6 +31,7 @@ void main() {
     await tester.pumpWidget(
       OneRMApp(
         records: records,
+        library: ExerciseLibrary(ExerciseLibraryService.forTesting()),
         onboarding: OnboardingService.forTesting(),
         unitService: UnitService.forTesting(),
       ),

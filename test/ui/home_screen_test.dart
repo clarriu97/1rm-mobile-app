@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
+import 'package:one_rm_mobile/repositories/exercise_library.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
@@ -26,11 +27,13 @@ Future<void> _pumpHome(
   WidgetTester tester,
   Map<String, List<ExerciseRecord>> data, {
   WeightUnit unit = WeightUnit.kg,
+  ExerciseLibrary? library,
 }) async {
   await tester.pumpWidget(
     buildTestApp(
       HomeScreen(
         records: RecordsRepository(StorageService.inMemoryForTesting(), data),
+        library: library ?? testLibrary(),
         unitService: UnitService.forTesting(unit: unit),
       ),
     ),
@@ -144,6 +147,7 @@ void main() {
               records: RecordsRepository(StorageService.inMemoryForTesting(), {
                 _squat.id: [_record(987.5), _record(999.9)],
               }),
+              library: testLibrary(),
               unitService: UnitService.forTesting(unit: WeightUnit.lbs),
             ),
           ),

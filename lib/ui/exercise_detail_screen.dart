@@ -19,11 +19,13 @@ class ExerciseDetailScreen extends StatelessWidget {
     required this.template,
     required this.records,
     required this.unit,
+    this.clock = DateTime.now,
   });
 
   final ExerciseTemplate template;
   final RecordsRepository records;
   final WeightUnit unit;
+  final DateTime Function() clock;
 
   Future<void> _addEntry(BuildContext context) async {
     final record = await Navigator.of(context).push<ExerciseRecord>(
@@ -32,6 +34,7 @@ class ExerciseDetailScreen extends StatelessWidget {
           exerciseName: template.name,
           assetPath: template.assetPath,
           unit: unit,
+          clock: clock,
         ),
       ),
     );
@@ -59,8 +62,12 @@ class ExerciseDetailScreen extends StatelessWidget {
   Future<void> _openHistory(BuildContext context) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (context) =>
-            HistoryScreen(template: template, records: records, unit: unit),
+        builder: (context) => HistoryScreen(
+          template: template,
+          records: records,
+          unit: unit,
+          clock: clock,
+        ),
       ),
     );
   }
@@ -123,7 +130,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                           template.id,
                         ),
                         unit: unit,
-                        now: DateTime.now(),
+                        now: clock(),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
                       _WorkingWeights(

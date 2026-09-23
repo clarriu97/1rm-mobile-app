@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # Pinned so golden screenshots render identically on every run. Bump it
+  # together with the local SDK and regenerate the goldens.
+  FLUTTER_VERSION: "3.47.5"
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -19,7 +24,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - run: flutter pub get
@@ -40,9 +45,32 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - run: flutter pub get
 
-      - run: flutter test
+      - run: flutter test --exclude-tags golden
+
+  goldens:
+    # Goldens are generated on macOS; comparing on the same OS keeps text
+    # antialiasing identical.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter test --tags golden
+
+      - name: Upload golden diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/goldens/failures/

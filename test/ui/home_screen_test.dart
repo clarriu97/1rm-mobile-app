@@ -163,4 +163,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  testWidgets('relative dates count from the injected clock', (tester) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        HomeScreen(
+          records: RecordsRepository(StorageService.inMemoryForTesting(), {
+            _squat.id: [_record(150, date: DateTime(2026, 3, 9, 22))],
+          }),
+          library: testLibrary(),
+          unitService: UnitService.forTesting(),
+          clock: () => DateTime(2026, 3, 10, 7),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Yesterday'), findsOneWidget);
+  });
 }

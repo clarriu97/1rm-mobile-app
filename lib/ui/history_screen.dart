@@ -265,7 +265,7 @@ class _HistoryEntry extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
-                  Flexible(
+                  Expanded(
                     child: Text(
                       dateLabel,
                       style: text.bodySmall,

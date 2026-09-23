@@ -17,9 +17,10 @@ cd "$(dirname "$0")/.."
 
 E2E=integration_test/app_test.dart
 
-# A healthy e2e run (build + install + flows) takes under 7 min on CI and
-# 3 min locally; past this, it is hung.
-E2E_TIMEOUT=${E2E_TIMEOUT:-600}
+# Safety net for a run stuck before the build finishes. A healthy run takes
+# 3 min locally and up to ~12 min on a slow CI runner; hangs after the build
+# are caught much sooner by STALL_TIMEOUT.
+E2E_TIMEOUT=${E2E_TIMEOUT:-1500}
 
 # Once the app is built, flutter prints something at least every ~60 s (each
 # finished test on CI, progress locally). Silence this long means the tool is
@@ -146,8 +147,13 @@ e2e_ios() {
   # listing simulators while one boots can take minutes.
   udid=${SIM_UDID:-$(boot_ios "$1")}
   step "e2e on the $1 iPhone simulator ($udid)"
+  # Build while the simulator finishes booting (minutes on CI); the test run
+  # then only rebuilds incrementally.
+  flutter build ios --simulator --debug -t "$E2E" &
+  local build=$!
   xcrun simctl bootstatus "$udid" -b >/dev/null
   wait_for_log_stream "$udid"
+  wait "$build"
   run_e2e "$udid"
 }
 

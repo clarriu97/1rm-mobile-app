@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import 'theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, required this.onComplete});
@@ -66,7 +66,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxl,
+              ),
               child: Column(
                 children: [
                   Row(
@@ -76,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       (index) => _PageIndicator(active: index == _currentPage),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -90,14 +95,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   if (_currentPage < _pages.length - 1) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     TextButton(
                       key: const Key('onboarding-skip-button'),
                       onPressed: widget.onComplete,
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(color: AppColors.textMuted),
-                      ),
+                      child: const Text('Skip'),
                     ),
                   ],
                 ],
@@ -123,40 +125,21 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.surface.withAlpha(80),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 64, color: AppColors.cta),
+          KnurlPanel(
+            borderColor: AppColors.accent,
+            padding: const EdgeInsets.all(AppSpacing.xxl),
+            child: Icon(icon, size: 64, color: AppColors.accent),
           ),
           const SizedBox(height: 40),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
+          Text(title, textAlign: TextAlign.center, style: text.displayMedium),
+          const SizedBox(height: AppSpacing.lg),
+          Text(description, textAlign: TextAlign.center, style: text.bodyLarge),
         ],
       ),
     );
@@ -173,12 +156,12 @@ class _PageIndicator extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: active ? 24 : 8,
-      height: 8,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      width: active ? 28 : 8,
+      height: 4,
       decoration: BoxDecoration(
-        color: active ? AppColors.cta : AppColors.surface.withAlpha(120),
-        borderRadius: BorderRadius.circular(4),
+        color: active ? AppColors.accent : AppColors.outline,
+        borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
     );
   }

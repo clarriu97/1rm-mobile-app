@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/weight_unit.dart';
 import '../services/unit_service.dart';
-import 'app_theme.dart';
+import 'theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -37,14 +37,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           Text('Units', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.surface.withAlpha(60),
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: AppColors.outline),
             ),
             child: Column(
               children: [
@@ -53,10 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   isSelected: _unit == WeightUnit.kg,
                   onTap: () => _onUnitChanged(WeightUnit.kg),
                 ),
-                Container(
-                  height: 0.5,
-                  color: AppColors.textMuted.withAlpha(20),
-                ),
+                Container(height: 0.5, color: AppColors.outline),
                 _UnitTile(
                   unit: WeightUnit.lbs,
                   isSelected: _unit == WeightUnit.lbs,
@@ -88,25 +86,24 @@ class _UnitTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   unit.displayName,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
               if (isSelected)
                 const Icon(
                   Icons.check_circle_rounded,
-                  color: AppColors.cta,
+                  color: AppColors.accent,
                   size: 24,
                 ),
             ],

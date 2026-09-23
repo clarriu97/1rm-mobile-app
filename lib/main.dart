@@ -3,12 +3,14 @@ import 'repositories/records_repository.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
 import 'services/unit_service.dart';
-import 'ui/app_theme.dart';
+import 'ui/theme/app_theme.dart';
+import 'ui/theme/font_licenses.dart';
 import 'ui/home_screen.dart';
 import 'ui/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerFontLicenses();
   final records = await RecordsRepository.load(
     await StorageService.getInstance(),
   );

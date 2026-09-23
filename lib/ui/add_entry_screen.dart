@@ -317,13 +317,23 @@ class _DateField extends StatelessWidget {
                   color: AppColors.textMuted,
                 ),
                 const SizedBox(width: AppSpacing.md),
-                Text(label, style: text.titleMedium),
-                const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: Text(
-                    localizations.formatMediumDate(date),
-                    style: text.bodyMedium,
-                    overflow: TextOverflow.ellipsis,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
+                    // Wraps the date under the label when both don't fit.
+                    child: Wrap(
+                      spacing: AppSpacing.sm,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(label, style: text.titleMedium),
+                        Text(
+                          localizations.formatMediumDate(date),
+                          style: text.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const Icon(

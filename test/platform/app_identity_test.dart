@@ -14,6 +14,22 @@ int _pngColorType(String path) => File(path).readAsBytesSync()[25];
 void main() {
   final background = _hex(AppColors.background.toARGB32());
 
+  group('iOS devices', () {
+    test('the app targets iPhone only', () {
+      final families = RegExp(
+        r'TARGETED_DEVICE_FAMILY = ([^;]+);',
+      ).allMatches(_read('ios/Runner.xcodeproj/project.pbxproj'));
+      expect(families, isNotEmpty);
+      for (final family in families) {
+        expect(family.group(1), '1');
+      }
+    });
+
+    test('Info.plist declares no iPad-specific orientations', () {
+      expect(_read('ios/Runner/Info.plist'), isNot(contains('~ipad')));
+    });
+  });
+
   group('display name', () {
     test('iOS shows "1RM" under the icon', () {
       expect(

@@ -147,8 +147,8 @@ class _ExerciseCard extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 template.assetPath,
-                width: 30,
-                height: 30,
+                width: 40,
+                height: 40,
                 colorFilter: ColorFilter.mode(
                   hasData ? AppColors.accent : AppColors.textSecondary,
                   BlendMode.srcIn,

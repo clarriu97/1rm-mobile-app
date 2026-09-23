@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="currentColor" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
   <g opacity="0.55" fill="none">
-    <path d="M23 21L15 33L28 34L24 44L31 44"/>
-    <path d="M23 21L25 11"/>
+    <path d="M32 18L14 22L20 33L16 44L23 44"/>
+    <path d="M32 18L25 23L25 29"/>
     <path d="M5 46H43" stroke-width="2.5"/>
   </g>
   <g opacity="0.55" fill="currentColor">
-    <circle cx="29" cy="18" r="3.2" stroke="none"/>
+    <circle cx="37" cy="14" r="3.5" stroke="none"/>
   </g>
   <g stroke="none">
-    <path fill-rule="evenodd" d="M20 8a6 6 0 1 0 12 0a6 6 0 1 0 -12 0ZM24 8a2 2 0 1 1 4 0a2 2 0 1 1 -4 0Z"/>
+    <path fill-rule="evenodd" d="M18 33a7 7 0 1 0 14 0a7 7 0 1 0 -14 0ZM23 33a2 2 0 1 1 4 0a2 2 0 1 1 -4 0Z"/>
   </g>
 </svg>

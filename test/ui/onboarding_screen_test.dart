@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/ui/onboarding_screen.dart';
 
@@ -135,12 +136,26 @@ void main() {
       expect(find.byType(AnimatedContainer), findsNWidgets(3));
     });
 
-    testWidgets('renders fitness_center icon on first page', (tester) async {
+    testWidgets('each page shows its own illustration', (tester) async {
+      Finder illustration(String name) => find.byWidgetPredicate(
+        (w) =>
+            w is SvgPicture &&
+            (w.bytesLoader as SvgAssetLoader).assetName ==
+                'assets/illustrations/$name.svg',
+      );
+
       await tester.pumpWidget(
         buildTestApp(OnboardingScreen(onComplete: () {})),
       );
+      expect(illustration('onboarding_max'), findsOneWidget);
 
-      expect(find.byIcon(Icons.fitness_center_rounded), findsOneWidget);
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
+      expect(illustration('onboarding_log'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
+      expect(illustration('onboarding_table'), findsOneWidget);
     });
   });
 }

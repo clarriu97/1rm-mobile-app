@@ -52,3 +52,21 @@ String formatWeight(double weightInKg, WeightUnit unit, [int decimals = 1]) {
       : weightInKg;
   return '${displayValue.toStringAsFixed(decimals)} ${unit.displayName}';
 }
+
+/// Above this many reps the Epley estimate gets noticeably less reliable.
+const int accurateRepsLimit = 10;
+
+/// Estimated 1RM in kg from raw form input, or null if either field is not
+/// a valid value (same rules as the entry form's validators).
+double? estimateOneRMFromInput(
+  String weightText,
+  String repsText,
+  WeightUnit unit,
+) {
+  final weight = tryParseWeight(weightText.trim());
+  final reps = int.tryParse(repsText.trim());
+  if (weight == null || weight <= 0 || weight > unit.maxWeight) return null;
+  if (reps == null || reps <= 0 || reps > maxReps) return null;
+  final weightInKg = unit == WeightUnit.lbs ? lbsToKg(weight) : weight;
+  return calculateOneRM(weightInKg, reps);
+}

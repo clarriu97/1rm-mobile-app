@@ -29,7 +29,7 @@ Future<void> _logEntry(WidgetTester tester, String weight, String reps) async {
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextFormField).at(0), weight);
   await tester.enterText(find.byType(TextFormField).at(1), reps);
-  await tester.tap(find.text('Calculate 1RM'));
+  await tester.tap(find.text('Save'));
   await tester.pumpAndSettle();
 }
 

@@ -146,7 +146,24 @@ e2e_ios() {
   step "e2e on $(xcrun simctl list devices | grep "$udid" | sed 's/ (.*//;s/^ *//') ($1)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
   wait_for_log_stream "$udid"
+  if [[ -n "${CI:-}" ]]; then
+    first_launch "$udid"
+  fi
   run_e2e "$udid"
+}
+
+# On a fresh CI simulator, the first launch of the app is the one that hangs
+# while flutter attaches; the second never does. Build, install and open the
+# app once so the test run gets the second launch. The build also warms up
+# Xcode, so the test build afterwards only recompiles Dart.
+first_launch() {
+  local udid=$1
+  step "first launch of the app on the new simulator"
+  flutter build ios --simulator --debug
+  xcrun simctl install "$udid" build/ios/iphonesimulator/Runner.app
+  xcrun simctl launch "$udid" dev.larri.onerm >/dev/null || true
+  sleep 10
+  xcrun simctl terminate "$udid" dev.larri.onerm >/dev/null 2>&1 || true
 }
 
 # Flutter attaches to the app through the simulator's `log stream`, which on

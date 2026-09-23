@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/main.dart';
+import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/onboarding_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
@@ -148,6 +149,56 @@ void main() {
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byType(OnboardingScreen), findsNothing);
+    });
+  });
+
+  group('OneRMApp — unit from onboarding', () {
+    Future<UnitService> finishOnboarding(
+      WidgetTester tester, {
+      String? countryCode,
+      bool pickLbs = false,
+    }) async {
+      final unitService = UnitService.forTesting();
+      await tester.pumpWidget(
+        OneRMApp(
+          records: RecordsRepository(StorageService.inMemoryForTesting()),
+          library: testLibrary(),
+          onboarding: OnboardingService.forTesting(),
+          unitService: unitService,
+          countryCode: countryCode,
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byKey(const Key('onboarding-next-button')));
+        await tester.pumpAndSettle();
+      }
+      if (pickLbs) {
+        await tester.tap(find.byKey(const Key('unit-option-lbs')));
+        await tester.pump();
+      }
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
+      return unitService;
+    }
+
+    testWidgets('US devices default to lbs', (tester) async {
+      final units = await finishOnboarding(tester, countryCode: 'US');
+      expect(await units.getUnit(), WeightUnit.lbs);
+    });
+
+    testWidgets('other regions default to kg', (tester) async {
+      final units = await finishOnboarding(tester, countryCode: 'ES');
+      expect(await units.getUnit(), WeightUnit.kg);
+    });
+
+    testWidgets('the unit picked during onboarding is saved', (tester) async {
+      final units = await finishOnboarding(
+        tester,
+        countryCode: 'ES',
+        pickLbs: true,
+      );
+      expect(await units.getUnit(), WeightUnit.lbs);
     });
   });
 }

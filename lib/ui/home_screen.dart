@@ -4,10 +4,12 @@ import '../data/default_exercises.dart';
 import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
 import '../services/unit_service.dart';
+import '../utils/dates.dart';
 import '../utils/formulas.dart';
 import 'exercise_detail_screen.dart';
 import 'settings_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/sparkline.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -74,31 +76,65 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: ListenableBuilder(
         listenable: widget.records,
-        builder: (context, _) => CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                80,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  childAspectRatio: 0.85,
-                ),
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final template = defaultExercises[index];
-                  return _ExerciseCard(
+        builder: (context, _) {
+          final now = DateTime.now();
+          final hasAnyRecord = defaultExercises.any(
+            (e) => widget.records.latestFor(e.id) != null,
+          );
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.xxl,
+            ),
+            children: [
+              if (!hasAnyRecord) const _FirstLiftHint(),
+              for (final template in defaultExercises)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _ExerciseCard(
                     template: template,
-                    bestOneRM: widget.records.bestOneRMFor(template.id),
+                    records: widget.records,
                     unit: _unit,
+                    now: now,
                     onTap: () => _openDetail(template),
-                  );
-                }, childCount: defaultExercises.length),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FirstLiftHint extends StatelessWidget {
+  const _FirstLiftHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: KnurlPanel(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const HazardStripe(),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('LOG YOUR FIRST LIFT', style: text.labelMedium),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Pick an exercise and enter a set you did — any weight, any reps.',
+                    style: text.bodyMedium,
+                  ),
+                ],
               ),
             ),
           ],
@@ -111,71 +147,116 @@ class _HomeScreenState extends State<HomeScreen> {
 class _ExerciseCard extends StatelessWidget {
   const _ExerciseCard({
     required this.template,
-    required this.bestOneRM,
+    required this.records,
     required this.unit,
+    required this.now,
     required this.onTap,
   });
 
   final ExerciseTemplate template;
-  final double? bestOneRM;
+  final RecordsRepository records;
   final WeightUnit unit;
+  final DateTime now;
   final VoidCallback onTap;
+
+  static const _trendLength = 12;
 
   @override
   Widget build(BuildContext context) {
-    final hasData = bestOneRM != null;
     final text = Theme.of(context).textTheme;
+    final best = records.bestOneRMFor(template.id);
+    final latest = records.latestFor(template.id);
+    final hasData = best != null;
+    final trend = (List.of(
+      records.recordsFor(template.id),
+    )..sort((a, b) => a.date.compareTo(b.date))).map((r) => r.oneRM).toList();
     final radius = BorderRadius.circular(AppRadii.md);
+
     return Material(
-      color: Colors.transparent,
+      color: hasData ? AppColors.surfaceRaised : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: hasData ? AppColors.accent : AppColors.outline),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: radius,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: hasData ? AppColors.surfaceRaised : AppColors.surface,
-            borderRadius: radius,
-            border: Border.all(
-              color: hasData ? AppColors.accent : AppColors.outline,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 84),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                template.assetPath,
-                width: 40,
-                height: 40,
-                colorFilter: ColorFilter.mode(
-                  hasData ? AppColors.accent : AppColors.textSecondary,
-                  BlendMode.srcIn,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                template.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: text.titleSmall?.copyWith(fontSize: 13, height: 1.2),
-              ),
-              if (hasData) ...[
-                const SizedBox(height: AppSpacing.xs),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    formatWeight(bestOneRM!, unit),
-                    style: text.displaySmall?.copyWith(
-                      fontSize: 22,
-                      color: AppColors.accent,
-                    ),
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  template.assetPath,
+                  width: 44,
+                  height: 44,
+                  colorFilter: ColorFilter.mode(
+                    hasData ? AppColors.accent : AppColors.textSecondary,
+                    BlendMode.srcIn,
                   ),
                 ),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        template.name,
+                        style: text.titleMedium,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        latest == null
+                            ? 'No records yet'
+                            : formatRelativeDate(latest.date, now),
+                        style: text.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (hasData) ...[
+                  const SizedBox(width: AppSpacing.md),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              formatWeight(best, unit),
+                              style: text.displaySmall?.copyWith(
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ),
+                          if (trend.length >= 2) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Sparkline(
+                              values: trend.length > _trendLength
+                                  ? trend.sublist(trend.length - _trendLength)
+                                  : trend,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
               ],
-            ],
+            ),
           ),
         ),
       ),

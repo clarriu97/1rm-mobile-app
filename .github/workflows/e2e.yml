@@ -18,8 +18,6 @@ concurrency:
 
 env:
   FLUTTER_VERSION: "3.47.5"
-  # Seconds before tool/ci.sh treats an e2e run as hung and retries it.
-  E2E_TIMEOUT: 480
 
 jobs:
   ios:
@@ -42,23 +40,6 @@ jobs:
       # booting slows restoring the 2 GB SDK cache from ~1.5 to ~5 min.
       - name: Start simulator
         run: tool/ci.sh boot-ios ${{ matrix.size }}
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ~/Library/Caches/CocoaPods
-          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
-
-      # Compiled Xcode products, the Swift module cache and Flutter's build
-      # cache: the build only redoes what changed since the cached one.
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Developer/Xcode/DerivedData
-            build/ios
-            .dart_tool/flutter_build
-          key: ios-build-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock', 'ios/Runner.xcodeproj/project.pbxproj') }}
 
       - run: tool/ci.sh e2e-ios ${{ matrix.size }}
 
@@ -102,14 +83,6 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      # Gradle's build cache and Flutter's: the build only redoes what changed.
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/build-cache-1
-            .dart_tool/flutter_build
-          key: android-build-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.lock', 'android/**/*.gradle*', 'android/gradle.properties') }}
 
       # A booted-emulator snapshot, created once per configuration: later runs
       # resume it in seconds instead of cold-booting.

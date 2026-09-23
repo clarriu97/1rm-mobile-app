@@ -54,11 +54,12 @@ goldens() {
   flutter test --tags golden
 }
 
-# Runs the e2e flows on a device. Simulators and emulators occasionally hang
-# while installing or attaching to the app ("Error waiting for a debug
-# connection"); such a run is killed as soon as it is detected (silent after
-# the build, or past E2E_TIMEOUT) and retried once. A failing test is never
-# retried.
+# Runs the e2e flows on a device. Simulators and emulators occasionally fail
+# to install or attach to the app before any test starts: they hang ("Error
+# waiting for a debug connection") or the load fails ("Failed to start Dart
+# Development Service"). A hung run is killed as soon as it is detected
+# (silent after the build, or past E2E_TIMEOUT); either case is retried once.
+# Once a test has run, a failure is real and is never retried.
 run_e2e() {
   local device=$1 attempt status log pid tailer hung built size last_size last_change start
   for attempt in 1 2; do
@@ -93,11 +94,14 @@ run_e2e() {
     sleep 1
     kill "$tailer" 2>/dev/null || true
     wait "$tailer" 2>/dev/null || true
+    if [[ -z "$hung" && "$status" -ne 0 ]] && grep -qE "Failed to load .*app_test\.dart" "$log"; then
+      hung="the app failed to load before any test ran"
+    fi
     rm -f "$log"
     if [[ -z "$hung" ]]; then
       return "$status"
     fi
-    echo "⚠︎ e2e hung ($hung) on attempt $attempt; killed." >&2
+    echo "⚠︎ e2e infrastructure failure ($hung) on attempt $attempt." >&2
   done
   return 1
 }
@@ -126,7 +130,13 @@ boot_ios() {
     echo "No $1 iPhone simulator available (Xcode → Settings → Components)." >&2
     return 1
   fi
-  xcrun simctl boot "$udid" 2>/dev/null || true # already booted is fine
+  # Booting one that is already booting blocks for minutes; only boot it
+  # when it is shut down.
+  local state
+  state=$(xcrun simctl list devices -j | jq -r --arg u "$udid" '.devices[][] | select(.udid == $u) | .state')
+  if [[ "$state" == Shutdown ]]; then
+    xcrun simctl boot "$udid"
+  fi
   echo "$udid"
 }
 

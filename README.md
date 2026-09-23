@@ -24,6 +24,8 @@ A cross-platform Flutter app to **calculate, track, and obsess over your One-Rep
 - **Delete entries** — tap the trash icon or long-press a row
 - **Comma & dot decimal support** — `112,5` kg works just like `112.5`
 - **Persistent storage** — all data saved automatically, survives app restarts
+- **kg / lbs** — pick your unit in Settings; data is stored in kg and converted on the fly
+- **First-run onboarding** — a quick intro to 1RM and how the app works
 - **Dark theme** — because you lift in the dungeon, not a tanning bed
 - **2 platforms** — Android & iOS
 

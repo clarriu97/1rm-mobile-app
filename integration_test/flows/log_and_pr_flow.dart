@@ -23,6 +23,7 @@ void logAndPrFlows() {
     await logEntry(tester, weight: '120', reps: '3');
     await waitFor(tester, find.byKey(const Key('pr-celebration')));
     await waitFor(tester, find.byKey(const Key('pr-celebration')), gone: true);
+    await scrollTo(tester, find.text('132.0 kg'));
     expect(find.text('132.0 kg'), findsWidgets);
     await expectOnScreen(tester, find.byKey(const Key('progress-line-chart')));
 

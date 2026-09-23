@@ -56,9 +56,12 @@ final _mainList = find
     )
     .first;
 
-/// Scrolls the main list down to [finder] only if it is not on screen yet
-/// (like a user would, without jumping the list around).
+/// Brings [finder] on screen if it isn't: back to the top of the main list,
+/// then down until it shows (small phones fit less of each screen).
 Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+  if (finder.hitTestable().evaluate().isNotEmpty) return;
+  tester.state<ScrollableState>(_mainList).position.jumpTo(0);
+  await tester.pumpAndSettle();
   if (finder.hitTestable().evaluate().isNotEmpty) return;
   await tester.scrollUntilVisible(finder, 200, scrollable: _mainList);
   await tester.pumpAndSettle();

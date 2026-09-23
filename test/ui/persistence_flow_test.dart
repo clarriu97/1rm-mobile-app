@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
@@ -215,4 +217,82 @@ void main() {
       expect(find.text('200.0 kg'), findsOneWidget);
     });
   });
+
+  group('Save errors', () {
+    testWidgets('adding an entry shows a message when saving fails', (
+      tester,
+    ) async {
+      final records = RecordsRepository(_FailingStorage());
+
+      await tester.pumpWidget(
+        _app(
+          ExerciseDetailScreen(
+            template: _squat,
+            records: records,
+            unit: WeightUnit.kg,
+          ),
+        ),
+      );
+      await _logEntry(tester, '100', '5');
+
+      expect(
+        find.text('Could not save. Check your device storage.'),
+        findsOneWidget,
+      );
+      // The entry is still shown so the user doesn't lose what they typed.
+      expect(find.text('116.7 kg'), findsWidgets);
+    });
+
+    testWidgets('deleting an entry shows a message when saving fails', (
+      tester,
+    ) async {
+      final records = RecordsRepository(_FailingStorage(), {
+        _squat.id: [_record()],
+      });
+
+      await tester.pumpWidget(
+        _app(
+          HistoryScreen(
+            template: _squat,
+            records: records,
+            unit: WeightUnit.kg,
+          ),
+        ),
+      );
+      await tester.tap(find.byTooltip('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Could not save. Check your device storage.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('successful save shows no error message', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          ExerciseDetailScreen(
+            template: _squat,
+            records: RecordsRepository(StorageService.inMemoryForTesting()),
+            unit: WeightUnit.kg,
+          ),
+        ),
+      );
+      await _logEntry(tester, '100', '5');
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
+  });
+}
+
+class _FailingStorage implements StorageService {
+  @override
+  Future<Map<String, List<ExerciseRecord>>> load() async => {};
+
+  @override
+  Future<void> save(Map<String, List<ExerciseRecord>> records) async {
+    throw const FileSystemException('disk full');
+  }
 }

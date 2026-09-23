@@ -1,13 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/utils/formulas.dart';
 
 void main() {
+  group('generatePercentageTable', () {
+    test('uses best 1RM for table generation', () {
+      final table = generatePercentageTable(200);
+      expect(table.first.percentage, 100);
+      expect(table.first.weight, roundToNearest(200));
+    });
+  });
   group('maxReps', () {
     test('is 50', () {
       expect(maxReps, 50);
     });
   });
-
   group('parseWeight', () {
     test('parses integer string', () {
       expect(parseWeight('100'), 100.0);
@@ -23,7 +30,6 @@ void main() {
 
     test('parses zero', () => expect(parseWeight('0'), 0.0));
   });
-
   group('tryParseWeight', () {
     test('parses dot decimal', () {
       expect(tryParseWeight('112.5'), 112.5);
@@ -47,7 +53,6 @@ void main() {
       expect(tryParseWeight('-10'), -10.0);
     });
   });
-
   group('calculateOneRM', () {
     test('returns the same weight for 1 rep', () {
       expect(calculateOneRM(100, 1), 100.0);
@@ -77,7 +82,6 @@ void main() {
       () => expect(calculateOneRM(315, 8), closeTo(399.0, 0.01)),
     );
   });
-
   group('calculateWeightForPercentage', () {
     test('returns 100% of oneRM', () {
       expect(calculateWeightForPercentage(200, 100), 200.0);
@@ -100,7 +104,6 @@ void main() {
       expect(calculateWeightForPercentage(0, 50), 0.0);
     });
   });
-
   group('generatePercentageTable', () {
     test('returns correct number of entries', () {
       final table = generatePercentageTable(200);
@@ -132,7 +135,6 @@ void main() {
       expect(entry.weight, 150.0);
     });
   });
-
   group('roundToNearest', () {
     test('rounds to nearest 1', () {
       expect(roundToNearest(123.0), 123.0);
@@ -141,5 +143,55 @@ void main() {
     test('rounds to nearest 5', () => expect(roundToNearest(138.0, 5), 140.0));
 
     test('handles exact values', () => expect(roundToNearest(100.0), 100.0));
+  });
+  group('formatWeight', () {
+    test('formats kg with 1 decimal by default', () {
+      expect(formatWeight(100.0, WeightUnit.kg), '100.0 kg');
+    });
+
+    test('formats lbs with 1 decimal by default', () {
+      expect(formatWeight(100.0, WeightUnit.lbs), '220.5 lbs');
+    });
+
+    test('formats kg with 0 decimals', () {
+      expect(formatWeight(100.0, WeightUnit.kg, 0), '100 kg');
+    });
+
+    test('formats lbs with 0 decimals', () {
+      expect(formatWeight(100.0, WeightUnit.lbs, 0), '220 lbs');
+    });
+
+    test('formats decimal kg correctly', () {
+      expect(formatWeight(112.5, WeightUnit.kg), '112.5 kg');
+    });
+
+    test('formats decimal kg to lbs correctly', () {
+      expect(formatWeight(112.5, WeightUnit.lbs), '248.0 lbs');
+    });
+  });
+  group('generatePercentageTable with unit', () {
+    test('uses kg rounding increment by default', () {
+      final table = generatePercentageTable(100);
+      expect(table.first.weight, 100);
+      expect(table.last.weight, 50);
+    });
+
+    test('uses lbs rounding increment (5.0)', () {
+      final table = generatePercentageTable(220.462, WeightUnit.lbs);
+      expect(table.first.weight, 220.0);
+      expect(table.last.weight, 110.0);
+    });
+
+    test('lbs table rounds to nearest 5', () {
+      final table = generatePercentageTable(225, WeightUnit.lbs);
+      final entry75 = table.firstWhere((e) => e.percentage == 75);
+      expect(entry75.weight % 5, 0.0);
+    });
+
+    test('kg table rounds to nearest 1', () {
+      final table = generatePercentageTable(100);
+      final entry75 = table.firstWhere((e) => e.percentage == 75);
+      expect(entry75.weight, 75.0);
+    });
   });
 }

@@ -68,6 +68,9 @@ flutter run -d android # Android
 # Run all tests
 flutter test
 
+# End-to-end flow on a booted simulator or connected device
+flutter test integration_test
+
 # Check formatting
 dart format --set-exit-if-changed .
 

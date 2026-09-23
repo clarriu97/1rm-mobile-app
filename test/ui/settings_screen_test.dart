@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
-import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/settings_screen.dart';
 
-Widget _buildApp(Widget home) {
-  return MaterialApp(theme: AppTheme.dark, home: home);
-}
+import '../helpers/test_app.dart';
 
 void main() {
   group('SettingsScreen', () {
@@ -15,7 +12,7 @@ void main() {
       final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
         ),
       );
@@ -31,7 +28,7 @@ void main() {
       final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
         ),
       );
@@ -65,7 +62,7 @@ void main() {
       final unitService = UnitService.forTesting();
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
         ),
       );
@@ -92,7 +89,7 @@ void main() {
       final unitService = UnitService.forTesting(unit: WeightUnit.lbs);
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           SettingsScreen(unitService: unitService, currentUnit: WeightUnit.lbs),
         ),
       );

@@ -8,11 +8,12 @@ import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
-import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
 import 'package:one_rm_mobile/ui/history_screen.dart';
 import 'package:one_rm_mobile/ui/home_screen.dart';
 import 'package:one_rm_mobile/utils/formulas.dart';
+
+import '../helpers/test_app.dart';
 
 final _squat = defaultExercises.first;
 
@@ -21,11 +22,6 @@ ExerciseRecord _record({double weight = 100, int reps = 5}) => ExerciseRecord(
   reps: reps,
   oneRM: calculateOneRM(weight, reps),
   date: DateTime(2026, 9, 20),
-);
-
-Widget _app(Widget home, {TargetPlatform? platform}) => MaterialApp(
-  theme: AppTheme.dark.copyWith(platform: platform),
-  home: home,
 );
 
 Future<void> _logEntry(WidgetTester tester, String weight, String reps) async {
@@ -46,7 +42,7 @@ void main() {
       final records = RecordsRepository(storage);
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           ExerciseDetailScreen(
             template: _squat,
             records: records,
@@ -70,7 +66,7 @@ void main() {
       final storage = StorageService.inMemoryForTesting();
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           ExerciseDetailScreen(
             template: _squat,
             records: RecordsRepository(storage),
@@ -95,7 +91,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.of(context).push<void>(
@@ -135,7 +131,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           HistoryScreen(
             template: _squat,
             records: records,
@@ -159,7 +155,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           HistoryScreen(
             template: _squat,
             records: records,
@@ -184,7 +180,7 @@ void main() {
       final records = RecordsRepository(StorageService.inMemoryForTesting());
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           HomeScreen(records: records, unitService: UnitService.forTesting()),
         ),
       );
@@ -205,7 +201,7 @@ void main() {
       final records = RecordsRepository(StorageService.inMemoryForTesting());
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           HomeScreen(records: records, unitService: UnitService.forTesting()),
         ),
       );
@@ -225,7 +221,7 @@ void main() {
       final records = RecordsRepository(_FailingStorage());
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           ExerciseDetailScreen(
             template: _squat,
             records: records,
@@ -251,7 +247,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           HistoryScreen(
             template: _squat,
             records: records,
@@ -272,7 +268,7 @@ void main() {
 
     testWidgets('successful save shows no error message', (tester) async {
       await tester.pumpWidget(
-        _app(
+        buildTestApp(
           ExerciseDetailScreen(
             template: _squat,
             records: RecordsRepository(StorageService.inMemoryForTesting()),

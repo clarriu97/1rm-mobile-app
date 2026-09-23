@@ -1,16 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
-import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/history_screen.dart';
 
-Widget _buildApp(Widget home) {
-  return MaterialApp(theme: AppTheme.dark, home: home);
-}
+import '../helpers/test_app.dart';
 
 void main() {
   group('HistoryScreen', () {
@@ -25,7 +21,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           HistoryScreen(
             template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {
@@ -51,7 +47,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           HistoryScreen(
             template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {
@@ -77,7 +73,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        _buildApp(
+        buildTestApp(
           HistoryScreen(
             template: defaultExercises.first,
             records: RecordsRepository(StorageService.inMemoryForTesting(), {

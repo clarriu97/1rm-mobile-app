@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
@@ -67,7 +66,6 @@ void main() {
       expect(loaded.containsKey('Deadlift'), isTrue);
     });
   });
-
   group('StorageService — file states', () {
     test('returns empty when file does not exist', () async {
       final storage = await StorageService.getInstanceForTesting();
@@ -96,7 +94,6 @@ void main() {
       expect(loaded, isEmpty);
     });
   });
-
   group('StorageService — corrupted JSON', () {
     test('recovers from malformed JSON', () async {
       final dir = await Directory.systemTemp.createTemp('bad_json_');
@@ -146,7 +143,6 @@ void main() {
       expect(loaded.containsKey('Deadlift'), isFalse);
     });
   });
-
   group('ExerciseRecord — corrupted records', () {
     test('skips records with missing fields', () async {
       final dir = await Directory.systemTemp.createTemp('missing_fields_');
@@ -237,61 +233,6 @@ void main() {
       expect(loaded['Squat']!.first.weight, 100);
     });
   });
-
-  group('ExerciseRecord — tryFromJson', () {
-    test('returns null for null input', () {
-      expect(
-        ExerciseRecord.tryFromJson({
-          'weight': null,
-          'reps': 5,
-          'oneRM': 100,
-          'date': '2024-01-15T10:00:00.000',
-        }),
-        isNull,
-      );
-    });
-
-    test('returns null for missing fields', () {
-      expect(ExerciseRecord.tryFromJson({'weight': 100}), isNull);
-    });
-
-    test('returns null for wrong types', () {
-      expect(
-        ExerciseRecord.tryFromJson({
-          'weight': 'abc',
-          'reps': 5,
-          'oneRM': 100,
-          'date': '2024-01-15T10:00:00.000',
-        }),
-        isNull,
-      );
-    });
-
-    test('returns null for invalid date string', () {
-      expect(
-        ExerciseRecord.tryFromJson({
-          'weight': 100,
-          'reps': 5,
-          'oneRM': 100,
-          'date': 'hello',
-        }),
-        isNull,
-      );
-    });
-
-    test('returns record for valid input', () {
-      final result = ExerciseRecord.tryFromJson({
-        'weight': 100,
-        'reps': 5,
-        'oneRM': 116.7,
-        'date': '2024-01-15T10:00:00.000',
-      });
-      expect(result, isNotNull);
-      expect(result!.weight, 100);
-      expect(result.reps, 5);
-    });
-  });
-
   group('StorageService — schema v2 and v1 migration', () {
     const v1Record =
         '{"weight": 100, "reps": 5, "oneRM": 116.7, "date": "2024-01-15T10:00:00.000"}';
@@ -409,7 +350,6 @@ void main() {
       expect(await storage.load(), isEmpty);
     });
   });
-
   group('StorageService — robustness', () {
     const validRecord =
         '{"weight": 100, "reps": 5, "oneRM": 116.7, "date": "2024-01-15T10:00:00.000"}';

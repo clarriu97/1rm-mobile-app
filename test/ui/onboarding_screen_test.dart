@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/ui/onboarding_screen.dart';
 
@@ -72,6 +73,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
 
       expect(find.text('Get Started'), findsOneWidget);
       expect(find.text('Next'), findsNothing);
@@ -82,6 +85,8 @@ void main() {
         buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -100,6 +105,8 @@ void main() {
         buildTestApp(OnboardingScreen(onComplete: (_) => completed = true)),
       );
 
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -133,12 +140,12 @@ void main() {
       expect(find.text('Log your lifts'), findsOneWidget);
     });
 
-    testWidgets('renders 3 page indicators', (tester) async {
+    testWidgets('renders 4 page indicators', (tester) async {
       await tester.pumpWidget(
         buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
-      expect(find.byType(AnimatedContainer), findsNWidgets(3));
+      expect(find.byType(AnimatedContainer), findsNWidgets(4));
     });
 
     testWidgets('each page shows its own illustration', (tester) async {
@@ -178,62 +185,60 @@ void main() {
     });
   });
 
-  group('OnboardingScreen — unit choice', () {
-    Future<void> goToLastPage(WidgetTester tester) async {
-      for (var i = 0; i < 2; i++) {
-        await tester.tap(find.byKey(const Key('onboarding-next-button')));
-        await tester.pumpAndSettle();
-      }
+  Future<void> next(WidgetTester tester, [int times = 1]) async {
+    for (var i = 0; i < times; i++) {
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
     }
+  }
 
-    bool isSelected(WidgetTester tester, WeightUnit unit) => tester
-        .widget<Semantics>(
-          find
-              .ancestor(
-                of: find.byKey(Key('unit-option-${unit.name}')),
-                matching: find.byType(Semantics),
-              )
-              .first,
-        )
-        .properties
-        .selected!;
+  bool isSelected(WidgetTester tester, Key key) => tester
+      .widget<Semantics>(
+        find
+            .ancestor(of: find.byKey(key), matching: find.byType(Semantics))
+            .first,
+      )
+      .properties
+      .selected!;
 
-    testWidgets('last page preselects the initial unit', (tester) async {
+  group('OnboardingScreen — unit choice', () {
+    testWidgets('unit page preselects the initial unit', (tester) async {
       await tester.pumpWidget(
         buildTestApp(
           OnboardingScreen(onComplete: (_) {}, initialUnit: WeightUnit.lbs),
         ),
       );
-      await goToLastPage(tester);
+      await next(tester, 2);
 
       expect(find.text('KG'), findsOneWidget);
       expect(find.text('LBS'), findsOneWidget);
-      expect(isSelected(tester, WeightUnit.lbs), isTrue);
-      expect(isSelected(tester, WeightUnit.kg), isFalse);
+      expect(isSelected(tester, const Key('unit-option-lbs')), isTrue);
+      expect(isSelected(tester, const Key('unit-option-kg')), isFalse);
     });
 
-    testWidgets('choosing a unit and finishing reports it', (tester) async {
-      WeightUnit? chosen;
+    testWidgets('the chosen unit is reported when finishing', (tester) async {
+      OnboardingChoices? choices;
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: (u) => chosen = u)),
+        buildTestApp(OnboardingScreen(onComplete: (c) => choices = c)),
       );
-      await goToLastPage(tester);
+      await next(tester, 2);
 
       await tester.tap(find.byKey(const Key('unit-option-lbs')));
       await tester.pump();
-      expect(isSelected(tester, WeightUnit.lbs), isTrue);
+      expect(isSelected(tester, const Key('unit-option-lbs')), isTrue);
 
-      await tester.tap(find.byKey(const Key('onboarding-next-button')));
-      await tester.pump();
-      expect(chosen, WeightUnit.lbs);
+      await next(tester, 2);
+      expect(choices!.unit, WeightUnit.lbs);
     });
 
-    testWidgets('skipping keeps the initial unit', (tester) async {
-      WeightUnit? chosen;
+    testWidgets('skipping keeps the initial unit and the default lifts', (
+      tester,
+    ) async {
+      OnboardingChoices? choices;
       await tester.pumpWidget(
         buildTestApp(
           OnboardingScreen(
-            onComplete: (u) => chosen = u,
+            onComplete: (c) => choices = c,
             initialUnit: WeightUnit.lbs,
           ),
         ),
@@ -241,7 +246,113 @@ void main() {
 
       await tester.tap(find.byKey(const Key('onboarding-skip-button')));
       await tester.pump();
-      expect(chosen, WeightUnit.lbs);
+      expect(choices!.unit, WeightUnit.lbs);
+      expect(choices!.lifts, isNull);
+    });
+  });
+
+  group('OnboardingScreen — pick your lifts', () {
+    final defaults = Set<String>.unmodifiable({
+      for (final e in defaultExercises)
+        if (e.defaultVisible) e.id,
+    });
+
+    Future<OnboardingChoices? Function()> openPicker(
+      WidgetTester tester, {
+      Set<String>? initialLifts,
+    }) async {
+      OnboardingChoices? choices;
+      await tester.pumpWidget(
+        buildTestApp(
+          OnboardingScreen(
+            onComplete: (c) => choices = c,
+            initialLifts: initialLifts,
+          ),
+        ),
+      );
+      await next(tester, 3);
+      return () => choices;
+    }
+
+    Future<void> tapChip(WidgetTester tester, String id) async {
+      final chip = find.byKey(Key('lift-chip-$id'));
+      await tester.scrollUntilVisible(
+        chip,
+        200,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('pick-lifts-page')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(chip);
+      await tester.pump();
+    }
+
+    testWidgets('lists families with the core lifts preselected', (
+      tester,
+    ) async {
+      await openPicker(tester);
+
+      expect(find.text('Pick your lifts'), findsOneWidget);
+      expect(find.text('SQUAT'), findsOneWidget);
+      expect(find.text('${defaults.length} selected'), findsOneWidget);
+      expect(isSelected(tester, const Key('lift-chip-back_squat')), isTrue);
+      expect(isSelected(tester, const Key('lift-chip-box_squat')), isFalse);
+      expect(find.textContaining('Manage exercises'), findsOneWidget);
+    });
+
+    testWidgets('toggling lifts is reflected in the result', (tester) async {
+      final result = await openPicker(tester);
+
+      await tapChip(tester, 'thruster');
+      await tapChip(tester, 'snatch');
+
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pump();
+
+      expect(result()!.lifts, {
+        ...defaults.where((id) => id != 'snatch'),
+        'thruster',
+      });
+    });
+
+    testWidgets('the counter follows the selection', (tester) async {
+      tester.view.physicalSize = const Size(430, 1400) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await openPicker(tester);
+
+      await tester.tap(find.byKey(const Key('lift-chip-box_squat')));
+      await tester.pump();
+      expect(find.text('${defaults.length + 1} selected'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('lift-chip-box_squat')));
+      await tester.pump();
+      expect(find.text('${defaults.length} selected'), findsOneWidget);
+    });
+
+    testWidgets('with no lifts selected the button is disabled', (
+      tester,
+    ) async {
+      final result = await openPicker(tester, initialLifts: {'back_squat'});
+
+      await tapChip(tester, 'back_squat');
+
+      expect(find.text('Pick at least one lift'), findsOneWidget);
+      final button = tester.widget<ElevatedButton>(
+        find.byKey(const Key('onboarding-next-button')),
+      );
+      expect(button.onPressed, isNull);
+      expect(result(), isNull);
+    });
+
+    testWidgets('initial lifts override the defaults', (tester) async {
+      final result = await openPicker(tester, initialLifts: {'hip_thrust'});
+
+      expect(find.text('1 selected'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pump();
+      expect(result()!.lifts, {'hip_thrust'});
     });
   });
 }

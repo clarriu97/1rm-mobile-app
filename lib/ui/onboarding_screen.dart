@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../data/default_exercises.dart';
 import '../models/weight_unit.dart';
 import 'theme/app_theme.dart';
 
@@ -12,17 +13,27 @@ WeightUnit defaultUnitForCountry(String? countryCode) =>
     ? WeightUnit.lbs
     : WeightUnit.kg;
 
+/// What the user chose during onboarding. [lifts] is null when they skipped,
+/// so the library keeps its defaults.
+typedef OnboardingChoices = ({WeightUnit unit, Set<String>? lifts});
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     super.key,
     required this.onComplete,
     this.initialUnit = WeightUnit.kg,
+    this.exercises = defaultExercises,
+    this.initialLifts,
   });
 
-  /// Called with the unit chosen on the last page (or [initialUnit] when
-  /// the user skips).
-  final ValueChanged<WeightUnit> onComplete;
+  final ValueChanged<OnboardingChoices> onComplete;
   final WeightUnit initialUnit;
+
+  /// Lifts offered on the "Pick your lifts" page.
+  final List<ExerciseTemplate> exercises;
+
+  /// Preselected lifts; defaults to the exercises visible by default.
+  final Set<String>? initialLifts;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -32,14 +43,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _currentPage = 0;
   late WeightUnit _unit = widget.initialUnit;
+  late final Set<String> _lifts =
+      widget.initialLifts ??
+      {
+        for (final e in widget.exercises)
+          if (e.defaultVisible) e.id,
+      };
 
-  static const _pageCount = 3;
+  static const _pageCount = 4;
 
   bool get _isLastPage => _currentPage == _pageCount - 1;
 
   void _nextPage() {
     if (_isLastPage) {
-      widget.onComplete(_unit);
+      widget.onComplete((unit: _unit, lifts: Set.of(_lifts)));
       return;
     }
     _controller.nextPage(
@@ -84,6 +101,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onChanged: (unit) => setState(() => _unit = unit),
         ),
       ),
+      _PickLiftsPage(
+        exercises: widget.exercises,
+        selected: _lifts,
+        onToggle: (id) => setState(
+          () => _lifts.contains(id) ? _lifts.remove(id) : _lifts.add(id),
+        ),
+      ),
     ];
 
     return Scaffold(
@@ -118,8 +142,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       key: const Key('onboarding-next-button'),
-                      onPressed: _nextPage,
-                      child: Text(_isLastPage ? 'Get Started' : 'Next'),
+                      onPressed: _isLastPage && _lifts.isEmpty
+                          ? null
+                          : _nextPage,
+                      child: Text(
+                        !_isLastPage
+                            ? 'Next'
+                            : _lifts.isEmpty
+                            ? 'Pick at least one lift'
+                            : 'Get Started',
+                      ),
                     ),
                   ),
                   // Keep the layout stable: reserve the Skip slot on the
@@ -132,7 +164,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     maintainState: true,
                     child: TextButton(
                       key: const Key('onboarding-skip-button'),
-                      onPressed: () => widget.onComplete(_unit),
+                      onPressed: () =>
+                          widget.onComplete((unit: _unit, lifts: null)),
                       child: const Text('Skip'),
                     ),
                   ),
@@ -189,6 +222,152 @@ class _OnboardingPage extends StatelessWidget {
               footer!,
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PickLiftsPage extends StatelessWidget {
+  const _PickLiftsPage({
+    required this.exercises,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  final List<ExerciseTemplate> exercises;
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    // Fade the bottom edge so it's obvious the list keeps going.
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (bounds) => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          AppColors.background,
+          AppColors.background,
+          AppColors.background.withValues(alpha: 0),
+        ],
+        stops: const [0, 0.9, 1],
+      ).createShader(bounds),
+      child: _buildList(text),
+    );
+  }
+
+  Widget _buildList(TextTheme text) {
+    return ListView(
+      key: const Key('pick-lifts-page'),
+      // Extra bottom room so the last row clears the fade when scrolled.
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xxl,
+        AppSpacing.xl,
+        AppSpacing.xxl * 2,
+      ),
+      children: [
+        Text(
+          'Pick your lifts',
+          textAlign: TextAlign.center,
+          style: text.displayMedium,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Choose what shows on Home. You can change it any time '
+          'from Manage exercises.',
+          textAlign: TextAlign.center,
+          style: text.bodyLarge,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '${selected.length} selected',
+          key: const Key('pick-lifts-count'),
+          textAlign: TextAlign.center,
+          style: text.labelMedium?.copyWith(color: AppColors.accent),
+        ),
+        for (final (category, group) in groupByCategory(exercises)) ...[
+          const SizedBox(height: AppSpacing.lg),
+          Text(category.displayName.toUpperCase(), style: text.labelMedium),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final exercise in group)
+                _LiftChip(
+                  exercise: exercise,
+                  selected: selected.contains(exercise.id),
+                  onTap: () => onToggle(exercise.id),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LiftChip extends StatelessWidget {
+  const _LiftChip({
+    required this.exercise,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ExerciseTemplate exercise;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.onAccent : AppColors.textPrimary;
+    final radius = BorderRadius.circular(AppRadii.sm);
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? AppColors.accent : AppColors.surfaceRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(
+            color: selected ? AppColors.accent : AppColors.outline,
+          ),
+        ),
+        child: InkWell(
+          key: Key('lift-chip-${exercise.id}'),
+          onTap: onTap,
+          borderRadius: radius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: kMinTapTarget),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    exercise.assetPath,
+                    width: 24,
+                    height: 24,
+                    colorFilter: ColorFilter.mode(foreground, BlendMode.srcIn),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      exercise.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleSmall?.copyWith(color: foreground),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

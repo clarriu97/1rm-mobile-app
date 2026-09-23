@@ -7,11 +7,13 @@ void main() {
   ExerciseLibrary library({
     List<CustomExerciseData> custom = const [],
     Set<String> hidden = const {},
+    Set<String> shown = const {},
     ExerciseLibraryService? service,
   }) => ExerciseLibrary(
     service ?? ExerciseLibraryService.forTesting(),
     custom: custom,
     hidden: hidden,
+    shown: shown,
     clock: () => DateTime(2026, 9, 23),
   );
 
@@ -30,17 +32,47 @@ void main() {
       expect(lib.isCustom('back_squat'), isFalse);
     });
 
-    test('visible excludes hidden built-ins and customs', () {
+    test('by default only the core lifts are visible', () {
+      final lib = library();
+      expect(lib.visible.map((e) => e.id), [
+        for (final e in defaultExercises)
+          if (e.defaultVisible) e.id,
+      ]);
+      expect(lib.isHidden('back_squat'), isFalse);
+      expect(lib.isHidden('thruster'), isTrue);
+    });
+
+    test('custom exercises are visible by default', () {
+      final lib = library(
+        custom: const [CustomExerciseData(id: 'custom_1', name: 'Pin Press')],
+      );
+      expect(lib.isHidden('custom_1'), isFalse);
+      expect(lib.visible.last.id, 'custom_1');
+    });
+
+    test('explicit choices override the defaults both ways', () {
       final lib = library(
         custom: const [CustomExerciseData(id: 'custom_1', name: 'Pin Press')],
         hidden: {'snatch', 'custom_1'},
+        shown: {'thruster'},
       );
 
       final ids = lib.visible.map((e) => e.id);
       expect(ids, isNot(contains('snatch')));
       expect(ids, isNot(contains('custom_1')));
+      expect(ids, contains('thruster'));
       expect(ids, contains('back_squat'));
-      expect(lib.visible, hasLength(defaultExercises.length - 1));
+    });
+
+    test('hidden wins if an id is in both override sets', () {
+      final lib = library(hidden: {'thruster'}, shown: {'thruster'});
+      expect(lib.isHidden('thruster'), isTrue);
+    });
+
+    test('unknown ids report hidden only when explicitly hidden', () {
+      final lib = library(hidden: {'gone'});
+      expect(lib.isHidden('gone'), isTrue);
+      expect(lib.isHidden('never_seen'), isFalse);
     });
 
     test('everything hidden gives an empty visible list', () {
@@ -128,20 +160,66 @@ void main() {
       await lib.setHidden('snatch', hidden: false);
       expect(lib.isHidden('snatch'), isFalse);
       expect(await service.loadHidden(), isEmpty);
+      expect(await service.loadShown(), {'snatch'});
 
       expect(notifications, 2);
+    });
+
+    test('setHidden can show a lift that is hidden by default', () async {
+      final service = ExerciseLibraryService.forTesting();
+      final lib = library(service: service);
+
+      await lib.setHidden('thruster', hidden: false);
+
+      expect(lib.isHidden('thruster'), isFalse);
+      expect(await service.loadShown(), {'thruster'});
+    });
+
+    test('setVisibleExactly only records what actually changes', () async {
+      final service = ExerciseLibraryService.forTesting();
+      final lib = library(service: service);
+      final core = {
+        for (final e in defaultExercises)
+          if (e.defaultVisible) e.id,
+      };
+
+      await lib.setVisibleExactly({
+        ...core.where((id) => id != 'snatch'),
+        'thruster',
+      });
+
+      expect(lib.isHidden('snatch'), isTrue);
+      expect(lib.isHidden('thruster'), isFalse);
+      expect(lib.isHidden('back_squat'), isFalse);
+      expect(await service.loadHidden(), {'snatch'});
+      expect(await service.loadShown(), {'thruster'});
+    });
+
+    test('setVisibleExactly with the current selection is a no-op', () async {
+      final service = ExerciseLibraryService.forTesting();
+      final lib = library(service: service);
+      var notifications = 0;
+      lib.addListener(() => notifications++);
+
+      await lib.setVisibleExactly({for (final e in lib.visible) e.id});
+
+      expect(notifications, 0);
+      expect(await service.loadHidden(), isEmpty);
+      expect(await service.loadShown(), isEmpty);
     });
 
     test('load reads what the service stored', () async {
       final service = ExerciseLibraryService.forTesting(
         custom: const [CustomExerciseData(id: 'custom_9', name: 'Pin Press')],
         hidden: {'deadlift'},
+        shown: {'thruster'},
       );
 
       final lib = await ExerciseLibrary.load(service);
 
       expect(lib.all.last.name, 'Pin Press');
       expect(lib.isHidden('deadlift'), isTrue);
+      expect(lib.isHidden('thruster'), isFalse);
     });
   });
 }

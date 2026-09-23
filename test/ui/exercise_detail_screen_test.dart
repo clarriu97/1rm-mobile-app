@@ -23,7 +23,7 @@ void main() {
         const dummyExercise = ExerciseTemplate(
           id: 'super_long_name_exercise',
           name: 'Super Long Name Exercise',
-          category: ExerciseCategory.legs,
+          category: ExerciseCategory.squat,
           assetPath: 'assets/icons/back_squat.svg',
         );
 

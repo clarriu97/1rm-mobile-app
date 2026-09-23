@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/main.dart';
+import 'package:one_rm_mobile/services/exercise_library_service.dart';
+import 'package:one_rm_mobile/repositories/exercise_library.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/onboarding_service.dart';
@@ -104,6 +106,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
 
       expect(find.byType(OnboardingScreen), findsNothing);
       expect(find.text('1RM'), findsOneWidget);
@@ -177,8 +181,11 @@ void main() {
         await tester.tap(find.byKey(const Key('unit-option-lbs')));
         await tester.pump();
       }
-      await tester.tap(find.byKey(const Key('onboarding-next-button')));
-      await tester.pumpAndSettle();
+      // Unit page → lifts page → finish.
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byKey(const Key('onboarding-next-button')));
+        await tester.pumpAndSettle();
+      }
       return unitService;
     }
 
@@ -199,6 +206,54 @@ void main() {
         pickLbs: true,
       );
       expect(await units.getUnit(), WeightUnit.lbs);
+    });
+  });
+
+  group('OneRMApp — lifts from onboarding', () {
+    testWidgets('lifts picked during onboarding are the ones on Home', (
+      tester,
+    ) async {
+      final library = testLibrary();
+      await tester.pumpWidget(
+        OneRMApp(
+          records: RecordsRepository(StorageService.inMemoryForTesting()),
+          library: library,
+          onboarding: OnboardingService.forTesting(),
+          unitService: UnitService.forTesting(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.byKey(const Key('onboarding-next-button')));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byKey(const Key('lift-chip-front_squat')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pumpAndSettle();
+
+      expect(library.isHidden('front_squat'), isTrue);
+      expect(library.isHidden('back_squat'), isFalse);
+      expect(find.text('Front Squat'), findsNothing);
+      expect(find.text('Back Squat'), findsOneWidget);
+    });
+
+    testWidgets('skipping keeps the default lifts untouched', (tester) async {
+      final service = ExerciseLibraryService.forTesting();
+      await tester.pumpWidget(
+        OneRMApp(
+          records: RecordsRepository(StorageService.inMemoryForTesting()),
+          library: ExerciseLibrary(service),
+          onboarding: OnboardingService.forTesting(),
+          unitService: UnitService.forTesting(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('onboarding-skip-button')));
+      await tester.pumpAndSettle();
+
+      expect(await service.loadHidden(), isEmpty);
+      expect(await service.loadShown(), isEmpty);
     });
   });
 }

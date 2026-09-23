@@ -1,24 +1,17 @@
+/// Lift families, in the order they're listed in the app.
 enum ExerciseCategory {
-  push,
-  pull,
-  legs,
-  core,
-  other;
+  squat('Squat'),
+  hinge('Deadlift & hinge'),
+  bench('Bench & dips'),
+  overhead('Overhead'),
+  pull('Pulls & rows'),
+  clean('Clean & jerk'),
+  snatch('Snatch'),
+  custom('Custom');
 
-  String get displayName {
-    switch (this) {
-      case ExerciseCategory.push:
-        return 'Push';
-      case ExerciseCategory.pull:
-        return 'Pull';
-      case ExerciseCategory.legs:
-        return 'Legs';
-      case ExerciseCategory.core:
-        return 'Core';
-      case ExerciseCategory.other:
-        return 'Other';
-    }
-  }
+  const ExerciseCategory(this.displayName);
+
+  final String displayName;
 }
 
 class ExerciseRecord {

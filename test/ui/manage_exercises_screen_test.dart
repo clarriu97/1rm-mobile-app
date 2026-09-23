@@ -18,6 +18,15 @@ Future<void> _pumpManage(WidgetTester tester, ExerciseLibrary library) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _showToggle(WidgetTester tester, String id) async {
+  await tester.scrollUntilVisible(
+    find.byKey(Key('toggle-$id')),
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 Future<void> _openDialogAndType(WidgetTester tester, String name) async {
   await tester.tap(find.byKey(const Key('new-exercise-button')));
   await tester.pumpAndSettle();
@@ -37,10 +46,7 @@ void main() {
       );
       expect(squat.value, isTrue);
 
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('toggle-snatch')),
-        200,
-      );
+      await _showToggle(tester, 'snatch');
       final snatch = tester.widget<SwitchListTile>(
         find.byKey(const Key('toggle-snatch')),
       );
@@ -51,6 +57,7 @@ void main() {
       final library = testLibrary();
       await _pumpManage(tester, library);
 
+      await _showToggle(tester, 'deadlift');
       await tester.tap(find.byKey(const Key('toggle-deadlift')));
       await tester.pumpAndSettle();
       expect(library.isHidden('deadlift'), isTrue);
@@ -68,8 +75,64 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
       expect(library.all.last.name, 'Zercher Squat');
-      await tester.scrollUntilVisible(find.text('Zercher Squat'), 200);
-      expect(find.text('Custom'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Zercher Squat'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('CUSTOM'), findsOneWidget);
+    });
+
+    testWidgets('lists families as sections and counts what is shown', (
+      tester,
+    ) async {
+      final library = testLibrary();
+      await _pumpManage(tester, library);
+
+      expect(find.text('SQUAT'), findsOneWidget);
+      expect(
+        find.text(
+          '${library.visible.length} of ${library.all.length} shown on Home',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('toggle-overhead_squat')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          '${library.visible.length} of ${library.all.length} shown on Home',
+        ),
+        findsOneWidget,
+      );
+      expect(library.isHidden('overhead_squat'), isFalse);
+    });
+
+    testWidgets('search filters by name, any case', (tester) async {
+      await _pumpManage(tester, testLibrary());
+
+      await tester.enterText(find.byKey(const Key('exercise-search')), 'CLEAN');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('toggle-power_clean')), findsOneWidget);
+      expect(find.byKey(const Key('toggle-hang_squat_clean')), findsOneWidget);
+      expect(find.byKey(const Key('toggle-back_squat')), findsNothing);
+      expect(find.text('SQUAT'), findsNothing);
+      expect(find.text('CLEAN & JERK'), findsOneWidget);
+    });
+
+    testWidgets('search with no matches says so; clearing restores the list', (
+      tester,
+    ) async {
+      await _pumpManage(tester, testLibrary());
+
+      await tester.enterText(find.byKey(const Key('exercise-search')), 'zzz');
+      await tester.pumpAndSettle();
+      expect(find.text('No exercises match "zzz".'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Clear search'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('toggle-back_squat')), findsOneWidget);
     });
 
     testWidgets('empty name shows an error and keeps the dialog open', (

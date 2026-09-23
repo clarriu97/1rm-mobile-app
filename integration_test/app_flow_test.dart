@@ -38,9 +38,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Onboarding: three pages, then home.
+    // Onboarding: four pages (the last one picks the lifts), then home.
     expect(find.text('What is 1RM?'), findsOneWidget);
-    for (var page = 0; page < 3; page++) {
+    for (var page = 0; page < 4; page++) {
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
     }

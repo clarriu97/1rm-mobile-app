@@ -66,6 +66,20 @@ class RecordsRepository extends ChangeNotifier {
   /// Tolerance for float noise from unit conversions.
   static const _epsilon = 1e-9;
 
+  /// Replaces [original] (by identity) with [updated]. No-op if not found.
+  Future<void> update(
+    String exercise,
+    ExerciseRecord original,
+    ExerciseRecord updated,
+  ) async {
+    final records = _records[exercise];
+    final index = records?.indexWhere((r) => identical(r, original)) ?? -1;
+    if (index < 0) return;
+    records![index] = updated;
+    notifyListeners();
+    await _storage.save(_records);
+  }
+
   Future<void> delete(String exercise, ExerciseRecord record) async {
     final records = _records[exercise];
     if (records == null || !records.remove(record)) return;

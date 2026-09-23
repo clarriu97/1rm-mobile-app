@@ -213,6 +213,58 @@ void main() {
     });
   });
 
+  group('RecordsRepository — update', () {
+    test('replaces the entry in place and persists', () async {
+      final storage = StorageService.inMemoryForTesting();
+      final keep = _record(oneRM: 100, date: DateTime(2026, 9, 2));
+      final original = _record(oneRM: 110, date: DateTime(2026, 9, 3));
+      final updated = _record(oneRM: 120, date: DateTime(2026, 9, 3));
+      final repo = RecordsRepository(storage, {
+        'Squat': [keep, original],
+      });
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+
+      await repo.update('Squat', original, updated);
+
+      expect(repo.recordsFor('Squat'), [keep, updated]);
+      expect(repo.bestOneRMFor('Squat'), 120);
+      expect((await storage.load())['Squat'], [keep, updated]);
+      expect(notifications, 1);
+    });
+
+    test('matches by identity, not by value', () async {
+      final a = _record();
+      final b = _record();
+      final replacement = _record(oneRM: 200);
+      final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+        'Squat': [a, b],
+      });
+
+      await repo.update('Squat', b, replacement);
+
+      expect(repo.recordsFor('Squat').first, same(a));
+      expect(repo.recordsFor('Squat').last, same(replacement));
+    });
+
+    test('unknown entry or exercise is a no-op without notification', () async {
+      final storage = StorageService.inMemoryForTesting();
+      final existing = _record();
+      final repo = RecordsRepository(storage, {
+        'Squat': [existing],
+      });
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+
+      await repo.update('Squat', _record(), _record(oneRM: 300));
+      await repo.update('Unknown', existing, _record(oneRM: 300));
+
+      expect(repo.recordsFor('Squat'), [existing]);
+      expect(notifications, 0);
+      expect(await storage.load(), isEmpty);
+    });
+  });
+
   group('RecordsRepository — save failures', () {
     test('add rethrows but keeps the record and saves it next time', () async {
       final storage = _FlakyStorage()..failNextSave = true;

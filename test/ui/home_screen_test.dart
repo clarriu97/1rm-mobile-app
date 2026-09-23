@@ -47,10 +47,15 @@ void main() {
       await _pumpHome(tester, {});
 
       expect(find.text('LOG YOUR FIRST LIFT'), findsOneWidget);
-      for (final exercise in defaultExercises) {
+      for (final exercise in defaultExercises.where((e) => e.defaultVisible)) {
         await tester.scrollUntilVisible(find.text(exercise.name), 100);
         expect(find.text(exercise.name), findsOneWidget);
       }
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('manage-exercises-button')),
+        100,
+      );
+      expect(find.text('Thruster'), findsNothing);
       expect(find.byType(Sparkline), findsNothing);
     });
   });

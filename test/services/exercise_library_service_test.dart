@@ -35,6 +35,7 @@ void main() {
       final s = await service();
       expect(await s.loadCustom(), isEmpty);
       expect(await s.loadHidden(), isEmpty);
+      expect(await s.loadShown(), isEmpty);
     });
 
     test('round-trips custom exercises and hidden ids', () async {
@@ -44,8 +45,10 @@ void main() {
         CustomExerciseData(id: 'custom_2', name: 'Pin Press'),
       ]);
       await s.saveHidden({'snatch', 'custom_2'});
+      await s.saveShown({'thruster'});
 
       final reloaded = await ExerciseLibraryService.getInstance();
+      expect(await reloaded.loadShown(), {'thruster'});
       expect((await reloaded.loadCustom()).map((e) => e.name), [
         'Zercher Squat',
         'Pin Press',

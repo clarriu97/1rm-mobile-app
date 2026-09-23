@@ -22,13 +22,15 @@ class CustomExerciseData {
   }
 }
 
-/// Persists the user's exercise library choices: custom exercises and which
-/// exercises are hidden from Home.
+/// Persists the user's exercise library choices: custom exercises and the
+/// exercises they explicitly hid from or showed on Home.
 abstract class ExerciseLibraryService {
   Future<List<CustomExerciseData>> loadCustom();
   Future<void> saveCustom(List<CustomExerciseData> exercises);
   Future<Set<String>> loadHidden();
   Future<void> saveHidden(Set<String> ids);
+  Future<Set<String>> loadShown();
+  Future<void> saveShown(Set<String> ids);
 
   static Future<ExerciseLibraryService> getInstance() async =>
       _PrefsExerciseLibraryService(await SharedPreferences.getInstance());
@@ -36,7 +38,8 @@ abstract class ExerciseLibraryService {
   static ExerciseLibraryService forTesting({
     List<CustomExerciseData> custom = const [],
     Set<String> hidden = const {},
-  }) => _FakeExerciseLibraryService(custom, hidden);
+    Set<String> shown = const {},
+  }) => _FakeExerciseLibraryService(custom, hidden, shown);
 }
 
 class _PrefsExerciseLibraryService implements ExerciseLibraryService {
@@ -45,6 +48,7 @@ class _PrefsExerciseLibraryService implements ExerciseLibraryService {
   final SharedPreferences _prefs;
   static const _customKey = 'custom_exercises';
   static const _hiddenKey = 'hidden_exercises';
+  static const _shownKey = 'shown_exercises';
 
   @override
   Future<List<CustomExerciseData>> loadCustom() async {
@@ -76,17 +80,28 @@ class _PrefsExerciseLibraryService implements ExerciseLibraryService {
   @override
   Future<void> saveHidden(Set<String> ids) =>
       _prefs.setStringList(_hiddenKey, ids.toList()..sort());
+
+  @override
+  Future<Set<String>> loadShown() async =>
+      (_prefs.getStringList(_shownKey) ?? const []).toSet();
+
+  @override
+  Future<void> saveShown(Set<String> ids) =>
+      _prefs.setStringList(_shownKey, ids.toList()..sort());
 }
 
 class _FakeExerciseLibraryService implements ExerciseLibraryService {
   _FakeExerciseLibraryService(
     List<CustomExerciseData> custom,
     Set<String> hidden,
+    Set<String> shown,
   ) : _custom = List.of(custom),
-      _hidden = Set.of(hidden);
+      _hidden = Set.of(hidden),
+      _shown = Set.of(shown);
 
   List<CustomExerciseData> _custom;
   Set<String> _hidden;
+  Set<String> _shown;
 
   @override
   Future<List<CustomExerciseData>> loadCustom() async => List.of(_custom);
@@ -100,4 +115,10 @@ class _FakeExerciseLibraryService implements ExerciseLibraryService {
 
   @override
   Future<void> saveHidden(Set<String> ids) async => _hidden = Set.of(ids);
+
+  @override
+  Future<Set<String>> loadShown() async => Set.of(_shown);
+
+  @override
+  Future<void> saveShown(Set<String> ids) async => _shown = Set.of(ids);
 }

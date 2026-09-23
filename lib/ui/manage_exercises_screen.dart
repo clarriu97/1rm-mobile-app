@@ -1,15 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../data/default_exercises.dart';
 import '../repositories/exercise_library.dart';
 import 'theme/app_theme.dart';
 
 /// Show/hide exercises on Home and create custom ones.
-class ManageExercisesScreen extends StatelessWidget {
+class ManageExercisesScreen extends StatefulWidget {
   const ManageExercisesScreen({super.key, required this.library});
 
   final ExerciseLibrary library;
 
-  Future<void> _addExercise(BuildContext context) async {
+  @override
+  State<ManageExercisesScreen> createState() => _ManageExercisesScreenState();
+}
+
+class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
+  final _search = TextEditingController();
+
+  ExerciseLibrary get library => widget.library;
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addExercise() async {
     final name = await showDialog<String>(
       context: context,
       builder: (_) => _NewExerciseDialog(library: library),
@@ -25,66 +47,70 @@ class ManageExercisesScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Exercises')),
       body: ListenableBuilder(
         listenable: library,
-        builder: (context, _) => ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.xxl,
-          ),
-          children: [
-            Text('SHOW ON HOME', style: text.labelMedium),
-            const SizedBox(height: AppSpacing.sm),
-            Material(
-              color: AppColors.surface,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-                side: const BorderSide(color: AppColors.outline),
-              ),
-              child: Column(
-                children: [
-                  for (final (index, exercise) in library.all.indexed)
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        border: index == 0
-                            ? null
-                            : const Border(
-                                top: BorderSide(color: AppColors.outline),
-                              ),
-                      ),
-                      child: SwitchListTile(
-                        key: Key('toggle-${exercise.id}'),
-                        value: !library.isHidden(exercise.id),
-                        onChanged: (show) =>
-                            library.setHidden(exercise.id, hidden: !show),
-                        activeThumbColor: AppColors.onAccent,
-                        activeTrackColor: AppColors.accent,
-                        secondary: SvgPicture.asset(
-                          exercise.assetPath,
-                          width: 32,
-                          height: 32,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.textSecondary,
-                            BlendMode.srcIn,
-                          ),
+        builder: (context, _) {
+          final query = _search.text.trim().toLowerCase();
+          final matches = library.all
+              .where((e) => e.name.toLowerCase().contains(query))
+              .toList();
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.xxl,
+            ),
+            children: [
+              TextField(
+                key: const Key('exercise-search'),
+                controller: _search,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Search exercises',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear search',
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: _search.clear,
                         ),
-                        title: Text(exercise.name, style: text.titleMedium),
-                        subtitle: library.isCustom(exercise.id)
-                            ? Text('Custom', style: text.bodySmall)
-                            : null,
-                      ),
-                    ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Hidden exercises keep all their records.',
-              style: text.bodySmall,
-            ),
-          ],
-        ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                '${library.visible.length} of ${library.all.length} shown on Home',
+                key: const Key('shown-count'),
+                style: text.bodySmall,
+              ),
+              if (matches.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                  child: Text(
+                    'No exercises match "${_search.text.trim()}".',
+                    textAlign: TextAlign.center,
+                    style: text.bodyLarge,
+                  ),
+                ),
+              for (final (category, group) in groupByCategory(matches)) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    category.displayName.toUpperCase(),
+                    style: text.labelMedium,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _ExerciseGroup(library: library, exercises: group),
+              ],
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Hidden exercises keep all their records.',
+                style: text.bodySmall,
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(
@@ -95,10 +121,62 @@ class ManageExercisesScreen extends StatelessWidget {
         ),
         child: ElevatedButton.icon(
           key: const Key('new-exercise-button'),
-          onPressed: () => _addExercise(context),
+          onPressed: _addExercise,
           icon: const Icon(Icons.add_rounded),
           label: const Text('New exercise'),
         ),
+      ),
+    );
+  }
+}
+
+class _ExerciseGroup extends StatelessWidget {
+  const _ExerciseGroup({required this.library, required this.exercises});
+
+  final ExerciseLibrary library;
+  final List<ExerciseTemplate> exercises;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Material(
+      color: AppColors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        side: const BorderSide(color: AppColors.outline),
+      ),
+      child: Column(
+        children: [
+          for (final (index, exercise) in exercises.indexed)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: index == 0
+                    ? null
+                    : const Border(top: BorderSide(color: AppColors.outline)),
+              ),
+              child: SwitchListTile(
+                key: Key('toggle-${exercise.id}'),
+                value: !library.isHidden(exercise.id),
+                onChanged: (show) =>
+                    library.setHidden(exercise.id, hidden: !show),
+                activeThumbColor: AppColors.onAccent,
+                activeTrackColor: AppColors.accent,
+                secondary: SvgPicture.asset(
+                  exercise.assetPath,
+                  width: 32,
+                  height: 32,
+                  colorFilter: ColorFilter.mode(
+                    library.isHidden(exercise.id)
+                        ? AppColors.textMuted
+                        : AppColors.accent,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                title: Text(exercise.name, style: text.titleMedium),
+              ),
+            ),
+        ],
       ),
     );
   }

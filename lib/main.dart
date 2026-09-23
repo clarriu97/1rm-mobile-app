@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'models/weight_unit.dart';
 import 'repositories/exercise_library.dart';
 import 'repositories/records_repository.dart';
 import 'services/exercise_library_service.dart';
@@ -104,8 +103,10 @@ class _AppGateState extends State<_AppGate> {
     if (mounted) setState(() => _onboardingComplete = complete);
   }
 
-  Future<void> _completeOnboarding(WeightUnit unit) async {
-    await widget.unitService.setUnit(unit);
+  Future<void> _completeOnboarding(OnboardingChoices choices) async {
+    await widget.unitService.setUnit(choices.unit);
+    final lifts = choices.lifts;
+    if (lifts != null) await widget.library.setVisibleExactly(lifts);
     await widget.onboarding.completeOnboarding();
     if (mounted) setState(() => _onboardingComplete = true);
   }
@@ -120,6 +121,8 @@ class _AppGateState extends State<_AppGate> {
       return OnboardingScreen(
         onComplete: _completeOnboarding,
         initialUnit: defaultUnitForCountry(widget.countryCode),
+        exercises: widget.library.all,
+        initialLifts: {for (final e in widget.library.visible) e.id},
       );
     }
 

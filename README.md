@@ -17,7 +17,7 @@ A cross-platform Flutter app to **calculate, track, and obsess over your One-Rep
 
 ## Features
 
-- **6 built-in exercises** — Back Squat, Front Squat, Bench Press, Deadlift, Power Clean, Snatch
+- **34 lifts** — squat, hinge, bench, overhead, pulls, Olympic lifts and CrossFit staples (thruster, cluster, SDHP…), each with its own vector icon; show only the ones you train, or add your own
 - **Epley 1RM calculation** — enter weight × reps, get your estimated max
 - **Percentage working-weight table** — 50–100% in 5% steps, rounded to nearest 1 kg
 - **Per-exercise history** — chronologically sorted with relative dates

@@ -15,6 +15,12 @@ import 'ui/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerFontLicenses();
+  runApp(await loadApp());
+}
+
+/// Builds the app on top of the on-device services. Integration tests use it
+/// too, so they exercise the same composition as a real launch.
+Future<OneRMApp> loadApp() async {
   final records = await RecordsRepository.load(
     await StorageService.getInstance(),
   );
@@ -24,14 +30,12 @@ void main() async {
   final onboarding = await OnboardingService.getInstance();
   final unitService = await UnitService.getInstance();
 
-  runApp(
-    OneRMApp(
-      records: records,
-      library: library,
-      onboarding: onboarding,
-      unitService: unitService,
-      countryCode: PlatformDispatcher.instance.locale.countryCode,
-    ),
+  return OneRMApp(
+    records: records,
+    library: library,
+    onboarding: onboarding,
+    unitService: unitService,
+    countryCode: PlatformDispatcher.instance.locale.countryCode,
   );
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -16,19 +17,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _pages = [
     _OnboardingPage(
-      icon: Icons.fitness_center_rounded,
+      illustration: 'assets/illustrations/onboarding_max.svg',
       title: 'What is 1RM?',
       description:
           'Your One-Rep Max is the maximum weight you can lift for a single repetition. It\'s the gold standard for measuring strength.',
     ),
     _OnboardingPage(
-      icon: Icons.add_circle_rounded,
+      illustration: 'assets/illustrations/onboarding_log.svg',
       title: 'Log your lifts',
       description:
           'Enter any weight and reps you\'ve lifted. We\'ll calculate your estimated 1RM using the Epley formula — no need to attempt a true max.',
     ),
     _OnboardingPage(
-      icon: Icons.insights_rounded,
+      illustration: 'assets/illustrations/onboarding_table.svg',
       title: 'Train smarter',
       description:
           'Get a personalized percentage table based on your best 1RM. Know exactly what weight to use for every training intensity.',
@@ -114,12 +115,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _OnboardingPage extends StatelessWidget {
   const _OnboardingPage({
-    required this.icon,
+    required this.illustration,
     required this.title,
     required this.description,
   });
 
-  final IconData icon;
+  /// Pre-colored SVG; not tinted.
+  final String illustration;
   final String title;
   final String description;
 
@@ -133,8 +135,7 @@ class _OnboardingPage extends StatelessWidget {
         children: [
           KnurlPanel(
             borderColor: AppColors.accent,
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: Icon(icon, size: 64, color: AppColors.accent),
+            child: SvgPicture.asset(illustration, width: 144, height: 144),
           ),
           const SizedBox(height: 40),
           Text(title, textAlign: TextAlign.center, style: text.displayMedium),

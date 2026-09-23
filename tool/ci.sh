@@ -147,13 +147,8 @@ e2e_ios() {
   # listing simulators while one boots can take minutes.
   udid=${SIM_UDID:-$(boot_ios "$1")}
   step "e2e on the $1 iPhone simulator ($udid)"
-  # Build while the simulator finishes booting (minutes on CI); the test run
-  # then only rebuilds incrementally.
-  flutter build ios --simulator --debug -t "$E2E" &
-  local build=$!
   xcrun simctl bootstatus "$udid" -b >/dev/null
   wait_for_log_stream "$udid"
-  wait "$build"
   run_e2e "$udid"
 }
 

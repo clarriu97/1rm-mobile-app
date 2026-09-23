@@ -33,14 +33,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Boots in the background while the SDK installs and the app builds.
-      - name: Start simulator
-        run: tool/ci.sh boot-ios ${{ matrix.size }}
-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      # Boots in the background during pub get and the build. Not earlier:
+      # booting slows restoring the 2 GB SDK cache from ~1.5 to ~5 min.
+      - name: Start simulator
+        run: tool/ci.sh boot-ios ${{ matrix.size }}
 
       - uses: actions/cache@v4
         with:

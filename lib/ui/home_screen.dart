@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
 import '../models/weight_unit.dart';
+import '../repositories/exercise_library.dart';
 import '../repositories/records_repository.dart';
 import '../services/unit_service.dart';
 import '../utils/dates.dart';
 import '../utils/formulas.dart';
 import 'exercise_detail_screen.dart';
+import 'manage_exercises_screen.dart';
 import 'settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sparkline.dart';
@@ -15,10 +17,12 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.records,
+    required this.library,
     required this.unitService,
   });
 
   final RecordsRepository records;
+  final ExerciseLibrary library;
   final UnitService unitService;
 
   @override
@@ -49,6 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUnit();
   }
 
+  Future<void> _openLibrary() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => ManageExercisesScreen(library: widget.library),
+      ),
+    );
+  }
+
   Future<void> _openDetail(ExerciseTemplate template) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -75,10 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: ListenableBuilder(
-        listenable: widget.records,
+        listenable: Listenable.merge([widget.records, widget.library]),
         builder: (context, _) {
           final now = DateTime.now();
-          final hasAnyRecord = defaultExercises.any(
+          final exercises = widget.library.visible;
+          final hasAnyRecord = exercises.any(
             (e) => widget.records.latestFor(e.id) != null,
           );
           return ListView(
@@ -89,8 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
               AppSpacing.xxl,
             ),
             children: [
-              if (!hasAnyRecord) const _FirstLiftHint(),
-              for (final template in defaultExercises)
+              if (exercises.isEmpty)
+                const _AllHiddenHint()
+              else if (!hasAnyRecord)
+                const _FirstLiftHint(),
+              for (final template in exercises)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: _ExerciseCard(
@@ -101,9 +117,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => _openDetail(template),
                   ),
                 ),
+              Center(
+                child: TextButton.icon(
+                  key: const Key('manage-exercises-button'),
+                  onPressed: _openLibrary,
+                  icon: const Icon(Icons.tune_rounded, size: 20),
+                  label: const Text('Manage exercises'),
+                ),
+              ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _AllHiddenHint extends StatelessWidget {
+  const _AllHiddenHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+      child: Text(
+        'All exercises are hidden.',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodyLarge,
       ),
     );
   }

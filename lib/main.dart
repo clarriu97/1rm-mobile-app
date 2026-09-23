@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'repositories/exercise_library.dart';
 import 'repositories/records_repository.dart';
+import 'services/exercise_library_service.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
 import 'services/unit_service.dart';
@@ -14,12 +16,16 @@ void main() async {
   final records = await RecordsRepository.load(
     await StorageService.getInstance(),
   );
+  final library = await ExerciseLibrary.load(
+    await ExerciseLibraryService.getInstance(),
+  );
   final onboarding = await OnboardingService.getInstance();
   final unitService = await UnitService.getInstance();
 
   runApp(
     OneRMApp(
       records: records,
+      library: library,
       onboarding: onboarding,
       unitService: unitService,
     ),
@@ -30,11 +36,13 @@ class OneRMApp extends StatelessWidget {
   const OneRMApp({
     super.key,
     required this.records,
+    required this.library,
     required this.onboarding,
     required this.unitService,
   });
 
   final RecordsRepository records;
+  final ExerciseLibrary library;
   final OnboardingService onboarding;
   final UnitService unitService;
 
@@ -47,6 +55,7 @@ class OneRMApp extends StatelessWidget {
       home: _AppGate(
         onboarding: onboarding,
         records: records,
+        library: library,
         unitService: unitService,
       ),
     );
@@ -57,11 +66,13 @@ class _AppGate extends StatefulWidget {
   const _AppGate({
     required this.onboarding,
     required this.records,
+    required this.library,
     required this.unitService,
   });
 
   final OnboardingService onboarding;
   final RecordsRepository records;
+  final ExerciseLibrary library;
   final UnitService unitService;
 
   @override
@@ -97,6 +108,10 @@ class _AppGateState extends State<_AppGate> {
       return OnboardingScreen(onComplete: _completeOnboarding);
     }
 
-    return HomeScreen(records: widget.records, unitService: widget.unitService);
+    return HomeScreen(
+      records: widget.records,
+      library: widget.library,
+      unitService: widget.unitService,
+    );
   }
 }

@@ -3,8 +3,8 @@ import 'package:one_rm_mobile/data/default_exercises.dart';
 
 void main() {
   group('DefaultExercises', () {
-    test('has exactly 6 exercises', () {
-      expect(defaultExercises.length, 6);
+    test('has the 10 built-in lifts', () {
+      expect(defaultExercises.length, 10);
     });
 
     test('all exercises have unique names', () {
@@ -22,9 +22,12 @@ void main() {
 
     test('every legacy name maps to an existing exercise id', () {
       final ids = defaultExercises.map((e) => e.id).toSet();
-      expect(legacyExerciseIds.values.toSet(), ids);
-      for (final exercise in defaultExercises) {
-        expect(legacyExerciseIds[exercise.name], exercise.id);
+      expect(ids, containsAll(legacyExerciseIds.values));
+      for (final entry in legacyExerciseIds.entries) {
+        final exercise = defaultExercises.firstWhere(
+          (e) => e.id == entry.value,
+        );
+        expect(exercise.name, entry.key, reason: 'v1 name must still map');
       }
     });
 

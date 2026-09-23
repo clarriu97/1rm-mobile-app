@@ -8,6 +8,8 @@ import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
 import 'package:one_rm_mobile/ui/onboarding_screen.dart';
 
+import 'helpers/test_app.dart';
+
 void main() {
   group('OneRMApp onboarding gate', () {
     late RecordsRepository records;
@@ -23,6 +25,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -42,6 +45,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -61,6 +65,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -85,6 +90,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -109,6 +115,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),
@@ -132,6 +139,7 @@ void main() {
       await tester.pumpWidget(
         OneRMApp(
           records: records,
+          library: testLibrary(),
           onboarding: onboarding,
           unitService: unitService,
         ),

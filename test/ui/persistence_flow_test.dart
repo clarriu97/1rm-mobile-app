@@ -179,7 +179,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          HomeScreen(records: records, unitService: UnitService.forTesting()),
+          HomeScreen(
+            records: records,
+            library: testLibrary(),
+            unitService: UnitService.forTesting(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -200,7 +204,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          HomeScreen(records: records, unitService: UnitService.forTesting()),
+          HomeScreen(
+            records: records,
+            library: testLibrary(),
+            unitService: UnitService.forTesting(),
+          ),
         ),
       );
       await tester.pumpAndSettle();

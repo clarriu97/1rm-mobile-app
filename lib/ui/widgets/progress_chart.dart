@@ -6,6 +6,7 @@ import '../../models/exercise.dart';
 import '../../models/weight_unit.dart';
 import '../../utils/formulas.dart';
 import '../theme/app_theme.dart';
+import 'segmented_chips.dart';
 
 enum ProgressRange {
   threeMonths('3M'),
@@ -111,12 +112,13 @@ class _ProgressChartState extends State<ProgressChart> {
         Row(
           children: [
             Expanded(child: Text('Progress', style: text.titleMedium)),
-            for (final range in ProgressRange.values)
-              _RangeChip(
-                range: range,
-                selected: range == _range,
-                onTap: () => setState(() => _range = range),
-              ),
+            SegmentedChips<ProgressRange>(
+              values: ProgressRange.values,
+              selected: _range,
+              labelOf: (range) => range.label,
+              onSelected: (range) => setState(() => _range = range),
+              keyPrefix: 'range',
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -275,55 +277,6 @@ class _ProgressChartState extends State<ProgressChart> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RangeChip extends StatelessWidget {
-  const _RangeChip({
-    required this.range,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final ProgressRange range;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
-      color: selected ? AppColors.onAccent : AppColors.textSecondary,
-      letterSpacing: 0.8,
-    );
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: InkWell(
-        key: Key('range-${range.label}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: kMinTapTarget,
-            minHeight: kMinTapTarget,
-          ),
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.accent : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadii.sm),
-              ),
-              child: Text(range.label, style: style),
-            ),
           ),
         ),
       ),

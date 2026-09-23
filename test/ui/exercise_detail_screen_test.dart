@@ -63,4 +63,124 @@ void main() {
       },
     );
   });
+
+  group('ExerciseDetailScreen — working weights table', () {
+    Future<void> pump(WidgetTester tester, double oneRMKg, WeightUnit unit) =>
+        tester.pumpWidget(
+          buildTestApp(
+            ExerciseDetailScreen(
+              template: defaultExercises.first,
+              records: RecordsRepository(StorageService.inMemoryForTesting(), {
+                defaultExercises.first.id: [
+                  ExerciseRecord(
+                    weight: oneRMKg,
+                    reps: 1,
+                    oneRM: oneRMKg,
+                    date: DateTime(2026, 9, 20),
+                  ),
+                ],
+              }),
+              unit: unit,
+            ),
+          ),
+        );
+
+    Future<void> showTable(WidgetTester tester) => tester.scrollUntilVisible(
+      find.byKey(const Key('working-weights-table')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    List<String> tableWeights(WidgetTester tester) => tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byKey(const Key('working-weights-table')),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data!)
+        .where((s) => s.endsWith(' kg') || s.endsWith(' lbs'))
+        .toList();
+
+    testWidgets('lbs working weights are loadable multiples of 5 lbs', (
+      tester,
+    ) async {
+      await pump(tester, 100, WeightUnit.lbs); // 100 kg = 220.46 lbs
+      await showTable(tester);
+
+      final weights = tableWeights(tester);
+      expect(weights, isNotEmpty);
+      for (final w in weights) {
+        final value = double.parse(w.split(' ').first);
+        expect(value % 5, 0, reason: w);
+      }
+      expect(weights.first, '220 lbs');
+    });
+
+    testWidgets('kg working weights are whole kilos without decimals', (
+      tester,
+    ) async {
+      await pump(tester, 116.7, WeightUnit.kg);
+      await showTable(tester);
+
+      final weights = tableWeights(tester);
+      expect(weights.first, '117 kg');
+      expect(find.text('Rounded to the nearest 1 kg.'), findsOneWidget);
+    });
+
+    testWidgets('reps mode lists 1 to 10 reps from the 1RM down', (
+      tester,
+    ) async {
+      await pump(tester, 150, WeightUnit.kg);
+      await showTable(tester);
+      await tester.ensureVisible(find.byKey(const Key('table-REPS')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('table-REPS')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('REPS'), findsWidgets);
+      expect(find.text('1 rep'), findsOneWidget);
+      expect(find.text('10 reps'), findsOneWidget);
+      final weights = tableWeights(tester);
+      expect(weights.first, '150 kg');
+      expect(weights.last, '113 kg'); // 150 / (1 + 10/30) = 112.5 → 113
+      expect(weights, hasLength(10));
+    });
+
+    testWidgets('switching back to % restores the percentage rows', (
+      tester,
+    ) async {
+      await pump(tester, 150, WeightUnit.kg);
+      await showTable(tester);
+      await tester.ensureVisible(find.byKey(const Key('table-REPS')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('table-REPS')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('table-%')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('table-%')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('100%'), findsOneWidget);
+      expect(find.text('50%'), findsOneWidget);
+      expect(tableWeights(tester), hasLength(11));
+    });
+
+    testWidgets('add button lives in the bottom bar, not over the table', (
+      tester,
+    ) async {
+      await pump(tester, 150, WeightUnit.kg);
+
+      expect(find.byType(FloatingActionButton), findsNothing);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.bottomNavigationBar, isNotNull);
+      expect(
+        find.descendant(
+          of: find.byWidget(scaffold.bottomNavigationBar!),
+          matching: find.text('Add Entry'),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
 }

@@ -26,6 +26,8 @@ double calculateWeightForPercentage(double oneRM, double percentage) {
   return oneRM * percentage / 100;
 }
 
+/// Working weights from 100 % down to 50 %. [oneRM] must already be in
+/// [unit] so the rounding lands on loadable plates (1 kg / 5 lbs).
 List<PercentageEntry> generatePercentageTable(
   double oneRM, [
   WeightUnit unit = WeightUnit.kg,
@@ -70,3 +72,36 @@ double? estimateOneRMFromInput(
   final weightInKg = unit == WeightUnit.lbs ? lbsToKg(weight) : weight;
   return calculateOneRM(weightInKg, reps);
 }
+
+class RepMaxEntry {
+  const RepMaxEntry({required this.reps, required this.weight});
+
+  final int reps;
+  final double weight;
+}
+
+/// Inverse Epley: the weight you should manage for [reps] given [oneRM].
+double weightForReps(double oneRM, int reps) =>
+    reps <= 1 ? oneRM : oneRM / (1 + reps / 30);
+
+/// Estimated rep maxes from 1 to [maxRepsShown]. [oneRM] must be in [unit].
+List<RepMaxEntry> generateRepsTable(
+  double oneRM, [
+  WeightUnit unit = WeightUnit.kg,
+  int maxRepsShown = 10,
+]) {
+  return [
+    for (var reps = 1; reps <= maxRepsShown; reps++)
+      RepMaxEntry(
+        reps: reps,
+        weight: roundToNearest(
+          weightForReps(oneRM, reps),
+          unit.roundingIncrement,
+        ),
+      ),
+  ];
+}
+
+/// Formats a value that is already in [unit] (no conversion).
+String formatUnitValue(double value, WeightUnit unit, [int decimals = 0]) =>
+    '${value.toStringAsFixed(decimals)} ${unit.displayName}';

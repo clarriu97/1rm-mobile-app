@@ -194,4 +194,60 @@ void main() {
       expect(entry75.weight, 75.0);
     });
   });
+
+  group('estimateOneRMFromInput', () {
+    test('valid kg input returns the Epley estimate in kg', () {
+      expect(
+        estimateOneRMFromInput('100', '5', WeightUnit.kg),
+        closeTo(116.67, 0.01),
+      );
+    });
+
+    test('1 rep returns the weight itself', () {
+      expect(estimateOneRMFromInput('140', '1', WeightUnit.kg), 140);
+    });
+
+    test('lbs input is converted to kg', () {
+      expect(
+        estimateOneRMFromInput('225', '1', WeightUnit.lbs),
+        closeTo(102.06, 0.01),
+      );
+    });
+
+    test('accepts comma decimals and surrounding spaces', () {
+      expect(estimateOneRMFromInput(' 112,5 ', ' 1 ', WeightUnit.kg), 112.5);
+    });
+
+    test('returns null for empty or unparsable fields', () {
+      expect(estimateOneRMFromInput('', '5', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('100', '', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('abc', '5', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('100', '5.5', WeightUnit.kg), isNull);
+    });
+
+    test('returns null for zero or negative values', () {
+      expect(estimateOneRMFromInput('0', '5', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('-10', '5', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('100', '0', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('100', '-1', WeightUnit.kg), isNull);
+    });
+
+    test('respects the per-unit weight limit', () {
+      expect(estimateOneRMFromInput('1000', '1', WeightUnit.kg), 1000);
+      expect(estimateOneRMFromInput('1000.1', '1', WeightUnit.kg), isNull);
+      expect(estimateOneRMFromInput('2204.62', '1', WeightUnit.lbs), isNotNull);
+      expect(estimateOneRMFromInput('2205', '1', WeightUnit.lbs), isNull);
+    });
+
+    test('respects the reps limit', () {
+      expect(
+        estimateOneRMFromInput('100', '$maxReps', WeightUnit.kg),
+        isNotNull,
+      );
+      expect(
+        estimateOneRMFromInput('100', '${maxReps + 1}', WeightUnit.kg),
+        isNull,
+      );
+    });
+  });
 }

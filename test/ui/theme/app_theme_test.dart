@@ -80,6 +80,13 @@ void main() {
       expect(size.width, greaterThanOrEqualTo(kMinTapTarget));
     });
 
+    test('date picker uses the tight radius and display font', () {
+      final picker = theme.datePickerTheme;
+      final shape = picker.shape! as RoundedRectangleBorder;
+      expect(shape.borderRadius, BorderRadius.circular(AppRadii.md));
+      expect(picker.headerHeadlineStyle!.fontFamily, AppTheme.displayFont);
+    });
+
     test('focused inputs are outlined in the accent color', () {
       final border =
           theme.inputDecorationTheme.focusedBorder! as OutlineInputBorder;

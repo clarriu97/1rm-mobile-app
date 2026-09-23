@@ -52,7 +52,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), '100');
     await tester.enterText(find.byType(TextFormField).at(1), '5');
-    await tester.tap(find.text('Calculate 1RM'));
+    await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('116.7 kg'), findsWidgets);

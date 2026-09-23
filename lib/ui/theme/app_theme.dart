@@ -174,6 +174,16 @@ class AppTheme {
         titleTextStyle: textTheme.headlineMedium?.copyWith(fontSize: 26),
         contentTextStyle: textTheme.bodyLarge,
       ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: AppColors.surfaceRaised,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          side: const BorderSide(color: AppColors.outline),
+        ),
+        headerHeadlineStyle: textTheme.headlineMedium,
+        dividerColor: AppColors.outline,
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceRaised,

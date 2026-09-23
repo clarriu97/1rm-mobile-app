@@ -90,7 +90,7 @@ Project skills live in `.claude/skills/` (`.agents` is a symlink for other agent
 3. Before modifying code, check existing coverage; add tests first if missing.
 4. Bugs: first a test that reproduces it, then the fix.
 5. UI tests cover happy paths and sad paths (invalid/empty input shows feedback).
-6. Test layers: unit for pure Dart (repositories, services, formulas); widget for screens/forms/navigation/semantics; `integration_test/` for full user flows on simulator/device.
+6. Test layers: unit for pure Dart (repositories, services, formulas); widget for screens/forms/navigation/semantics; `integration_test/` for full user flows on simulator/device. Every new user-facing flow gets an e2e in `integration_test/flows/`, registered in `integration_test/app_test.dart` and built from `integration_test/helpers.dart` (real storage, relaunch, platform back gesture, waits for disk I/O with `waitFor`).
 7. No `Future.delayed` to hide async timing. Use fakes, explicit pumps, `pumpAndSettle` only when animations settle. Flaky tests get fixed immediately.
 8. Test files mirror `lib/` (`lib/repositories/records_repository.dart` → `test/repositories/records_repository_test.dart`). Reuse the services' `forTesting()` fakes; don't invent new mocking patterns.
 9. When touching old tests that break these rules, bring them in line.
@@ -104,12 +104,13 @@ dart format .                      # CI runs: dart format --set-exit-if-changed 
 flutter analyze
 flutter test                       # full suite — a partial pass is a failure
 flutter test --update-goldens --tags golden   # regenerate screenshots (macOS only)
-flutter test integration_test      # on a running simulator/device
+flutter test integration_test/app_test.dart -d <device-id>   # e2e flows on a simulator/emulator/device
+tool/ci.sh                         # exactly what CI runs (tool/ci.sh all adds every e2e target)
 flutter devices
 flutter run -d <device-id>         # iPhone (USB or Wi-Fi) or simulator; keep it running for hot reload
 ```
 
-**Every change must pass `dart format .`, `flutter analyze`, and the full `flutter test` before it is considered done.** Iterate autonomously until green.
+**Every change must pass `tool/ci.sh` (format, analyze, full `flutter test`, goldens) before it is considered done; run `tool/ci.sh all` before opening a PR that touches UI or flows.** Iterate autonomously until green.
 
 When the app is running (via `flutter run` or the Dart MCP server), hot reload after editing UI in `lib/`, and hot restart after changing `main()`, `initState`, or global/static state. Don't reload for edits outside `lib/` or comment-only changes.
 

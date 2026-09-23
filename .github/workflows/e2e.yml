@@ -1,0 +1,135 @@
+name: E2E
+
+# The integration_test flows on real simulators/emulators: the smallest and
+# largest current iPhone, and Android on the oldest supported API with a small
+# screen and the newest API with a large one. Same commands as
+# `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android` locally.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  # Seconds before tool/ci.sh treats an e2e run as hung and retries it.
+  E2E_TIMEOUT: 480
+
+jobs:
+  ios:
+    name: iOS · ${{ matrix.size }}
+    runs-on: macos-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [small, large]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      # Boots in the background during pub get and the build. Not earlier:
+      # booting slows restoring the 2 GB SDK cache from ~1.5 to ~5 min.
+      - name: Start simulator
+        run: tool/ci.sh boot-ios ${{ matrix.size }}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
+
+      - run: flutter pub get
+
+      - run: tool/ci.sh e2e-ios ${{ matrix.size }}
+
+  android:
+    name: Android · API ${{ matrix.api-level }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Oldest API Flutter supports, on a small 360 × 640 dp screen.
+          # Cold boot: installs hang when resuming this image from a snapshot.
+          - api-level: 24
+            target: default
+            profile: Nexus 5
+            snapshot: false
+          # Newest API, on a large 412 × 915 dp screen.
+          - api-level: 35
+            target: google_apis
+            profile: pixel_7
+            snapshot: true
+    env:
+      EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=always"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      # A booted-emulator snapshot, created once per configuration: later runs
+      # resume it in seconds instead of cold-booting.
+      - uses: actions/cache@v4
+        if: matrix.snapshot
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.profile }}
+
+      - name: Create emulator snapshot
+        if: matrix.snapshot && steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          force-avd-creation: false
+          emulator-options: ${{ env.EMULATOR_OPTIONS }}
+          disable-animations: false
+          script: echo "Snapshot saved."
+
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          force-avd-creation: false
+          emulator-options: ${{ matrix.snapshot && '-no-snapshot-save' || '-no-snapshot' }} ${{ env.EMULATOR_OPTIONS }}
+          # Turns on "Remove animations": Android runs exercise the static
+          # fallbacks, iOS runs the full motion.
+          disable-animations: true
+          script: tool/ci.sh e2e-android

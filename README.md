@@ -18,16 +18,14 @@ A cross-platform Flutter app to **calculate, track, and obsess over your One-Rep
 ## Features
 
 - **34 lifts** — squat, hinge, bench, overhead, pulls, Olympic lifts and CrossFit staples (thruster, cluster, SDHP…), each with its own vector icon; show only the ones you train, or add your own
-- **Epley 1RM calculation** — enter weight × reps, get your estimated max
-- **Percentage working-weight table** — 50–100% in 5% steps, rounded to nearest 1 kg
-- **Per-exercise history** — chronologically sorted with relative dates
-- **Delete entries** — tap the trash icon or long-press a row
-- **Comma & dot decimal support** — `112,5` kg works just like `112.5`
-- **Persistent storage** — all data saved automatically, survives app restarts
-- **kg / lbs** — pick your unit in Settings; data is stored in kg and converted on the fly
-- **First-run onboarding** — a quick intro to 1RM and how the app works
-- **Dark theme** — because you lift in the dungeon, not a tanning bed
-- **2 platforms** — Android & iOS
+- **Live 1RM estimate** — type weight × reps and see the Epley estimate before saving; log past sessions with a date picker
+- **Personal records** — beating your best triggers a celebration; PRs are badged in the history
+- **Progress chart** — 1RM over time per lift, 3M / 1Y / ALL
+- **Working weights** — percentage table (50–100 %) and reps table (1–10), rounded to loadable plates (1 kg / 5 lbs)
+- **Editable history** — grouped by month; tap to edit, swipe to delete, undo
+- **kg / lbs** — chosen at onboarding (default from your region), switchable in Settings; data is stored in kg
+- **Offline and private** — everything stays on the device, saved on every change
+- **Dark industrial theme**, iPhone and Android
 
 ## The Science
 
@@ -64,19 +62,47 @@ flutter run -d android # Android
 
 ## Testing
 
+| Kind | Where | What it covers | Runs on |
+|---|---|---|---|
+| **Unit** | `test/` (`test()`) | Pure logic: formulas, rounding, kg ↔ lbs, repositories, storage migrations | Host machine, milliseconds |
+| **Widget** | `test/` (`testWidgets`) | One screen rendered by the real Flutter framework: tap, type, scroll, check what shows | Host machine, no device |
+| **Layout matrix** | `test/ui/layout_matrix_test.dart` | Every screen × 8 devices (iPhone SE → Android tablet) × text 100 / 130 / 200 %; fails on any overflow | Host machine |
+| **Golden** | `test/goldens/` (tag `golden`) | Pixel comparison of the key screens against checked-in PNGs | macOS only |
+| **End-to-end** | `integration_test/` | Full user flows on a simulator/emulator with real disk storage, including app relaunch and the iOS back swipe | Simulator, emulator or device |
+
+Flutter draws every pixel itself, so widget tests exercise the same layout code a phone runs. The end-to-end tests add what they can't see: plugins (storage, preferences), the real engine, back gestures and cold starts.
+
+The same commands CI runs are wrapped in `tool/ci.sh`, so a local run is identical to CI:
+
 ```bash
-# Run all tests
-flutter test
-
-# End-to-end flow on a booted simulator or connected device
-flutter test integration_test
-
-# Check formatting
-dart format --set-exit-if-changed .
-
-# Static analysis
-flutter analyze
+tool/ci.sh                  # format, analyze, unit/widget/matrix tests, goldens (~1 min)
+tool/ci.sh all              # + e2e on the small and large iPhone simulators and a running Android emulator
+tool/ci.sh e2e-ios small    # one e2e target: small | large
+tool/ci.sh e2e-android      # e2e on the running emulator/device
 ```
+
+Run the fast checks automatically before every push (once per clone):
+
+```bash
+git config core.hooksPath tool/git-hooks   # then: E2E=1 git push to include the e2e flows
+```
+
+Lower-level commands:
+
+```bash
+flutter test --exclude-tags golden               # unit, widget, layout matrix
+flutter test --update-goldens --tags golden      # regenerate screenshots after a visual change (macOS)
+flutter devices                                  # list simulator/emulator/device ids
+flutter test integration_test/app_test.dart -d <device-id>
+```
+
+All e2e flows live in `integration_test/flows/` and run from the single entry point `integration_test/app_test.dart`, so the app is built and installed once per run.
+
+### CI
+
+Every pull request runs:
+- **Flutter CI**: format + analyze, unit/widget/matrix tests (Linux), goldens (macOS).
+- **E2E**: all `integration_test/` flows on the smallest and largest current iPhone simulators (macOS) and on Android emulators with API 24 on a small screen and API 35 on a large one (Linux).
 
 ## Built With
 

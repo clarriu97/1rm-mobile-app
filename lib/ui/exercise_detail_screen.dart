@@ -11,6 +11,7 @@ import 'history_screen.dart';
 import 'save_error.dart';
 import 'widgets/pr_celebration.dart';
 import 'widgets/progress_chart.dart';
+import 'widgets/segmented_chips.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   const ExerciseDetailScreen({
@@ -108,7 +109,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                   AppSpacing.lg,
                   AppSpacing.sm,
                   AppSpacing.lg,
-                  96,
+                  AppSpacing.xl,
                 ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
@@ -125,7 +126,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                         now: DateTime.now(),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
-                      _buildPercentageTable(context, best),
+                      _WorkingWeights(
+                        oneRM: unit == WeightUnit.lbs ? kgToLbs(best) : best,
+                        unit: unit,
+                      ),
                     ] else ...[
                       const SizedBox(height: 40),
                       _buildEmptyState(context),
@@ -135,10 +139,19 @@ class ExerciseDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _addEntry(context),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Entry'),
+          bottomNavigationBar: SafeArea(
+            minimum: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            child: ElevatedButton.icon(
+              key: const Key('add-entry-button'),
+              onPressed: () => _addEntry(context),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add Entry'),
+            ),
           ),
         );
       },
@@ -218,78 +231,6 @@ class ExerciseDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPercentageTable(BuildContext context, double best) {
-    final text = Theme.of(context).textTheme;
-    final table = generatePercentageTable(best, unit);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Working weights', style: text.titleMedium),
-        const SizedBox(height: AppSpacing.md),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(color: AppColors.outline),
-          ),
-          child: Column(
-            children: [
-              _buildTableHeader(context),
-              for (final entry in table) _buildTableRow(context, entry),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTableHeader(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelMedium;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text('PERCENTAGE', style: style)),
-          Expanded(
-            child: Text('WEIGHT', textAlign: TextAlign.right, style: style),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableRow(BuildContext context, PercentageEntry entry) {
-    final isHundred = entry.percentage == 100;
-    final style = Theme.of(context).textTheme.titleMedium?.copyWith(
-      color: isHundred ? AppColors.accent : AppColors.textPrimary,
-      fontWeight: isHundred ? FontWeight.w700 : FontWeight.w500,
-    );
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
-      ),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.outline)),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text('${entry.percentage}%', style: style)),
-          Expanded(
-            child: Text(
-              formatWeight(entry.weight, unit),
-              textAlign: TextAlign.right,
-              style: style,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Center(
@@ -317,6 +258,135 @@ class ExerciseDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+enum _TableMode { percent, reps }
+
+/// Working weights by percentage or by reps. [oneRM] is in [unit] so the
+/// rounding lands on plates you can actually load.
+class _WorkingWeights extends StatefulWidget {
+  const _WorkingWeights({required this.oneRM, required this.unit});
+
+  final double oneRM;
+  final WeightUnit unit;
+
+  @override
+  State<_WorkingWeights> createState() => _WorkingWeightsState();
+}
+
+class _WorkingWeightsState extends State<_WorkingWeights> {
+  _TableMode _mode = _TableMode.percent;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final rows = _mode == _TableMode.percent
+        ? [
+            for (final e in generatePercentageTable(widget.oneRM, widget.unit))
+              (
+                label: '${e.percentage}%',
+                weight: e.weight,
+                top: e.percentage == 100,
+              ),
+          ]
+        : [
+            for (final e in generateRepsTable(widget.oneRM, widget.unit))
+              (
+                label: e.reps == 1 ? '1 rep' : '${e.reps} reps',
+                weight: e.weight,
+                top: e.reps == 1,
+              ),
+          ];
+    final increment = widget.unit.roundingIncrement;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text('Working weights', style: text.titleMedium)),
+            SegmentedChips<_TableMode>(
+              values: _TableMode.values,
+              selected: _mode,
+              labelOf: (mode) => mode == _TableMode.percent ? '%' : 'REPS',
+              onSelected: (mode) => setState(() => _mode = mode),
+              keyPrefix: 'table',
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        DecoratedBox(
+          key: const Key('working-weights-table'),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(color: AppColors.outline),
+          ),
+          child: Column(
+            children: [
+              _TableRow(
+                left: _mode == _TableMode.percent ? 'PERCENTAGE' : 'REPS',
+                right: 'WEIGHT',
+                style: text.labelMedium,
+                divider: false,
+              ),
+              for (final row in rows)
+                _TableRow(
+                  left: row.label,
+                  right: formatUnitValue(row.weight, widget.unit),
+                  style: text.titleMedium?.copyWith(
+                    color: row.top ? AppColors.accent : AppColors.textPrimary,
+                    fontWeight: row.top ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Rounded to the nearest ${increment.toStringAsFixed(0)} ${widget.unit.displayName}.',
+          style: text.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+class _TableRow extends StatelessWidget {
+  const _TableRow({
+    required this.left,
+    required this.right,
+    required this.style,
+    this.divider = true,
+  });
+
+  final String left;
+  final String right;
+  final TextStyle? style;
+  final bool divider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.md,
+      ),
+      decoration: divider
+          ? const BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.outline)),
+            )
+          : null,
+      child: Row(
+        children: [
+          Expanded(child: Text(left, style: style)),
+          Expanded(
+            child: Text(right, textAlign: TextAlign.right, style: style),
+          ),
+        ],
       ),
     );
   }

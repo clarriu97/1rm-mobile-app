@@ -250,4 +250,54 @@ void main() {
       );
     });
   });
+
+  group('weightForReps', () {
+    test('1 rep (or less) is the 1RM itself', () {
+      expect(weightForReps(150, 1), 150);
+      expect(weightForReps(150, 0), 150);
+    });
+
+    test('inverts Epley exactly', () {
+      for (final reps in [2, 5, 8, 10]) {
+        final w = weightForReps(150, reps);
+        expect(calculateOneRM(w, reps), closeTo(150, 1e-9));
+      }
+    });
+
+    test('10 reps is 75 % of the 1RM', () {
+      expect(weightForReps(200, 10), closeTo(150, 1e-9));
+    });
+  });
+
+  group('generateRepsTable', () {
+    test('covers 1 to 10 reps with decreasing weights', () {
+      final table = generateRepsTable(150);
+      expect(table.map((e) => e.reps), List.generate(10, (i) => i + 1));
+      for (var i = 1; i < table.length; i++) {
+        expect(table[i].weight, lessThanOrEqualTo(table[i - 1].weight));
+      }
+      expect(table.first.weight, 150);
+    });
+
+    test('rounds to 1 kg and 5 lbs', () {
+      for (final e in generateRepsTable(152.3)) {
+        expect(e.weight % 1, 0);
+      }
+      for (final e in generateRepsTable(331, WeightUnit.lbs)) {
+        expect(e.weight % 5, 0);
+      }
+    });
+
+    test('custom length', () {
+      expect(generateRepsTable(100, WeightUnit.kg, 5), hasLength(5));
+    });
+  });
+
+  group('formatUnitValue', () {
+    test('formats without converting, 0 decimals by default', () {
+      expect(formatUnitValue(220, WeightUnit.lbs), '220 lbs');
+      expect(formatUnitValue(117, WeightUnit.kg), '117 kg');
+      expect(formatUnitValue(117.25, WeightUnit.kg, 1), '117.3 kg');
+    });
+  });
 }

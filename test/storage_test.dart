@@ -70,7 +70,7 @@ void main() {
 
   group('StorageService — file states', () {
     test('returns empty when file does not exist', () async {
-      final storage = await StorageService.getInstanceForTesting(empty: true);
+      final storage = await StorageService.getInstanceForTesting();
       final loaded = await storage.load();
       expect(loaded, isEmpty);
     });
@@ -407,6 +407,127 @@ void main() {
       final storage = await storageWith('{"schemaVersion": 2}');
 
       expect(await storage.load(), isEmpty);
+    });
+  });
+
+  group('StorageService — robustness', () {
+    const validRecord =
+        '{"weight": 100, "reps": 5, "oneRM": 116.7, "date": "2024-01-15T10:00:00.000"}';
+
+    late Directory dir;
+    late File file;
+
+    setUp(() async {
+      dir = await Directory.systemTemp.createTemp('robust_');
+      file = File('${dir.path}/records.json');
+    });
+
+    tearDown(() => dir.delete(recursive: true));
+
+    List<File> backups() => dir
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.uri.pathSegments.last.startsWith('records.corrupt-'))
+        .toList();
+
+    Future<StorageService> storage() =>
+        StorageService.getInstanceForTesting(directory: dir);
+
+    test('save leaves no temp file behind', () async {
+      await (await storage()).save({
+        'back_squat': [_record],
+      });
+
+      expect(file.existsSync(), isTrue);
+      expect(File('${file.path}.tmp').existsSync(), isFalse);
+    });
+
+    test('orphan temp file does not affect loading the real file', () async {
+      file.writeAsStringSync(
+        '{"schemaVersion": 2, "records": {"snatch": [$validRecord]}}',
+      );
+      File('${file.path}.tmp').writeAsStringSync('{half-written');
+
+      final loaded = await (await storage()).load();
+
+      expect(loaded['snatch'], hasLength(1));
+      expect(backups(), isEmpty);
+    });
+
+    test('orphan temp file without a real file loads as empty', () async {
+      File('${file.path}.tmp').writeAsStringSync('{half-written');
+
+      expect(await (await storage()).load(), isEmpty);
+    });
+
+    test('malformed JSON is backed up and survives the next save', () async {
+      const corrupt = '{"schemaVersion": 2, "records": {"snatch": [';
+      file.writeAsStringSync(corrupt);
+      final service = await storage();
+
+      expect(await service.load(), isEmpty);
+      await service.save({
+        'deadlift': [_record],
+      });
+
+      expect(backups(), hasLength(1));
+      expect(backups().single.readAsStringSync(), corrupt);
+      expect((await service.load()).keys, ['deadlift']);
+    });
+
+    test('non-object root is backed up', () async {
+      file.writeAsStringSync('[1, 2, 3]');
+
+      expect(await (await storage()).load(), isEmpty);
+      expect(backups(), hasLength(1));
+    });
+
+    test('v2 file with invalid records section is backed up', () async {
+      file.writeAsStringSync('{"schemaVersion": 2, "records": "oops"}');
+
+      expect(await (await storage()).load(), isEmpty);
+      expect(backups(), hasLength(1));
+    });
+
+    test('partially invalid file keeps valid records and a backup', () async {
+      const contents =
+          '{"schemaVersion": 2, "records": {"snatch": [$validRecord, {"weight": "x"}], "deadlift": 3}}';
+      file.writeAsStringSync(contents);
+
+      final loaded = await (await storage()).load();
+
+      expect(loaded.keys, ['snatch']);
+      expect(loaded['snatch'], hasLength(1));
+      expect(backups().single.readAsStringSync(), contents);
+    });
+
+    test('valid, empty or missing files create no backup', () async {
+      final service = await storage();
+      expect(await service.load(), isEmpty);
+
+      file.writeAsStringSync('  ');
+      expect(await service.load(), isEmpty);
+
+      file.writeAsStringSync(
+        '{"schemaVersion": 2, "records": {"snatch": [$validRecord]}}',
+      );
+      expect(await service.load(), isNotEmpty);
+
+      expect(backups(), isEmpty);
+    });
+
+    test('save throws when the file cannot be written', () async {
+      final service = await storage();
+      await dir.delete(recursive: true);
+
+      await expectLater(
+        service.save({
+          'back_squat': [_record],
+        }),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      await dir.create();
     });
   });
 }

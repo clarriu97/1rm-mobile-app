@@ -21,7 +21,6 @@ abstract class StorageService {
   /// Not for production use.
   static Future<StorageService> getInstanceForTesting({
     Directory? directory,
-    bool empty = false,
   }) async {
     final dir =
         directory ?? await Directory.systemTemp.createTemp('storage_test_');
@@ -39,60 +38,89 @@ class _FileStorageService implements StorageService {
 
   final File _file;
 
+  File get _tempFile => File('${_file.path}.tmp');
+
   @override
   Future<Map<String, List<ExerciseRecord>>> load() async {
+    if (!await _file.exists()) return {};
     try {
-      if (!await _file.exists()) return {};
       final contents = await _file.readAsString();
       if (contents.trim().isEmpty) return {};
 
-      final decoded = json.decode(contents);
-      // Root must be a JSON object
-      if (decoded is! Map<String, dynamic>) return {};
-
-      if (!decoded.containsKey('schemaVersion')) {
-        // v1: exercise display name → records
-        return _migrateV1Keys(_parseRecords(decoded));
-      }
-      final records = decoded['records'];
-      if (records is! Map<String, dynamic>) return {};
-      return _parseRecords(records);
+      final parsed = _decode(json.decode(contents));
+      if (parsed == null || parsed.lossy) await _backup();
+      return parsed?.records ?? {};
     } catch (_) {
-      // Any error during read/parse → start fresh
+      // Unreadable or malformed: keep a copy so the next save can't destroy it.
+      await _backup();
       return {};
     }
   }
 
+  /// Writes to a temp file and renames it over the real one, so an
+  /// interrupted write never leaves a half-written records file.
+  /// Errors propagate to the caller.
   @override
   Future<void> save(Map<String, List<ExerciseRecord>> records) async {
+    final data = {
+      'schemaVersion': StorageService.schemaVersion,
+      'records': records.map(
+        (key, value) => MapEntry(key, value.map((r) => r.toJson()).toList()),
+      ),
+    };
+    await _tempFile.writeAsString(json.encode(data), flush: true);
+    await _tempFile.rename(_file.path);
+  }
+
+  Future<void> _backup() async {
     try {
-      final data = {
-        'schemaVersion': StorageService.schemaVersion,
-        'records': records.map(
-          (key, value) => MapEntry(key, value.map((r) => r.toJson()).toList()),
-        ),
-      };
-      await _file.writeAsString(json.encode(data));
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+      await _file.copy('${_file.parent.path}/records.corrupt-$stamp.json');
     } catch (_) {
-      // Silent fail — no data is better than a crash
+      // Best effort: nothing more we can do if the copy fails too.
     }
   }
 
-  static Map<String, List<ExerciseRecord>> _parseRecords(
-    Map<String, dynamic> raw,
+  /// Returns null when the file structure is unusable; `lossy` is true when
+  /// some entries or records had to be skipped.
+  static ({Map<String, List<ExerciseRecord>> records, bool lossy})? _decode(
+    Object? decoded,
   ) {
+    // Root must be a JSON object
+    if (decoded is! Map<String, dynamic>) return null;
+
+    if (!decoded.containsKey('schemaVersion')) {
+      // v1: exercise display name → records
+      final parsed = _parseRecords(decoded);
+      return (records: _migrateV1Keys(parsed.records), lossy: parsed.lossy);
+    }
+    final records = decoded['records'];
+    if (records is! Map<String, dynamic>) return null;
+    return _parseRecords(records);
+  }
+
+  static ({Map<String, List<ExerciseRecord>> records, bool lossy})
+  _parseRecords(Map<String, dynamic> raw) {
     final result = <String, List<ExerciseRecord>>{};
+    var lossy = false;
     for (final entry in raw.entries) {
       // Value must be a list
-      if (entry.value is! List) continue;
+      if (entry.value is! List) {
+        lossy = true;
+        continue;
+      }
 
       final rawList = entry.value as List;
       final records = <ExerciseRecord>[];
       for (final item in rawList) {
         // Each item must be a map with valid fields
-        if (item is! Map<String, dynamic>) continue;
-        final record = ExerciseRecord.tryFromJson(item);
-        if (record == null) continue;
+        final record = item is Map<String, dynamic>
+            ? ExerciseRecord.tryFromJson(item)
+            : null;
+        if (record == null) {
+          lossy = true;
+          continue;
+        }
         records.add(record);
       }
 
@@ -100,7 +128,7 @@ class _FileStorageService implements StorageService {
         result[entry.key] = records;
       }
     }
-    return result;
+    return (records: result, lossy: lossy);
   }
 
   /// Maps legacy display-name keys to stable ids. Unknown keys are kept as-is

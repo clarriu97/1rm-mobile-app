@@ -8,6 +8,7 @@ import '../utils/formulas.dart';
 import 'add_entry_screen.dart';
 import 'app_theme.dart';
 import 'history_screen.dart';
+import 'save_error.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   const ExerciseDetailScreen({
@@ -32,7 +33,12 @@ class ExerciseDetailScreen extends StatelessWidget {
       ),
     );
 
-    if (record != null) await records.add(template.id, record);
+    if (record == null) return;
+    try {
+      await records.add(template.id, record);
+    } on Exception {
+      if (context.mounted) showSaveError(context);
+    }
   }
 
   Future<void> _openHistory(BuildContext context) async {

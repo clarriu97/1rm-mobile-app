@@ -7,6 +7,7 @@ import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
 import '../utils/formulas.dart';
 import 'app_theme.dart';
+import 'save_error.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
@@ -56,7 +57,12 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
 
-    if (confirmed == true) await records.delete(template.id, record);
+    if (confirmed != true) return;
+    try {
+      await records.delete(template.id, record);
+    } on Exception {
+      if (context.mounted) showSaveError(context);
+    }
   }
 
   @override

@@ -212,4 +212,60 @@ void main() {
       expect(repo.recordsFor('Deadlift').single, same(first));
     });
   });
+
+  group('RecordsRepository — save failures', () {
+    test('add rethrows but keeps the record and saves it next time', () async {
+      final storage = _FlakyStorage()..failNextSave = true;
+      final repo = RecordsRepository(storage);
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+      final first = _record(oneRM: 100);
+      final second = _record(oneRM: 110);
+
+      await expectLater(
+        repo.add('Deadlift', first),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      expect(repo.recordsFor('Deadlift'), [first]);
+      expect(notifications, 1);
+      expect(await storage.load(), isEmpty);
+
+      await repo.add('Deadlift', second);
+
+      expect((await storage.load())['Deadlift'], [first, second]);
+    });
+
+    test('delete rethrows but keeps the deletion in memory', () async {
+      final record = _record();
+      final storage = _FlakyStorage()..failNextSave = true;
+      final repo = RecordsRepository(storage, {
+        'Deadlift': [record],
+      });
+
+      await expectLater(
+        repo.delete('Deadlift', record),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      expect(repo.recordsFor('Deadlift'), isEmpty);
+    });
+  });
+}
+
+class _FlakyStorage implements StorageService {
+  final _inner = StorageService.inMemoryForTesting();
+  bool failNextSave = false;
+
+  @override
+  Future<Map<String, List<ExerciseRecord>>> load() => _inner.load();
+
+  @override
+  Future<void> save(Map<String, List<ExerciseRecord>> records) async {
+    if (failNextSave) {
+      failNextSave = false;
+      throw const FileSystemException('disk full');
+    }
+    await _inner.save(records);
+  }
 }

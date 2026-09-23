@@ -4,6 +4,9 @@ import '../services/storage_service.dart';
 
 /// Single source of truth for exercise records. Every mutation is persisted
 /// immediately, so no screen needs to hand data back to another one.
+///
+/// If saving fails, the change stays in memory (and is written with the next
+/// successful save) and the error is rethrown so the UI can tell the user.
 class RecordsRepository extends ChangeNotifier {
   RecordsRepository(
     this._storage, [

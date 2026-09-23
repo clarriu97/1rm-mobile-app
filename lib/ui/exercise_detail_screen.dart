@@ -9,6 +9,7 @@ import 'add_entry_screen.dart';
 import 'theme/app_theme.dart';
 import 'history_screen.dart';
 import 'save_error.dart';
+import 'widgets/pr_celebration.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   const ExerciseDetailScreen({
@@ -34,10 +35,22 @@ class ExerciseDetailScreen extends StatelessWidget {
     );
 
     if (record == null) return;
+    final previousBest = records.bestOneRMFor(template.id);
+    final bool isPR;
     try {
-      await records.add(template.id, record);
+      isPR = await records.add(template.id, record);
     } on Exception {
       if (context.mounted) showSaveError(context);
+      return;
+    }
+    if (isPR && context.mounted) {
+      await showPrCelebration(
+        context,
+        exerciseName: template.name,
+        oneRM: record.oneRM,
+        previousBest: previousBest!,
+        unit: unit,
+      );
     }
   }
 

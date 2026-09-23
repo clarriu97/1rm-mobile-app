@@ -108,3 +108,5 @@ analyzer:
     - "**/*.freezed.dart"
     - "build/**"
     - ".dart_tool/**"
+    - android/**
+    - ios/**

@@ -58,7 +58,7 @@ void main() {
       expect(find.byType(ExerciseDetailScreen), findsOneWidget);
       expect(find.text('116.7 kg'), findsWidgets);
 
-      final saved = (await storage.load())[_squat.name];
+      final saved = (await storage.load())[_squat.id];
       expect(saved, hasLength(1));
       expect(saved!.single.weight, 100);
       expect(saved.single.reps, 5);
@@ -89,7 +89,7 @@ void main() {
       tester,
     ) async {
       final records = RecordsRepository(StorageService.inMemoryForTesting(), {
-        _squat.name: [_record()],
+        _squat.id: [_record()],
       });
 
       await tester.pumpWidget(
@@ -126,17 +126,16 @@ void main() {
     testWidgets('confirmed delete is saved immediately', (tester) async {
       final storage = StorageService.inMemoryForTesting();
       final records = RecordsRepository(storage, {
-        _squat.name: [_record()],
+        _squat.id: [_record()],
       });
       await storage.save({
-        _squat.name: [_record()],
+        _squat.id: [_record()],
       });
 
       await tester.pumpWidget(
         _app(
           HistoryScreen(
-            exerciseName: _squat.name,
-            assetPath: _squat.assetPath,
+            template: _squat,
             records: records,
             unit: WeightUnit.kg,
           ),
@@ -154,14 +153,13 @@ void main() {
     testWidgets('cancelled delete keeps the entry', (tester) async {
       final storage = StorageService.inMemoryForTesting();
       final records = RecordsRepository(storage, {
-        _squat.name: [_record()],
+        _squat.id: [_record()],
       });
 
       await tester.pumpWidget(
         _app(
           HistoryScreen(
-            exerciseName: _squat.name,
-            assetPath: _squat.assetPath,
+            template: _squat,
             records: records,
             unit: WeightUnit.kg,
           ),
@@ -173,7 +171,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No records yet'), findsNothing);
-      expect(records.recordsFor(_squat.name), hasLength(1));
+      expect(records.recordsFor(_squat.id), hasLength(1));
     });
   });
 
@@ -211,7 +209,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await records.add(_squat.name, _record(weight: 200, reps: 1));
+      await records.add(_squat.id, _record(weight: 200, reps: 1));
       await tester.pump();
 
       expect(find.text('200.0 kg'), findsOneWidget);

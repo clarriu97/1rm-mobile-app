@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -288,6 +289,124 @@ void main() {
       expect(result, isNotNull);
       expect(result!.weight, 100);
       expect(result.reps, 5);
+    });
+  });
+
+  group('StorageService — schema v2 and v1 migration', () {
+    const v1Record =
+        '{"weight": 100, "reps": 5, "oneRM": 116.7, "date": "2024-01-15T10:00:00.000"}';
+
+    Future<Directory> tempDir() async {
+      final dir = await Directory.systemTemp.createTemp('schema_');
+      addTearDown(() => dir.delete(recursive: true));
+      return dir;
+    }
+
+    Future<StorageService> storageWith(String contents) async {
+      final dir = await tempDir();
+      File('${dir.path}/records.json').writeAsStringSync(contents);
+      return StorageService.getInstanceForTesting(directory: dir);
+    }
+
+    test('save writes a versioned envelope', () async {
+      final dir = await tempDir();
+      final storage = await StorageService.getInstanceForTesting(
+        directory: dir,
+      );
+
+      await storage.save({
+        'back_squat': [_record],
+      });
+
+      final raw =
+          json.decode(File('${dir.path}/records.json').readAsStringSync())
+              as Map<String, dynamic>;
+      expect(raw['schemaVersion'], StorageService.schemaVersion);
+      expect((raw['records'] as Map<String, dynamic>).keys, ['back_squat']);
+    });
+
+    test('migrates v1 display-name keys to stable ids', () async {
+      final storage = await storageWith('''
+        {
+          "Back Squat": [$v1Record],
+          "Front Squat": [$v1Record],
+          "Bench Press": [$v1Record],
+          "Deadlift": [$v1Record, $v1Record],
+          "Power Clean": [$v1Record],
+          "Snatch": [$v1Record]
+        }
+      ''');
+
+      final loaded = await storage.load();
+
+      expect(loaded.keys.toSet(), {
+        'back_squat',
+        'front_squat',
+        'bench_press',
+        'deadlift',
+        'power_clean',
+        'snatch',
+      });
+      expect(loaded['deadlift'], hasLength(2));
+      expect(loaded['back_squat']!.single.weight, 100);
+      expect(loaded['back_squat']!.single.date, _fixedDate);
+    });
+
+    test('keeps unknown v1 keys instead of dropping data', () async {
+      final storage = await storageWith('{"Zercher Squat": [$v1Record]}');
+
+      final loaded = await storage.load();
+
+      expect(loaded.keys, ['Zercher Squat']);
+      expect(loaded['Zercher Squat'], hasLength(1));
+    });
+
+    test('merges a v1 name and an id for the same exercise', () async {
+      final storage = await storageWith(
+        '{"Back Squat": [$v1Record], "back_squat": [$v1Record]}',
+      );
+
+      final loaded = await storage.load();
+
+      expect(loaded.keys, ['back_squat']);
+      expect(loaded['back_squat'], hasLength(2));
+    });
+
+    test('v1 file is rewritten as v2 on the next save', () async {
+      final dir = await tempDir();
+      final file = File('${dir.path}/records.json')
+        ..writeAsStringSync('{"Snatch": [$v1Record]}');
+      final storage = await StorageService.getInstanceForTesting(
+        directory: dir,
+      );
+
+      await storage.save(await storage.load());
+
+      final raw = json.decode(file.readAsStringSync()) as Map<String, dynamic>;
+      expect(raw['schemaVersion'], 2);
+      expect((await storage.load())['snatch'], hasLength(1));
+    });
+
+    test('loads a v2 file without renaming keys', () async {
+      final storage = await storageWith(
+        '{"schemaVersion": 2, "records": {"Back Squat": [$v1Record]}}',
+      );
+
+      expect((await storage.load()).keys, ['Back Squat']);
+    });
+
+    test('v2 file with non-object records loads as empty', () async {
+      final storage = await storageWith(
+        '{"schemaVersion": 2, "records": [1, 2, 3]}',
+      );
+
+      expect(await storage.load(), isEmpty);
+    });
+
+    test('v2 file without records loads as empty', () async {
+      final storage = await storageWith('{"schemaVersion": 2}');
+
+      expect(await storage.load(), isEmpty);
     });
   });
 }

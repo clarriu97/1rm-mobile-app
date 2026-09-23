@@ -23,7 +23,7 @@ jobs:
   ios:
     name: iOS · ${{ matrix.size }}
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -54,19 +54,22 @@ jobs:
   android:
     name: Android · API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         include:
           # Oldest API Flutter supports, on a small 360 × 640 dp screen.
+          # Cold boot: installs hang when resuming this image from a snapshot.
           - api-level: 24
             target: default
             profile: Nexus 5
+            snapshot: false
           # Newest API, on a large 412 × 915 dp screen.
           - api-level: 35
             target: google_apis
             profile: pixel_7
+            snapshot: true
     env:
       EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
     steps:
@@ -94,6 +97,7 @@ jobs:
       # A booted-emulator snapshot, created once per configuration: later runs
       # resume it in seconds instead of cold-booting.
       - uses: actions/cache@v4
+        if: matrix.snapshot
         id: avd-cache
         with:
           path: |
@@ -102,7 +106,7 @@ jobs:
           key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.profile }}
 
       - name: Create emulator snapshot
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+        if: matrix.snapshot && steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -121,7 +125,7 @@ jobs:
           arch: x86_64
           profile: ${{ matrix.profile }}
           force-avd-creation: false
-          emulator-options: -no-snapshot-save ${{ env.EMULATOR_OPTIONS }}
+          emulator-options: ${{ matrix.snapshot && '-no-snapshot-save' || '-no-snapshot' }} ${{ env.EMULATOR_OPTIONS }}
           # Turns on "Remove animations": Android runs exercise the static
           # fallbacks, iOS runs the full motion.
           disable-animations: true

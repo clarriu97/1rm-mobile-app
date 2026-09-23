@@ -17,6 +17,9 @@ cd "$(dirname "$0")/.."
 
 E2E=integration_test/app_test.dart
 
+# A healthy e2e run (build + install + flows) takes under 10 min even on CI.
+E2E_TIMEOUT=${E2E_TIMEOUT:-900}
+
 step() { printf '\n\033[1;33m▶ %s\033[0m\n' "$*"; }
 
 lint() {
@@ -43,6 +46,32 @@ goldens() {
   fi
   step "goldens"
   flutter test --tags golden
+}
+
+# Runs the e2e flows on a device. Simulators and emulators occasionally hang
+# while installing or attaching to the app; such a run is killed after
+# E2E_TIMEOUT seconds and retried once. A failing test is never retried.
+run_e2e() {
+  local device=$1 attempt status marker pid watchdog
+  for attempt in 1 2; do
+    marker=$(mktemp -u)
+    flutter test "$E2E" -d "$device" &
+    pid=$!
+    (sleep "$E2E_TIMEOUT" && touch "$marker" && pkill -TERM -P "$pid"; kill -TERM "$pid") >/dev/null 2>&1 &
+    watchdog=$!
+    status=0
+    wait "$pid" || status=$?
+    # Stop the watchdog and its sleep, which would otherwise outlive us.
+    pkill -P "$watchdog" 2>/dev/null || true
+    kill "$watchdog" 2>/dev/null || true
+    wait "$watchdog" 2>/dev/null || true
+    if [[ ! -f "$marker" ]]; then
+      return "$status"
+    fi
+    rm -f "$marker"
+    echo "⚠︎ e2e hung for ${E2E_TIMEOUT}s on attempt $attempt; killed." >&2
+  done
+  return 1
 }
 
 # Newest available simulator whose name matches the size's pattern:
@@ -78,7 +107,7 @@ e2e_ios() {
   udid=$(boot_ios "$1")
   step "e2e on $(xcrun simctl list devices | grep "$udid" | sed 's/ (.*//;s/^ *//') ($1)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
-  flutter test "$E2E" -d "$udid"
+  run_e2e "$udid"
 }
 
 android_device() {
@@ -93,8 +122,14 @@ e2e_android() {
     echo "No Android emulator or device running (start one from Android Studio → Device Manager)." >&2
     return 1
   fi
+  # boot_completed can be set before the package manager accepts installs.
+  local _
+  for _ in $(seq 60); do
+    adb -s "$device" shell pm path android >/dev/null 2>&1 && break
+    sleep 2
+  done
   step "e2e on Android $device"
-  flutter test "$E2E" -d "$device"
+  run_e2e "$device"
 }
 
 all() {

@@ -10,6 +10,7 @@ import 'theme/app_theme.dart';
 import 'history_screen.dart';
 import 'save_error.dart';
 import 'widgets/pr_celebration.dart';
+import 'widgets/progress_chart.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   const ExerciseDetailScreen({
@@ -114,6 +115,15 @@ class ExerciseDetailScreen extends StatelessWidget {
                     if (best != null) ...[
                       const SizedBox(height: AppSpacing.sm),
                       _buildBestOneRM(context, best, latest),
+                      const SizedBox(height: AppSpacing.xxl),
+                      ProgressChart(
+                        records: records.recordsFor(template.id),
+                        personalRecords: records.personalRecordsFor(
+                          template.id,
+                        ),
+                        unit: unit,
+                        now: DateTime.now(),
+                      ),
                       const SizedBox(height: AppSpacing.xxl),
                       _buildPercentageTable(context, best),
                     ] else ...[

@@ -121,7 +121,18 @@ void main() {
   });
 
   group('HistoryScreen persistence', () {
-    testWidgets('confirmed delete is saved immediately', (tester) async {
+    Future<void> pumpHistory(WidgetTester tester, RecordsRepository records) =>
+        tester.pumpWidget(
+          buildTestApp(
+            HistoryScreen(
+              template: _squat,
+              records: records,
+              unit: WeightUnit.kg,
+            ),
+          ),
+        );
+
+    testWidgets('delete is immediate (no dialog) and saved', (tester) async {
       final storage = StorageService.inMemoryForTesting();
       final records = RecordsRepository(storage, {
         _squat.id: [_record()],
@@ -130,46 +141,33 @@ void main() {
         _squat.id: [_record()],
       });
 
-      await tester.pumpWidget(
-        buildTestApp(
-          HistoryScreen(
-            template: _squat,
-            records: records,
-            unit: WeightUnit.kg,
-          ),
-        ),
-      );
+      await pumpHistory(tester, records);
       await tester.tap(find.byTooltip('Delete'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
-      await tester.pumpAndSettle();
 
+      expect(find.byType(AlertDialog), findsNothing);
       expect(find.text('No records yet'), findsOneWidget);
       expect(await storage.load(), isEmpty);
     });
 
-    testWidgets('cancelled delete keeps the entry', (tester) async {
+    testWidgets('Undo restores the deleted entry and saves it', (tester) async {
       final storage = StorageService.inMemoryForTesting();
+      final record = _record();
       final records = RecordsRepository(storage, {
-        _squat.id: [_record()],
+        _squat.id: [record],
       });
 
-      await tester.pumpWidget(
-        buildTestApp(
-          HistoryScreen(
-            template: _squat,
-            records: records,
-            unit: WeightUnit.kg,
-          ),
-        ),
-      );
+      await pumpHistory(tester, records);
       await tester.tap(find.byTooltip('Delete'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel'));
+      expect(find.text('Deleted 100.0 kg × 5'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
 
+      expect(records.recordsFor(_squat.id).single, same(record));
+      expect((await storage.load())[_squat.id], hasLength(1));
       expect(find.text('No records yet'), findsNothing);
-      expect(records.recordsFor(_squat.id), hasLength(1));
     });
   });
 
@@ -257,13 +255,12 @@ void main() {
       );
       await tester.tap(find.byTooltip('Delete'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
-      await tester.pumpAndSettle();
 
       expect(
         find.text('Could not save. Check your device storage.'),
         findsOneWidget,
       );
+      expect(find.text('Undo'), findsNothing);
     });
 
     testWidgets('successful save shows no error message', (tester) async {

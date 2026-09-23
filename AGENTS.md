@@ -53,7 +53,7 @@ lib/
 ```
 
 Rules:
-- **Data flows down from repositories, never back up through `Navigator.pop` results.** Screens call repository methods; repositories persist immediately.
+- **Data flows down from repositories, never back up through `Navigator.pop` results.** Screens don't keep copies of repository data; they call repository methods and repositories persist immediately. (A form route may return its single result via `pop`; the caller hands it to the repository right away.)
 - Dependencies are injected through constructors from `main.dart`. No global singletons, no service locators.
 - Weights are always stored in **kg**; convert only at the UI boundary (`formatWeight`, `lbsToKg`).
 - Exercises are keyed by a **stable id** (`back_squat`), never by display name.

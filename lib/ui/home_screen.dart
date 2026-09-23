@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
-import '../models/exercise.dart';
 import '../models/weight_unit.dart';
-import '../services/storage_service.dart';
+import '../repositories/records_repository.dart';
 import '../services/unit_service.dart';
 import '../utils/formulas.dart';
 import 'exercise_detail_screen.dart';
@@ -13,13 +12,11 @@ import 'app_theme.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
-    required this.initialRecords,
-    required this.storage,
+    required this.records,
     required this.unitService,
   });
 
-  final Map<String, List<ExerciseRecord>> initialRecords;
-  final StorageService storage;
+  final RecordsRepository records;
   final UnitService unitService;
 
   @override
@@ -27,13 +24,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Map<String, List<ExerciseRecord>> _records;
   WeightUnit _unit = WeightUnit.kg;
 
   @override
   void initState() {
     super.initState();
-    _records = widget.initialRecords;
     _loadUnit();
   }
 
@@ -52,35 +47,16 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUnit();
   }
 
-  Future<void> _persist() => widget.storage.save(_records);
-
-  Future<void> _openDetail(
-    String exerciseName,
-    ExerciseTemplate template,
-  ) async {
-    final existingRecords = _records[exerciseName] ?? [];
-
-    final updatedRecords = await Navigator.of(context)
-        .push<List<ExerciseRecord>>(
-          MaterialPageRoute<List<ExerciseRecord>>(
-            builder: (context) => ExerciseDetailScreen(
-              template: template,
-              records: existingRecords,
-              unit: _unit,
-            ),
-          ),
-        );
-
-    if (updatedRecords != null) {
-      setState(() {
-        if (updatedRecords.isEmpty) {
-          _records.remove(exerciseName);
-        } else {
-          _records[exerciseName] = updatedRecords;
-        }
-      });
-      _persist();
-    }
+  Future<void> _openDetail(ExerciseTemplate template) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => ExerciseDetailScreen(
+          template: template,
+          records: widget.records,
+          unit: _unit,
+        ),
+      ),
+    );
   }
 
   @override
@@ -96,35 +72,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.85,
+      body: ListenableBuilder(
+        listenable: widget.records,
+        builder: (context, _) => CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.85,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final template = defaultExercises[index];
+                  return _ExerciseCard(
+                    template: template,
+                    bestOneRM: widget.records.bestOneRMFor(template.name),
+                    unit: _unit,
+                    onTap: () => _openDetail(template),
+                  );
+                }, childCount: defaultExercises.length),
               ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final template = defaultExercises[index];
-                final records = _records[template.name] ?? [];
-                final bestOneRM = records.isEmpty
-                    ? null
-                    : records
-                          .map((r) => r.oneRM)
-                          .reduce((a, b) => a > b ? a : b);
-                return _ExerciseCard(
-                  template: template,
-                  bestOneRM: bestOneRM,
-                  unit: _unit,
-                  onTap: () => _openDetail(template.name, template),
-                );
-              }, childCount: defaultExercises.length),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

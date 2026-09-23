@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
+import 'package:one_rm_mobile/repositories/records_repository.dart';
+import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/ui/add_entry_screen.dart';
 import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
@@ -393,7 +395,9 @@ void main() {
           _buildApp(
             ExerciseDetailScreen(
               template: dummyExercise,
-              records: [massiveRecord],
+              records: RecordsRepository(StorageService.inMemoryForTesting(), {
+                dummyExercise.name: [massiveRecord],
+              }),
               unit: WeightUnit.kg,
             ),
           ),

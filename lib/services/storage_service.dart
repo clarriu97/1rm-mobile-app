@@ -3,14 +3,13 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../models/exercise.dart';
 
-class StorageService {
-  StorageService._(this._file);
-
-  final File _file;
+abstract class StorageService {
+  Future<Map<String, List<ExerciseRecord>>> load();
+  Future<void> save(Map<String, List<ExerciseRecord>> records);
 
   static Future<StorageService> getInstance() async {
     final dir = await getApplicationDocumentsDirectory();
-    return StorageService._(File('${dir.path}/records.json'));
+    return _FileStorageService(File('${dir.path}/records.json'));
   }
 
   /// Creates an instance backed by a test directory.
@@ -22,9 +21,20 @@ class StorageService {
     final dir =
         directory ?? await Directory.systemTemp.createTemp('storage_test_');
     final file = File('${dir.path}/records.json');
-    return StorageService._(file);
+    return _FileStorageService(file);
   }
 
+  /// In-memory instance for widget tests, where real file I/O does not
+  /// complete inside the fake async zone.
+  static StorageService inMemoryForTesting() => _InMemoryStorageService();
+}
+
+class _FileStorageService implements StorageService {
+  _FileStorageService(this._file);
+
+  final File _file;
+
+  @override
   Future<Map<String, List<ExerciseRecord>>> load() async {
     try {
       if (!await _file.exists()) return {};
@@ -61,6 +71,7 @@ class StorageService {
     }
   }
 
+  @override
   Future<void> save(Map<String, List<ExerciseRecord>> records) async {
     try {
       final data = records.map(
@@ -71,4 +82,20 @@ class StorageService {
       // Silent fail — no data is better than a crash
     }
   }
+}
+
+class _InMemoryStorageService implements StorageService {
+  Map<String, List<ExerciseRecord>> _data = {};
+
+  @override
+  Future<Map<String, List<ExerciseRecord>>> load() async => _copy(_data);
+
+  @override
+  Future<void> save(Map<String, List<ExerciseRecord>> records) async {
+    _data = _copy(records);
+  }
+
+  static Map<String, List<ExerciseRecord>> _copy(
+    Map<String, List<ExerciseRecord>> source,
+  ) => {for (final entry in source.entries) entry.key: List.of(entry.value)};
 }

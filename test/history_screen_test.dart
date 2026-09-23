@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
+import 'package:one_rm_mobile/repositories/records_repository.dart';
+import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/ui/app_theme.dart';
 import 'package:one_rm_mobile/ui/history_screen.dart';
 
@@ -26,7 +28,9 @@ void main() {
           HistoryScreen(
             exerciseName: 'Back Squat',
             assetPath: 'assets/icons/back_squat.svg',
-            records: records,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              'Back Squat': records,
+            }),
             unit: WeightUnit.kg,
           ),
         ),
@@ -51,7 +55,9 @@ void main() {
           HistoryScreen(
             exerciseName: 'Back Squat',
             assetPath: 'assets/icons/back_squat.svg',
-            records: records,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              'Back Squat': records,
+            }),
             unit: WeightUnit.lbs,
           ),
         ),
@@ -76,7 +82,9 @@ void main() {
           HistoryScreen(
             exerciseName: 'Back Squat',
             assetPath: 'assets/icons/back_squat.svg',
-            records: records,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              'Back Squat': records,
+            }),
             unit: WeightUnit.lbs,
           ),
         ),

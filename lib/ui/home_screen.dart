@@ -19,11 +19,13 @@ class HomeScreen extends StatefulWidget {
     required this.records,
     required this.library,
     required this.unitService,
+    this.clock = DateTime.now,
   });
 
   final RecordsRepository records;
   final ExerciseLibrary library;
   final UnitService unitService;
+  final DateTime Function() clock;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -68,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           template: template,
           records: widget.records,
           unit: _unit,
+          clock: widget.clock,
         ),
       ),
     );
@@ -89,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListenableBuilder(
         listenable: Listenable.merge([widget.records, widget.library]),
         builder: (context, _) {
-          final now = DateTime.now();
+          final now = widget.clock();
           final exercises = widget.library.visible;
           final hasAnyRecord = exercises.any(
             (e) => widget.records.latestFor(e.id) != null,

@@ -183,4 +183,59 @@ void main() {
       );
     });
   });
+
+  group('ExerciseDetailScreen — clock', () {
+    final squat = defaultExercises.first;
+    final now = DateTime(2026, 3, 10, 12);
+    ExerciseRecord record(DateTime date) =>
+        ExerciseRecord(weight: 100, reps: 1, oneRM: 100, date: date);
+
+    testWidgets('the chart ranges count back from the injected clock', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          ExerciseDetailScreen(
+            template: squat,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              squat.id: [
+                record(DateTime(2025, 1, 5)),
+                record(DateTime(2025, 2, 5)),
+              ],
+            }),
+            unit: WeightUnit.kg,
+            clock: () => now,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('range-1Y')));
+      await tester.pumpAndSettle();
+
+      // Both entries are more than a year before the injected "now".
+      expect(find.text('Not enough entries in this range.'), findsOneWidget);
+    });
+
+    testWidgets('history opened from the detail uses the same clock', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          ExerciseDetailScreen(
+            template: squat,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              squat.id: [record(DateTime(2026, 3, 9, 8))],
+            }),
+            unit: WeightUnit.kg,
+            clock: () => now,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('History'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Yesterday'), findsOneWidget);
+    });
+  });
 }

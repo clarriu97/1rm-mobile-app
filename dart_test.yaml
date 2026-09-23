@@ -1,0 +1,4 @@
+tags:
+  # Pixel comparisons against checked-in screenshots. They run on macOS in CI
+  # (where they are generated); `flutter test --exclude-tags golden` skips them.
+  golden:

@@ -65,13 +65,12 @@ void main() {
     var saved = await tester.runAsync(() async => (await storage()).load());
     expect(saved!['back_squat'], hasLength(1));
 
-    // Delete it from history.
+    // Delete it from history (no dialog, undoable).
     await tester.tap(find.byTooltip('History'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Delete'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Delete'));
-    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
     expect(find.text('No records yet'), findsOneWidget);
 
     saved = await tester.runAsync(() async => (await storage()).load());

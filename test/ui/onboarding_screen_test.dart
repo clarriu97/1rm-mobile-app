@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/ui/onboarding_screen.dart';
 
 import '../helpers/test_app.dart';
@@ -11,7 +12,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       expect(find.text('What is 1RM?'), findsOneWidget);
@@ -20,7 +21,7 @@ void main() {
 
     testWidgets('shows Next button on first page', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       expect(find.text('Next'), findsOneWidget);
@@ -29,7 +30,7 @@ void main() {
 
     testWidgets('shows Skip button on first page', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       expect(find.text('Skip'), findsOneWidget);
@@ -37,7 +38,7 @@ void main() {
 
     testWidgets('navigates to second page on Next tap', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -49,7 +50,7 @@ void main() {
 
     testWidgets('navigates to third page on second Next tap', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -59,12 +60,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Train smarter'), findsOneWidget);
-      expect(find.textContaining('percentage table'), findsOneWidget);
+      expect(find.textContaining('working weights'), findsOneWidget);
     });
 
     testWidgets('shows Get Started on last page', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -78,7 +79,7 @@ void main() {
 
     testWidgets('hides Skip button on last page', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -86,13 +87,17 @@ void main() {
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Skip'), findsNothing);
+      final skip = tester.widget<Visibility>(
+        find.ancestor(of: find.text('Skip'), matching: find.byType(Visibility)),
+      );
+      expect(skip.visible, isFalse);
+      expect(find.text('Skip').hitTestable(), findsNothing);
     });
 
     testWidgets('calls onComplete when Get Started is tapped', (tester) async {
       bool completed = false;
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () => completed = true)),
+        buildTestApp(OnboardingScreen(onComplete: (_) => completed = true)),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
@@ -108,7 +113,7 @@ void main() {
     testWidgets('calls onComplete when Skip is tapped', (tester) async {
       bool completed = false;
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () => completed = true)),
+        buildTestApp(OnboardingScreen(onComplete: (_) => completed = true)),
       );
 
       await tester.tap(find.byKey(const Key('onboarding-skip-button')));
@@ -119,7 +124,7 @@ void main() {
 
     testWidgets('swipe navigates to next page', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       await tester.fling(find.byType(PageView), const Offset(-300, 0), 1000);
@@ -130,7 +135,7 @@ void main() {
 
     testWidgets('renders 3 page indicators', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
 
       expect(find.byType(AnimatedContainer), findsNWidgets(3));
@@ -145,7 +150,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        buildTestApp(OnboardingScreen(onComplete: () {})),
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
       );
       expect(illustration('onboarding_max'), findsOneWidget);
 
@@ -156,6 +161,87 @@ void main() {
       await tester.tap(find.byKey(const Key('onboarding-next-button')));
       await tester.pumpAndSettle();
       expect(illustration('onboarding_table'), findsOneWidget);
+    });
+  });
+
+  group('defaultUnitForCountry', () {
+    test('pounds for countries that do not use the metric system', () {
+      for (final code in ['US', 'us', 'LR', 'MM']) {
+        expect(defaultUnitForCountry(code), WeightUnit.lbs, reason: code);
+      }
+    });
+
+    test('kilograms everywhere else and when unknown', () {
+      for (final code in ['ES', 'GB', 'MX', 'CA', '', null]) {
+        expect(defaultUnitForCountry(code), WeightUnit.kg, reason: '$code');
+      }
+    });
+  });
+
+  group('OnboardingScreen — unit choice', () {
+    Future<void> goToLastPage(WidgetTester tester) async {
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byKey(const Key('onboarding-next-button')));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    bool isSelected(WidgetTester tester, WeightUnit unit) => tester
+        .widget<Semantics>(
+          find
+              .ancestor(
+                of: find.byKey(Key('unit-option-${unit.name}')),
+                matching: find.byType(Semantics),
+              )
+              .first,
+        )
+        .properties
+        .selected!;
+
+    testWidgets('last page preselects the initial unit', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          OnboardingScreen(onComplete: (_) {}, initialUnit: WeightUnit.lbs),
+        ),
+      );
+      await goToLastPage(tester);
+
+      expect(find.text('KG'), findsOneWidget);
+      expect(find.text('LBS'), findsOneWidget);
+      expect(isSelected(tester, WeightUnit.lbs), isTrue);
+      expect(isSelected(tester, WeightUnit.kg), isFalse);
+    });
+
+    testWidgets('choosing a unit and finishing reports it', (tester) async {
+      WeightUnit? chosen;
+      await tester.pumpWidget(
+        buildTestApp(OnboardingScreen(onComplete: (u) => chosen = u)),
+      );
+      await goToLastPage(tester);
+
+      await tester.tap(find.byKey(const Key('unit-option-lbs')));
+      await tester.pump();
+      expect(isSelected(tester, WeightUnit.lbs), isTrue);
+
+      await tester.tap(find.byKey(const Key('onboarding-next-button')));
+      await tester.pump();
+      expect(chosen, WeightUnit.lbs);
+    });
+
+    testWidgets('skipping keeps the initial unit', (tester) async {
+      WeightUnit? chosen;
+      await tester.pumpWidget(
+        buildTestApp(
+          OnboardingScreen(
+            onComplete: (u) => chosen = u,
+            initialUnit: WeightUnit.lbs,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('onboarding-skip-button')));
+      await tester.pump();
+      expect(chosen, WeightUnit.lbs);
     });
   });
 }

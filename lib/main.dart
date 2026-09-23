@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'models/weight_unit.dart';
 import 'repositories/exercise_library.dart';
 import 'repositories/records_repository.dart';
 import 'services/exercise_library_service.dart';
@@ -28,6 +31,7 @@ void main() async {
       library: library,
       onboarding: onboarding,
       unitService: unitService,
+      countryCode: PlatformDispatcher.instance.locale.countryCode,
     ),
   );
 }
@@ -39,12 +43,16 @@ class OneRMApp extends StatelessWidget {
     required this.library,
     required this.onboarding,
     required this.unitService,
+    this.countryCode,
   });
 
   final RecordsRepository records;
   final ExerciseLibrary library;
   final OnboardingService onboarding;
   final UnitService unitService;
+
+  /// Device region, used to pick the default unit during onboarding.
+  final String? countryCode;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +65,7 @@ class OneRMApp extends StatelessWidget {
         records: records,
         library: library,
         unitService: unitService,
+        countryCode: countryCode,
       ),
     );
   }
@@ -68,12 +77,14 @@ class _AppGate extends StatefulWidget {
     required this.records,
     required this.library,
     required this.unitService,
+    required this.countryCode,
   });
 
   final OnboardingService onboarding;
   final RecordsRepository records;
   final ExerciseLibrary library;
   final UnitService unitService;
+  final String? countryCode;
 
   @override
   State<_AppGate> createState() => _AppGateState();
@@ -93,7 +104,8 @@ class _AppGateState extends State<_AppGate> {
     if (mounted) setState(() => _onboardingComplete = complete);
   }
 
-  Future<void> _completeOnboarding() async {
+  Future<void> _completeOnboarding(WeightUnit unit) async {
+    await widget.unitService.setUnit(unit);
     await widget.onboarding.completeOnboarding();
     if (mounted) setState(() => _onboardingComplete = true);
   }
@@ -105,7 +117,10 @@ class _AppGateState extends State<_AppGate> {
     }
 
     if (!_onboardingComplete!) {
-      return OnboardingScreen(onComplete: _completeOnboarding);
+      return OnboardingScreen(
+        onComplete: _completeOnboarding,
+        initialUnit: defaultUnitForCountry(widget.countryCode),
+      );
     }
 
     return HomeScreen(

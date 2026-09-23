@@ -1,8 +1,9 @@
 name: E2E
 
 # The integration_test flows on real simulators/emulators: the smallest and
-# largest iPhone, and Android on the oldest supported API with a small screen
-# and the newest API with a large one.
+# largest current iPhone, and Android on the oldest supported API with a small
+# screen and the newest API with a large one. Same commands as
+# `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android` locally.
 
 on:
   push:
@@ -22,52 +23,38 @@ jobs:
   ios:
     name: iOS · ${{ matrix.size }}
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - size: small
-            # iPhone SE / "e" models: the narrowest current iPhones.
-            pattern: "iPhone (SE|[0-9]+e)"
-          - size: large
-            pattern: "Pro Max"
+        size: [small, large]
     steps:
       - uses: actions/checkout@v4
+
+      # Boots in the background while the SDK installs and the app builds.
+      - name: Start simulator
+        run: tool/ci.sh boot-ios ${{ matrix.size }}
 
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
+
       - run: flutter pub get
 
-      - name: Boot simulator
-        id: sim
-        run: |
-          # Latest available device matching the pattern, on the newest runtime.
-          udid=$(xcrun simctl list devices available -j | jq -r --arg p "${{ matrix.pattern }}" '
-            [.devices | to_entries[]
-              | select(.key | test("iOS"))
-              | .key as $rt | .value[]
-              | select(.name | test($p)) | {rt: $rt, udid, name}]
-            | sort_by(.rt) | last | .udid')
-          if [ -z "$udid" ] || [ "$udid" = "null" ]; then
-            xcrun simctl list devices available
-            echo "No simulator matches '${{ matrix.pattern }}'" >&2
-            exit 1
-          fi
-          xcrun simctl list devices | grep "$udid"
-          xcrun simctl boot "$udid"
-          xcrun simctl bootstatus "$udid" -b
-          echo "udid=$udid" >> "$GITHUB_OUTPUT"
-
-      - run: flutter test integration_test -d ${{ steps.sim.outputs.udid }}
+      - run: tool/ci.sh e2e-ios ${{ matrix.size }}
 
   android:
     name: Android · API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -80,6 +67,8 @@ jobs:
           - api-level: 35
             target: google_apis
             profile: pixel_7
+    env:
+      EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
     steps:
       - uses: actions/checkout@v4
 
@@ -93,6 +82,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
+          cache: gradle
 
       - uses: subosito/flutter-action@v2
         with:
@@ -101,14 +91,38 @@ jobs:
 
       - run: flutter pub get
 
+      # A booted-emulator snapshot, created once per configuration: later runs
+      # resume it in seconds instead of cold-booting.
+      - uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.profile }}
+
+      - name: Create emulator snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          force-avd-creation: false
+          emulator-options: ${{ env.EMULATOR_OPTIONS }}
+          disable-animations: false
+          script: echo "Snapshot saved."
+
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
           arch: x86_64
           profile: ${{ matrix.profile }}
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save ${{ env.EMULATOR_OPTIONS }}
           # Turns on "Remove animations": Android runs exercise the static
           # fallbacks, iOS runs the full motion.
           disable-animations: true
-          script: flutter test integration_test -d emulator-5554
+          script: tool/ci.sh e2e-android

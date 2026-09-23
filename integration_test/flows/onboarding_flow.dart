@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'helpers.dart';
+import '../helpers.dart';
 
-void main() {
-  setUpE2E();
-
+void onboardingFlows() {
   testWidgets('first run: the unit and lifts picked in onboarding stick', (
     tester,
   ) async {
@@ -23,7 +21,7 @@ void main() {
     await tapKey(tester, 'lift-chip-thruster');
     await tapKey(tester, 'onboarding-next-button');
 
-    expect(find.text('1RM'), findsOneWidget);
+    await waitFor(tester, find.text('1RM'));
     await tapText(tester, 'Thruster');
     await logEntry(tester, weight: '95', reps: '1');
     expect(find.text('95.0 lbs'), findsWidgets);
@@ -36,8 +34,7 @@ void main() {
     await goBack(tester);
 
     await tapKey(tester, 'manage-exercises-button');
-    await tester.enterText(find.byKey(const Key('exercise-search')), 'snatch');
-    await tester.pumpAndSettle();
+    await typeInto(tester, 'exercise-search', 'snatch');
     final snatch = tester.widget<SwitchListTile>(
       find.byKey(const Key('toggle-snatch')),
     );
@@ -50,7 +47,7 @@ void main() {
     await launchApp(tester);
     await tapKey(tester, 'onboarding-skip-button');
 
-    expect(find.text('1RM'), findsOneWidget);
+    await waitFor(tester, find.text('1RM'));
     expect(find.text('Back Squat'), findsOneWidget);
 
     await relaunchApp(tester);

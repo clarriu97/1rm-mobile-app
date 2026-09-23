@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Runs the fast CI checks before every push (~1 min). Enable once per clone:
+#   git config core.hooksPath tool/git-hooks
+# Include the e2e flows too:   E2E=1 git push
+# Skip in an emergency:        git push --no-verify
+set -euo pipefail
+if [[ "${E2E:-}" == 1 ]]; then
+  exec tool/ci.sh all
+fi
+exec tool/ci.sh

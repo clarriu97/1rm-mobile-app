@@ -28,7 +28,8 @@ Future<void> _resetAppData() async {
 /// Starts the app exactly like `main()` does, on the real device storage.
 Future<void> launchApp(WidgetTester tester) async {
   await tester.pumpWidget(await loadApp());
-  await tester.pumpAndSettle();
+  // The app shows a spinner while it reads whether onboarding is done.
+  await waitFor(tester, find.byType(CircularProgressIndicator), gone: true);
 }
 
 /// Kills and reopens the app: throws the whole widget tree away and rebuilds
@@ -36,6 +37,12 @@ Future<void> launchApp(WidgetTester tester) async {
 Future<void> relaunchApp(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpAndSettle();
+  // The moment between closing and reopening: lets writes already in flight
+  // land, as they would on a phone. (A kill in the middle of a write is
+  // covered by the atomic-save tests of StorageService.)
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 500)),
+  );
   await (await SharedPreferences.getInstance()).reload();
   await launchApp(tester);
 }
@@ -49,13 +56,23 @@ final _mainList = find
     )
     .first;
 
-/// Taps [finder], scrolling the main list first only if it is not on screen
+/// Scrolls the main list down to [finder] only if it is not on screen yet
 /// (like a user would, without jumping the list around).
+Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+  if (finder.hitTestable().evaluate().isNotEmpty) return;
+  await tester.scrollUntilVisible(finder, 200, scrollable: _mainList);
+  await tester.pumpAndSettle();
+}
+
+/// Expects exactly one [finder] on screen, scrolling down to it if needed:
+/// small phones show less of each screen.
+Future<void> expectOnScreen(WidgetTester tester, Finder finder) async {
+  await scrollTo(tester, finder);
+  expect(finder, findsOneWidget);
+}
+
 Future<void> _scrollAndTap(WidgetTester tester, Finder finder) async {
-  if (finder.hitTestable().evaluate().isEmpty) {
-    await tester.scrollUntilVisible(finder, 200, scrollable: _mainList);
-    await tester.pumpAndSettle();
-  }
+  await scrollTo(tester, finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
 }
@@ -73,7 +90,23 @@ Future<void> completeOnboarding(
   await tapKey(tester, 'unit-option-${unit.name}');
   await tapKey(tester, 'onboarding-next-button');
   await tapKey(tester, 'onboarding-next-button');
-  expect(find.text('1RM'), findsOneWidget, reason: 'Home is showing');
+  await waitFor(tester, find.text('1RM'));
+}
+
+/// Types into the field with [key] and closes the keyboard, which on a
+/// device covers the lower half of the screen.
+Future<void> typeInto(WidgetTester tester, String key, String text) async {
+  final field = find.byKey(Key(key));
+  if (field.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(field, -200, scrollable: _mainList);
+  }
+  // Focus it with a tap first, as a user does: after the keyboard was
+  // closed, enterText alone does not reconnect the text input.
+  await tester.tap(field);
+  await tester.pumpAndSettle();
+  await tester.enterText(field, text);
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
 }
 
 Future<void> tapText(WidgetTester tester, String text) =>
@@ -94,8 +127,9 @@ Future<void> logEntry(
 }
 
 /// Pumps real frames until [finder] matches (or stops matching, with
-/// [gone]), for UI driven by real timers such as the PR celebration.
-Future<void> pumpUntil(
+/// [gone]): for UI that waits on real timers (the PR celebration) or on disk
+/// and preferences writes, which `pumpAndSettle` does not wait for.
+Future<void> waitFor(
   WidgetTester tester,
   Finder finder, {
   bool gone = false,

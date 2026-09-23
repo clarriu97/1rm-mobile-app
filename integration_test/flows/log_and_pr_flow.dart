@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'helpers.dart';
+import '../helpers.dart';
 
-void main() {
-  setUpE2E();
-
+void logAndPrFlows() {
   testWidgets('log a lift, beat it with a PR, survive a relaunch', (
     tester,
   ) async {
@@ -19,18 +17,14 @@ void main() {
     await logEntry(tester, weight: '100', reps: '5');
     expect(find.byKey(const Key('pr-celebration')), findsNothing);
     expect(find.text('116.7 kg'), findsWidgets);
-    expect(find.text('Working weights'), findsOneWidget);
+    await expectOnScreen(tester, find.text('Working weights'));
 
     // Second entry: 120 × 3 → 132.0 kg beats it.
     await logEntry(tester, weight: '120', reps: '3');
-    await pumpUntil(tester, find.byKey(const Key('pr-celebration')));
-    await pumpUntil(
-      tester,
-      find.byKey(const Key('pr-celebration')),
-      gone: true,
-    );
+    await waitFor(tester, find.byKey(const Key('pr-celebration')));
+    await waitFor(tester, find.byKey(const Key('pr-celebration')), gone: true);
     expect(find.text('132.0 kg'), findsWidgets);
-    expect(find.byKey(const Key('progress-line-chart')), findsOneWidget);
+    await expectOnScreen(tester, find.byKey(const Key('progress-line-chart')));
 
     await tester.tap(find.byTooltip('History'));
     await tester.pumpAndSettle();

@@ -72,24 +72,31 @@ flutter run -d android # Android
 
 Flutter draws every pixel itself, so widget tests exercise the same layout code a phone runs. The end-to-end tests add what they can't see: plugins (storage, preferences), the real engine, back gestures and cold starts.
 
+The same commands CI runs are wrapped in `tool/ci.sh`, so a local run is identical to CI:
+
 ```bash
-# Everything that runs without a device (what CI's test job runs, plus goldens on macOS)
-flutter test
-
-# Style and static analysis (CI fails on either)
-dart format --set-exit-if-changed .
-flutter analyze
-
-# Goldens: compare, or regenerate after an intentional visual change (macOS)
-flutter test --tags golden
-flutter test --update-goldens --tags golden
-
-# End-to-end on a simulator, emulator or device
-flutter devices                              # list ids
-flutter test integration_test -d <device-id>
+tool/ci.sh                  # format, analyze, unit/widget/matrix tests, goldens (~1 min)
+tool/ci.sh all              # + e2e on the small and large iPhone simulators and a running Android emulator
+tool/ci.sh e2e-ios small    # one e2e target: small | large
+tool/ci.sh e2e-android      # e2e on the running emulator/device
 ```
 
-To pick a specific screen size: `xcrun simctl list devices available` (iOS) or create an emulator in Android Studio → Device Manager, then pass its id to `-d`.
+Run the fast checks automatically before every push (once per clone):
+
+```bash
+git config core.hooksPath tool/git-hooks   # then: E2E=1 git push to include the e2e flows
+```
+
+Lower-level commands:
+
+```bash
+flutter test --exclude-tags golden               # unit, widget, layout matrix
+flutter test --update-goldens --tags golden      # regenerate screenshots after a visual change (macOS)
+flutter devices                                  # list simulator/emulator/device ids
+flutter test integration_test/app_test.dart -d <device-id>
+```
+
+All e2e flows live in `integration_test/flows/` and run from the single entry point `integration_test/app_test.dart`, so the app is built and installed once per run.
 
 ### CI
 

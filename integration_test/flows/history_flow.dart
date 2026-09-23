@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'helpers.dart';
+import '../helpers.dart';
 
-void main() {
-  setUpE2E();
-
+void historyFlows() {
   testWidgets('edit an entry, delete with swipe and undo, delete for good', (
     tester,
   ) async {
@@ -13,11 +11,7 @@ void main() {
     await completeOnboarding(tester);
     await tapText(tester, 'Bench Press');
     await logEntry(tester, weight: '80', reps: '5');
-    await pumpUntil(
-      tester,
-      find.byKey(const Key('pr-celebration')),
-      gone: true,
-    );
+    await waitFor(tester, find.byKey(const Key('pr-celebration')), gone: true);
 
     await tester.tap(find.byTooltip('History'));
     await tester.pumpAndSettle();
@@ -35,6 +29,8 @@ void main() {
     await tester.drag(find.byType(Dismissible), const Offset(-600, 0));
     await tester.pumpAndSettle();
     expect(find.text('No records yet'), findsOneWidget);
+    // The Undo snackbar appears once the delete is on disk.
+    await waitFor(tester, find.text('Undo'));
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(find.text('80.0 kg × 8 reps'), findsOneWidget);

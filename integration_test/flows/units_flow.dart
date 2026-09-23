@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'helpers.dart';
+import '../helpers.dart';
 
-void main() {
-  setUpE2E();
-
+void unitsFlows() {
   testWidgets('switching kg → lbs converts every number and persists', (
     tester,
   ) async {
@@ -21,11 +19,12 @@ void main() {
     await tester.pumpAndSettle();
     await goBack(tester);
 
-    expect(find.text('220.5 lbs'), findsOneWidget);
+    // Home reloads the unit from preferences when Settings closes.
+    await waitFor(tester, find.text('220.5 lbs'));
     await tapText(tester, 'Back Squat');
     expect(find.text('220.5 lbs'), findsWidgets);
     // Working weights round to loadable 5 lb steps.
-    expect(find.text('220 lbs'), findsOneWidget);
+    await expectOnScreen(tester, find.text('220 lbs'));
 
     await tapKey(tester, 'add-entry-button');
     expect(find.text('lbs'), findsWidgets);

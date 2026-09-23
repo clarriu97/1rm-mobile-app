@@ -17,8 +17,9 @@ cd "$(dirname "$0")/.."
 
 E2E=integration_test/app_test.dart
 
-# A healthy e2e run (build + install + flows) takes under 10 min even on CI.
-E2E_TIMEOUT=${E2E_TIMEOUT:-900}
+# A healthy e2e run (build + install + flows) takes under 7 min on CI and
+# 3 min locally; past this, it is hung.
+E2E_TIMEOUT=${E2E_TIMEOUT:-600}
 
 step() { printf '\n\033[1;33m▶ %s\033[0m\n' "$*"; }
 
@@ -107,6 +108,10 @@ e2e_ios() {
   udid=$(boot_ios "$1")
   step "e2e on $(xcrun simctl list devices | grep "$udid" | sed 's/ (.*//;s/^ *//') ($1)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
+  # Flutter attaches to the app through the simulator's log stream, which on
+  # a freshly booted CI simulator can fail on first use ("The log reader
+  # failed unexpectedly"); touch it once before the real run.
+  xcrun simctl spawn "$udid" log show --last 1m --style compact >/dev/null 2>&1 || true
   run_e2e "$udid"
 }
 

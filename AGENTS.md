@@ -3,6 +3,8 @@
 Flutter app (iOS + Android) to estimate, log, and track one-rep maxes. Offline-first, no backend, no accounts.
 Goal of phase 1: a feature-complete, polished v1 ready for App Store / Play Store submission.
 
+**Project state, decisions and what's next: `docs/ROADMAP.md`** (loaded with this file). To resume work ("sigue con M4"), follow the `continue` skill. Update the roadmap in the same PR whenever a milestone finishes, a decision is made or something moves.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -78,6 +80,7 @@ The app is used in the gym, between sets: one hand, sweaty fingers, glancing at 
 
 Project skills live in `.claude/skills/` (`.agents` is a symlink for other agents). The official `dart-flutter` plugin (enabled in `.claude/settings.json`) adds Flutter/Dart skills and the Dart MCP server.
 
+- Resuming the roadmap → `continue`.
 - Tests → `flutter-testing` (read the matching file in `.claude/skills/flutter-testing/references/` first); plugin skills `flutter-add-widget-test`, `flutter-add-integration-test`, `dart-add-unit-test`.
 - Motion → `flutter-animations` (read `.claude/skills/flutter-animations/references/<type>.md` first).
 - Visual design direction → `frontend-design` (principles only; it is web-oriented — translate to Flutter).
@@ -117,7 +120,7 @@ When the app is running (via `flutter run` or the Dart MCP server), hot reload a
 
 ## Workflow
 
-- Work is tracked as GitHub issues in milestones (M1 Foundations → M4 Release quality).
+- Work is tracked as GitHub issues in milestones (see `docs/ROADMAP.md` for the current one and the order).
 - One branch per issue: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `chore/<slug>`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `test:`, `docs:`, `build:`, `ci:`).
 - PR body contains `Closes #<issue>`, a summary, and how it was verified (tests + device screenshot for UI changes).

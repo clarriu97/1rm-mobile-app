@@ -46,7 +46,19 @@ jobs:
 
       - run: flutter pub get
 
-      - run: tool/ci.sh unit
+      # `shell: bash` adds pipefail: a failing test must fail the step.
+      - run: tool/ci.sh unit | tee unit.log
+        shell: bash
+        env:
+          COVERAGE: "1"
+
+      - name: Coverage summary
+        run: grep '^Line coverage' unit.log >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
 
   goldens:
     # Goldens are generated on macOS; comparing on the same OS keeps text

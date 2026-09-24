@@ -2,7 +2,8 @@
 # The checks CI runs, runnable locally with the same commands.
 #
 #   tool/ci.sh                 checks + goldens (goldens on macOS only)   ~1 min
-#   tool/ci.sh all             the above + e2e on every target available  ~6-10 min
+#   tool/ci.sh all             the above + release builds + e2e on every
+#                              target available                          ~7-11 min
 #                              and, when it all passes on a pushed commit
 #                              with no local changes, reports the
 #                              `local-e2e` status that merging into main needs
@@ -17,6 +18,10 @@
 #   tool/ci.sh e2e-ios SIZE    e2e flows on that simulator (boots it if needed),
 #                              in Spanish on the small one, English on the large
 #   tool/ci.sh e2e-android     e2e flows on an Android emulator (starts one if needed)
+#   tool/ci.sh smoke-android-release  launch the release (R8) build on an
+#                              emulator: first run, storage, relaunch
+#   tool/ci.sh build-android   release app bundle (R8), as the store gets it
+#   tool/ci.sh build-ios       release iOS build without code signing
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -56,7 +61,29 @@ lint() {
 
 unit() {
   step "unit, widget and layout-matrix tests"
-  flutter test --exclude-tags golden
+  # CI sets COVERAGE=1 and uploads coverage/lcov.info.
+  flutter test --exclude-tags golden ${COVERAGE:+--coverage}
+  if [[ -n "${COVERAGE:-}" ]]; then coverage_summary; fi
+}
+
+# Line coverage of lib/ from coverage/lcov.info, generated code excluded.
+coverage_summary() {
+  awk -F: '
+    /^SF:/ { skip = ($2 ~ /lib\/l10n\/app_localizations/) }
+    /^LF:/ && !skip { found += $2 }
+    /^LH:/ && !skip { hit += $2 }
+    END { printf "Line coverage: %.1f %% (%d of %d lines)\n", 100 * hit / found, hit, found }
+  ' coverage/lcov.info
+}
+
+build_android() {
+  step "release app bundle"
+  flutter build appbundle --release
+}
+
+build_ios() {
+  step "release iOS build (no code signing)"
+  flutter build ios --release --no-codesign
 }
 
 checks() {
@@ -275,12 +302,78 @@ e2e_android() {
   return "$status"
 }
 
+# Polls the screen of $1 until an element's text or description starts
+# with $2 (a regex); prints its centre ("x y"). Fails after 60 s.
+android_find() {
+  local device=$1 pattern=$2 bounds _
+  for _ in $(seq 30); do
+    bounds=$(adb -s "$device" exec-out uiautomator dump /dev/tty 2>/dev/null |
+      tr '>' '\n' | grep -E "(text|content-desc)=\"($pattern)" |
+      grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | head -1 || true)
+    if [[ -n "$bounds" ]]; then
+      echo "$bounds" | tr -c '0-9' ' ' | awk '{ print int(($1 + $3) / 2), int(($2 + $4) / 2) }'
+      return 0
+    fi
+    sleep 2
+  done
+  echo "Never showed: $pattern" >&2
+  return 1
+}
+
+# The e2e flows need `flutter test`, which only runs debug builds, and
+# `flutter drive` refuses release mode. So the release build (AOT + R8) gets a
+# smoke test instead: the first run shows onboarding, skipping reaches Home,
+# and after a relaunch Home comes back. That covers what R8 breaks first:
+# plugins (preferences, file storage) and the app starting at all.
+smoke_android_release() {
+  local device was_running app=dev.larri.onerm status=0 at
+  was_running=$(android_device)
+  device=$(boot_android)
+  if [[ -z "$device" ]]; then
+    echo "No Android emulator available." >&2
+    return 1
+  fi
+  local _
+  for _ in $(seq 60); do
+    adb -s "$device" shell pm path android >/dev/null 2>&1 && break
+    sleep 2
+  done
+  step "release smoke test on Android $device"
+  flutter build apk --release
+  {
+    adb -s "$device" install -r build/app/outputs/flutter-apk/app-release.apk >/dev/null &&
+      adb -s "$device" shell pm clear "$app" >/dev/null &&
+      adb -s "$device" logcat -c &&
+      adb -s "$device" shell am start -n "$app/.MainActivity" >/dev/null &&
+      at=$(android_find "$device" "Skip|Saltar") &&
+      adb -s "$device" shell input tap $at &&
+      android_find "$device" "Back Squat|Sentadilla trasera" >/dev/null &&
+      adb -s "$device" shell am force-stop "$app" &&
+      adb -s "$device" shell am start -n "$app/.MainActivity" >/dev/null &&
+      android_find "$device" "Back Squat|Sentadilla trasera" >/dev/null
+  } || status=1
+  if adb -s "$device" logcat -d | grep -E "FATAL EXCEPTION|MissingPluginException"; then
+    status=1
+  fi
+  if [[ -z "$was_running" ]]; then
+    adb -s "$device" emu kill >/dev/null 2>&1 || true
+  fi
+  if ((status == 0)); then echo "Release build OK."; fi
+  return "$status"
+}
+
 all() {
   local passed="" sha
   sha=$(git rev-parse HEAD)
   checks
   goldens
+  if [[ -d "$ANDROID_HOME" ]]; then
+    build_android
+  else
+    echo "⚠︎ Android release build skipped: no Android SDK. CI builds it on main."
+  fi
   if [[ "$(uname)" == Darwin ]]; then
+    build_ios
     e2e_ios small
     e2e_ios large
     passed="iOS small, iOS large"
@@ -339,5 +432,8 @@ case "${1:-}" in
   boot-ios) boot_ios "${2:?size: small|large}" ;;
   e2e-ios) e2e_ios "${2:?size: small|large}" ;;
   e2e-android) e2e_android ;;
-  *) sed -n '2,20p' "$0"; exit 1 ;;
+  smoke-android-release) smoke_android_release ;;
+  build-android) build_android ;;
+  build-ios) build_ios ;;
+  *) sed -n '2,23p' "$0"; exit 1 ;;
 esac

@@ -497,4 +497,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exerciseSnatchBalance => 'Snatch Balance';
+
+  @override
+  String exerciseCardSemantics(String exercise, String weight, String when) {
+    return '$exercise, best 1RM $weight, $when';
+  }
+
+  @override
+  String exerciseCardEmptySemantics(String exercise) {
+    return '$exercise, no records yet';
+  }
+
+  @override
+  String get rangeThreeMonthsSemantics => 'Last 3 months';
+
+  @override
+  String get rangeYearSemantics => 'Last year';
+
+  @override
+  String get rangeAllSemantics => 'All time';
+
+  @override
+  String get tablePercentSemantics => 'By percentage';
+
+  @override
+  String get tableRepsSemantics => 'By reps';
+
+  @override
+  String get editHint => 'Edit';
+
+  @override
+  String dateSemantics(String when, String date) {
+    return 'Date: $when, $date';
+  }
+
+  @override
+  String get changeDateHint => 'Change date';
+
+  @override
+  String get estimateEmptySemantics => 'Enter weight and reps';
 }

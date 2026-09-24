@@ -163,5 +163,20 @@
   "exercisePowerSnatch": "Power Snatch",
   "exerciseHangPowerSnatch": "Hang Power Snatch",
   "exerciseHangSquatSnatch": "Hang Squat Snatch",
-  "exerciseSnatchBalance": "Snatch Balance"
+  "exerciseSnatchBalance": "Snatch Balance",
+
+  "exerciseCardSemantics": "{exercise}, best 1RM {weight}, {when}",
+  "@exerciseCardSemantics": {"placeholders": {"exercise": {"type": "String"}, "weight": {"type": "String"}, "when": {"type": "String"}}},
+  "exerciseCardEmptySemantics": "{exercise}, no records yet",
+  "@exerciseCardEmptySemantics": {"placeholders": {"exercise": {"type": "String"}}},
+  "rangeThreeMonthsSemantics": "Last 3 months",
+  "rangeYearSemantics": "Last year",
+  "rangeAllSemantics": "All time",
+  "tablePercentSemantics": "By percentage",
+  "tableRepsSemantics": "By reps",
+  "editHint": "Edit",
+  "dateSemantics": "Date: {when}, {date}",
+  "@dateSemantics": {"placeholders": {"when": {"type": "String"}, "date": {"type": "String"}}},
+  "changeDateHint": "Change date",
+  "estimateEmptySemantics": "Enter weight and reps"
 }

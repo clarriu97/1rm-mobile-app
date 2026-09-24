@@ -11,6 +11,7 @@ import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
 import 'package:one_rm_mobile/ui/home_screen.dart';
 import 'package:one_rm_mobile/ui/widgets/sparkline.dart';
 
+import '../helpers/semantics.dart';
 import '../helpers/test_app.dart';
 
 final _squat = defaultExercises.first;
@@ -224,6 +225,63 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('APUNTA TU PRIMERA SERIE'), findsOneWidget);
+    });
+  });
+  group('HomeScreen — screen reader', () {
+    Future<SemanticsHandle> pump(WidgetTester tester, {Locale? locale}) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(
+          HomeScreen(
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              _squat.id: [_record(112.5, date: DateTime(2026, 9, 22, 18))],
+            }),
+            library: testLibrary(),
+            unitService: UnitService.forTesting(),
+            language: testLanguage(),
+            clock: () => DateTime(2026, 9, 23, 10),
+          ),
+          locale: locale,
+        ),
+      );
+      await tester.pumpAndSettle();
+      return semantics;
+    }
+
+    testWidgets('a card is one button that says the lift, its best and when', (
+      tester,
+    ) async {
+      final semantics = await pump(tester);
+
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel('Back Squat, best 1RM 112.5 kg, Yesterday'),
+        ),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel('Front Squat, no records yet'),
+        ),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('in Spanish', (tester) async {
+      final semantics = await pump(tester, locale: const Locale('es'));
+
+      expect(
+        find.bySemanticsLabel('Sentadilla trasera, mejor 1RM 112,5 kg, Ayer'),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('exercise icons are decoration, not images', (tester) async {
+      final semantics = await pump(tester);
+      expect(imageLabels(tester), isEmpty);
+      semantics.dispose();
     });
   });
 }

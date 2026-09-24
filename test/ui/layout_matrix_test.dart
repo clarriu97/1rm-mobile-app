@@ -1,7 +1,7 @@
 // Every screen, in every relevant state, on every supported screen size,
-// system text size and language. A RenderFlex overflow or any layout
-// exception fails the test, including in content that is only reached by
-// scrolling.
+// system text size (and bold text) and language. A RenderFlex overflow or any
+// layout exception fails the test, including in content that is only reached
+// by scrolling. At 100 % text, the accessibility guidelines must pass too.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -340,19 +340,65 @@ Future<void> _scrollThroughEverything(WidgetTester tester) async {
   }
 }
 
+/// Scenarios where a guideline would measure a mid-scroll or faded state
+/// rather than the design, and where that design is checked instead.
+const _skipTapTargets = {
+  // The keyboard scrolls the form so fields sit half under the app bar;
+  // 'add entry empty' checks the same form at rest.
+  'add entry at the limits with the keyboard open',
+};
+const _skipContrast = {
+  // The list fades out at its bottom edge on purpose (a scroll hint); the
+  // chips' contrast is checked in onboarding_screen_test.dart.
+  'onboarding page 4',
+};
+
+/// Tap targets of at least 48 dp (Android) and 44 pt (iOS), every tappable
+/// thing labeled for screen readers, and AA text contrast, on what is on
+/// screen now.
+Future<void> _expectAccessible(WidgetTester tester, String scenario) async {
+  if (!_skipTapTargets.contains(scenario)) {
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+  }
+  await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  if (!_skipContrast.contains(scenario)) {
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+  }
+}
+
 void main() {
   for (final locale in AppLocalizations.supportedLocales) {
     for (final device in testDevices) {
-      for (final scale in testTextScales) {
-        group('$locale · $device · text ${(scale * 100).round()} %', () {
+      for (final (scale, bold) in [
+        for (final scale in testTextScales) (scale, false),
+        // The system bold-text setting widens every glyph.
+        (testTextScales.last, true),
+      ]) {
+        final text = '${(scale * 100).round()} %${bold ? ' bold' : ''}';
+        group('$locale · $device · text $text', () {
           _scenarios.forEach((name, scenario) {
             testWidgets(name, (tester) async {
+              final semantics = tester.ensureSemantics();
               device.apply(tester, textScale: scale);
+              if (bold) {
+                tester.platformDispatcher.accessibilityFeaturesTestValue =
+                    const FakeAccessibilityFeatures(boldText: true);
+              }
               await scenario(tester, (device: device, locale: locale));
+              expect(
+                MediaQuery.boldTextOf(
+                  tester.element(find.byType(Scaffold).first),
+                ),
+                bold,
+              );
+              if (scale == 1.0) await _expectAccessible(tester, name);
               await _scrollThroughEverything(tester);
+              if (scale == 1.0) await _expectAccessible(tester, name);
               // Let timed UI (the PR celebration) finish before tear-down.
               await tester.pump(kPrCelebrationDuration);
               await tester.pumpAndSettle();
+              semantics.dispose();
             });
           });
         });

@@ -97,7 +97,7 @@ Project skills live in `.claude/skills/` (`.agents` is a symlink for other agent
 7. No `Future.delayed` to hide async timing. Use fakes, explicit pumps, `pumpAndSettle` only when animations settle. Flaky tests get fixed immediately.
 8. Test files mirror `lib/` (`lib/repositories/records_repository.dart` → `test/repositories/records_repository_test.dart`). Reuse the services' `forTesting()` fakes; don't invent new mocking patterns.
 9. When touching old tests that break these rules, bring them in line.
-10. Every new screen or screen state gets a scenario in `test/ui/layout_matrix_test.dart` (all devices in `test/helpers/devices.dart` × text 100/130/200 %). Key screens also get a golden in `test/goldens/golden_test.dart`; after an intentional visual change regenerate them on macOS and review the PNG diff.
+10. Every new screen or screen state gets a scenario in `test/ui/layout_matrix_test.dart` (all devices in `test/helpers/devices.dart` × text 100/130/200 % and bold × en/es; at 100 % it must also pass Flutter's tap-target, labeled-tap-target and text-contrast guidelines). Screens get screen-reader tests: what a card, number or icon button is announced as (`tester.getSemantics(...)` + `isSemantics`). Key screens also get a golden in `test/goldens/golden_test.dart`; after an intentional visual change regenerate them on macOS and review the PNG diff.
 
 ## Commands
 

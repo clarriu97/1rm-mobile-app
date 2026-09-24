@@ -246,6 +246,7 @@ class _ExerciseGroup extends StatelessWidget {
     activeTrackColor: AppColors.accent,
     secondary: SvgPicture.asset(
       exercise.assetPath,
+      excludeFromSemantics: true,
       width: 32,
       height: 32,
       colorFilter: ColorFilter.mode(

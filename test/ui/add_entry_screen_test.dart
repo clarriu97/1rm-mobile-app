@@ -913,6 +913,59 @@ void main() {
       );
     });
   });
+  group('AddEntryScreen — screen reader', () {
+    Future<SemanticsHandle> pump(WidgetTester tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(
+          AddEntryScreen(
+            exerciseName: 'Deadlift',
+            assetPath: 'assets/icons/deadlift.svg',
+            unit: WeightUnit.kg,
+            clock: () => DateTime(2026, 9, 23, 10),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return semantics;
+    }
+
+    testWidgets('the date is a button that says the day and what it does', (
+      tester,
+    ) async {
+      final semantics = await pump(tester);
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Date: Today, Wed, Sep 23')),
+        isSemantics(
+          isButton: true,
+          hasTapAction: true,
+          onTapHint: 'Change date',
+        ),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('the estimate is read as a value, never as a dash', (
+      tester,
+    ) async {
+      final semantics = await pump(tester);
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('ESTIMATED 1RM')),
+        isSemantics(value: 'Enter weight and reps'),
+      );
+
+      await tester.enterText(find.byType(TextFormField).at(0), '112.5');
+      await tester.enterText(find.byType(TextFormField).at(1), '3');
+      await tester.pump();
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('ESTIMATED 1RM')),
+        isSemantics(value: '123.8 kg'),
+      );
+      semantics.dispose();
+    });
+  });
 }
 
 String _fieldText(WidgetTester tester, int index) => tester

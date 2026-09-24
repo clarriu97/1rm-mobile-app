@@ -225,91 +225,112 @@ class _ExerciseCard extends StatelessWidget {
       records.recordsFor(template.id),
     )..sort((a, b) => a.date.compareTo(b.date))).map((r) => r.oneRM).toList();
     final radius = BorderRadius.circular(AppRadii.md);
+    final name = l10n.exerciseName(template);
+    final locale = l10n.localeName;
 
-    return Material(
-      color: hasData ? AppColors.surfaceRaised : AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: BorderSide(color: hasData ? AppColors.accent : AppColors.outline),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: radius,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 84),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+    return Semantics(
+      button: true,
+      label: best == null || latest == null
+          ? l10n.exerciseCardEmptySemantics(name)
+          : l10n.exerciseCardSemantics(
+              name,
+              formatWeight(best, unit, locale: locale),
+              formatRelativeDate(latest.date, now, l10n),
             ),
-            child: Row(
-              children: [
-                SvgPicture.asset(
-                  template.assetPath,
-                  width: 44,
-                  height: 44,
-                  colorFilter: ColorFilter.mode(
-                    hasData ? AppColors.accent : AppColors.textSecondary,
-                    BlendMode.srcIn,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.exerciseName(template),
-                        style: text.titleMedium,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        latest == null
-                            ? l10n.noRecordsYet
-                            : formatRelativeDate(latest.date, now, l10n),
-                        style: text.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                if (hasData) ...[
-                  const SizedBox(width: AppSpacing.md),
-                  Flexible(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              formatWeight(best, unit, locale: l10n.localeName),
-                              style: text.displaySmall?.copyWith(
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                          if (trend.length >= 2) ...[
-                            const SizedBox(height: AppSpacing.xs),
-                            Sparkline(
-                              values: trend.length > _trendLength
-                                  ? trend.sublist(trend.length - _trendLength)
-                                  : trend,
-                            ),
-                          ],
-                        ],
-                      ),
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: hasData ? AppColors.surfaceRaised : AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(
+            color: hasData ? AppColors.accent : AppColors.outline,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 84),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    template.assetPath,
+                    excludeFromSemantics: true,
+                    width: 44,
+                    height: 44,
+                    colorFilter: ColorFilter.mode(
+                      hasData ? AppColors.accent : AppColors.textSecondary,
+                      BlendMode.srcIn,
                     ),
                   ),
-                ] else
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textMuted,
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: text.titleMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          latest == null
+                              ? l10n.noRecordsYet
+                              : formatRelativeDate(latest.date, now, l10n),
+                          style: text.bodySmall,
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                  if (hasData) ...[
+                    const SizedBox(width: AppSpacing.md),
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                formatWeight(
+                                  best,
+                                  unit,
+                                  locale: l10n.localeName,
+                                ),
+                                style: text.displaySmall?.copyWith(
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ),
+                            if (trend.length >= 2) ...[
+                              const SizedBox(height: AppSpacing.xs),
+                              Sparkline(
+                                values: trend.length > _trendLength
+                                    ? trend.sublist(trend.length - _trendLength)
+                                    : trend,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textMuted,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

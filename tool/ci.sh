@@ -25,6 +25,9 @@ E2E=integration_test/app_test.dart
 # Where `tool/ci.sh all` remembers the commits it passed on.
 STAMPS=.dart_tool/local-e2e
 
+# Set by e2e_android: the API level it ran on.
+ANDROID_API=""
+
 # Android SDK tools, installed by Android Studio.
 ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
 for dir in "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/emulator"; do
@@ -109,7 +112,12 @@ run_e2e() {
     sleep 1
     kill "$tailer" 2>/dev/null || true
     wait "$tailer" 2>/dev/null || true
-    if [[ -z "$hung" && "$status" -ne 0 ]] && grep -qE "Failed to load .*app_test\.dart" "$log"; then
+    # "Failed to load" also covers a failed build, which is real: only a
+    # load failure after a successful build is the device's fault.
+    if grep -qE "Xcode build done|Built build/" "$log"; then
+      built=1
+    fi
+    if [[ -z "$hung" && "$status" -ne 0 && -n "$built" ]] && grep -qE "Failed to load .*app_test\.dart" "$log"; then
       hung="the app failed to load before any test ran"
     fi
     rm -f "$log"
@@ -156,14 +164,25 @@ boot_ios() {
 }
 
 e2e_ios() {
-  local udid
+  local udid was_booted="" status=0
+  if [[ -z "${SIM_UDID:-}" ]]; then
+    udid=$(ios_udid "$1")
+    if xcrun simctl list devices | grep "$udid" | grep -q Booted; then
+      was_booted=1
+    fi
+  fi
   # CI boots the simulator in an earlier step and passes its id along:
   # listing simulators while one boots can take minutes.
   udid=${SIM_UDID:-$(boot_ios "$1")}
   step "e2e on the $1 iPhone simulator ($udid)"
   xcrun simctl bootstatus "$udid" -b >/dev/null
   wait_for_log_stream "$udid"
-  run_e2e "$udid"
+  run_e2e "$udid" || status=$?
+  # Shut down what this run booted; leave a simulator you had open.
+  if [[ -z "${SIM_UDID:-}" && -z "$was_booted" ]]; then
+    xcrun simctl shutdown "$udid" 2>/dev/null || true
+  fi
+  return "$status"
 }
 
 # Flutter attaches to the app through the simulator's `log stream`, which on
@@ -213,8 +232,15 @@ boot_android() {
   echo "$device"
 }
 
+# True when there is an Android device running or an emulator to start.
+android_available() {
+  [[ -n "$(android_device)" ]] ||
+    { command -v emulator >/dev/null && [[ -n "$(emulator -list-avds 2>/dev/null)" ]]; }
+}
+
 e2e_android() {
-  local device
+  local device was_running status=0
+  was_running=$(android_device)
   device=$(boot_android)
   if [[ -z "$device" ]]; then
     echo "No Android emulator available: create one in Android Studio → Device Manager." >&2
@@ -226,8 +252,14 @@ e2e_android() {
     adb -s "$device" shell pm path android >/dev/null 2>&1 && break
     sleep 2
   done
-  step "e2e on Android $device (API $(adb -s "$device" shell getprop ro.build.version.sdk | tr -d '\r'))"
-  run_e2e "$device"
+  ANDROID_API=$(adb -s "$device" shell getprop ro.build.version.sdk | tr -d '\r')
+  step "e2e on Android $device (API $ANDROID_API)"
+  run_e2e "$device" || status=$?
+  # Stop the emulator this run started; leave one you had open.
+  if [[ -z "$was_running" ]]; then
+    adb -s "$device" emu kill >/dev/null 2>&1 || true
+  fi
+  return "$status"
 }
 
 all() {
@@ -240,9 +272,9 @@ all() {
     e2e_ios large
     passed="iOS small, iOS large"
   fi
-  if [[ -n "$(boot_android)" ]]; then
+  if android_available; then
     e2e_android
-    passed="${passed:+$passed, }Android API $(adb shell getprop ro.build.version.sdk | tr -d '\r')"
+    passed="${passed:+$passed, }Android API $ANDROID_API"
   else
     echo "⚠︎ Android e2e skipped: no emulator. CI runs it on main."
     passed="${passed:+$passed; }Android skipped"

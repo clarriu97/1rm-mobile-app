@@ -96,6 +96,21 @@ flutter devices                                  # list simulator/emulator/devic
 flutter test integration_test/app_test.dart -d <device-id>
 ```
 
+**Android locally**: builds use JDK 17, like CI (Android Studio bundles a newer Java that the project's Gradle doesn't support yet). Once, after installing Android Studio and its SDK Command-line Tools:
+
+```bash
+brew install openjdk@17
+flutter config --jdk-dir "$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
+```
+
+Create the emulators the gate uses, matching CI (API 24 small screen, API 35 large screen); `tool/ci.sh all` starts the first AVD whose name contains `1rm` and stops it afterwards:
+
+```bash
+android sdk install "system-images/android-24/default/arm64-v8a" "system-images/android-35/google_apis/arm64-v8a"
+avdmanager create avd -n 1rm_api24_small -k "system-images;android-24;default;arm64-v8a" -d "Nexus 5"
+avdmanager create avd -n 1rm_api35_large -k "system-images;android-35;google_apis;arm64-v8a" -d "pixel_7"
+```
+
 All e2e flows live in `integration_test/flows/` and run from the single entry point `integration_test/app_test.dart`, so the app is built and installed once per run.
 
 ### CI and the merge gate

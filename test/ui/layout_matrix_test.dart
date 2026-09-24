@@ -114,6 +114,21 @@ Future<void> _onboardingPage(
   }
 }
 
+/// Opens the editor of the long custom exercise, listed last.
+Future<void> _openEditor(WidgetTester tester) async {
+  final list = tester.state<ScrollableState>(find.byType(Scrollable).first);
+  while (list.position.pixels < list.position.maxScrollExtent) {
+    list.position.jumpTo(list.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+  }
+  final edit = find.byKey(Key('edit-${_longCustom.id}'));
+  await tester.ensureVisible(edit);
+  await tester.pumpAndSettle();
+  await tester.tap(edit);
+  await tester.pumpAndSettle();
+  expect(find.byType(AlertDialog), findsOneWidget);
+}
+
 Widget _detail(Map<String, List<ExerciseRecord>> data) => ExerciseDetailScreen(
   template: _squat,
   records: _records(data),
@@ -198,15 +213,40 @@ final Map<String, _Scenario> _scenarios = {
       unit: WeightUnit.lbs,
     ),
   ),
-  'manage exercises': (t, d) =>
-      _pump(t, d, ManageExercisesScreen(library: _library())),
+  'history entry deleted, with undo': (t, d) async {
+    await _pump(
+      t,
+      d,
+      HistoryScreen(
+        template: _closeGrip,
+        records: _records(_sampleRecords()),
+        unit: WeightUnit.lbs,
+      ),
+    );
+    await t.tap(find.byType(IconButton).last);
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('undo-button')), findsOneWidget);
+  },
+  'manage exercises': (t, d) => _pump(
+    t,
+    d,
+    ManageExercisesScreen(library: _library(), records: _records()),
+  ),
   'manage exercises with no search results': (t, d) async {
-    await _pump(t, d, ManageExercisesScreen(library: _library()));
+    await _pump(
+      t,
+      d,
+      ManageExercisesScreen(library: _library(), records: _records()),
+    );
     await t.enterText(find.byKey(const Key('exercise-search')), 'zzz');
     await t.pumpAndSettle();
   },
   'new exercise dialog': (t, d) async {
-    await _pump(t, d, ManageExercisesScreen(library: _library()));
+    await _pump(
+      t,
+      d,
+      ManageExercisesScreen(library: _library(), records: _records()),
+    );
     await t.tap(find.byKey(const Key('new-exercise-button')));
     await t.pumpAndSettle();
     await t.enterText(
@@ -214,6 +254,31 @@ final Map<String, _Scenario> _scenarios = {
       _longCustom.name,
     );
     await t.pumpAndSettle();
+  },
+  'edit exercise dialog': (t, d) async {
+    await _pump(
+      t,
+      d,
+      ManageExercisesScreen(library: _library(), records: _records()),
+    );
+    await _openEditor(t);
+  },
+  'custom exercise deleted, with undo': (t, d) async {
+    await _pump(
+      t,
+      d,
+      ManageExercisesScreen(
+        library: _library(),
+        records: _records(_sampleRecords()),
+      ),
+    );
+    await _openEditor(t);
+    final delete = find.byKey(const Key('delete-exercise-button'));
+    await t.ensureVisible(delete);
+    await t.pumpAndSettle();
+    await t.tap(delete);
+    await t.pumpAndSettle();
+    expect(find.byType(SnackBar), findsOneWidget);
   },
   'settings': (t, d) => _pump(
     t,

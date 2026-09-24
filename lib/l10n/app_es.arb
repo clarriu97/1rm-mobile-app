@@ -96,6 +96,8 @@
   "maxCharacters": "Máximo {count} caracteres",
   "exerciseExists": "Ese ejercicio ya existe",
   "create": "Crear",
+  "editExercise": "Editar ejercicio",
+  "deletedExercise": "{count, plural, =0{Borrado: {name}} =1{Borrado: {name} y 1 registro} other{Borrado: {name} y {count} registros}}",
 
   "categorySquat": "Sentadilla",
   "categoryHinge": "Peso muerto y bisagra",

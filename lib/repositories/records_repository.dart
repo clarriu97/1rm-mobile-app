@@ -80,6 +80,23 @@ class RecordsRepository extends ChangeNotifier {
     await _storage.save(_records);
   }
 
+  /// Deletes every record of [exercise] and returns them, for [restoreAll].
+  Future<List<ExerciseRecord>> deleteAll(String exercise) async {
+    final removed = _records.remove(exercise);
+    if (removed == null) return const [];
+    notifyListeners();
+    await _storage.save(_records);
+    return removed;
+  }
+
+  /// Puts back records removed by [deleteAll], next to any added since.
+  Future<void> restoreAll(String exercise, List<ExerciseRecord> records) async {
+    if (records.isEmpty) return;
+    (_records[exercise] ??= []).addAll(records);
+    notifyListeners();
+    await _storage.save(_records);
+  }
+
   Future<void> delete(String exercise, ExerciseRecord record) async {
     final records = _records[exercise];
     if (records == null || !records.remove(record)) return;

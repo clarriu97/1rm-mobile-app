@@ -383,6 +383,90 @@ void main() {
       },
     );
   });
+  group('RecordsRepository — deleteAll and restoreAll', () {
+    test('deleteAll removes every record of one exercise, saves and returns '
+        'them', () async {
+      final storage = StorageService.inMemoryForTesting();
+      final a = _record(oneRM: 100);
+      final b = _record(oneRM: 110);
+      final other = _record(oneRM: 90);
+      final repo = RecordsRepository(storage, {
+        'custom_1': [a, b],
+        'deadlift': [other],
+      });
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+
+      final removed = await repo.deleteAll('custom_1');
+
+      expect(removed, [a, b]);
+      expect(repo.recordsFor('custom_1'), isEmpty);
+      expect(repo.bestOneRMFor('custom_1'), isNull);
+      expect(repo.recordsFor('deadlift'), [other]);
+      expect(notifications, 1);
+      expect((await storage.load()).keys, ['deadlift']);
+    });
+
+    test('deleteAll of an exercise without records does nothing', () async {
+      final repo = RecordsRepository(StorageService.inMemoryForTesting());
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+
+      expect(await repo.deleteAll('custom_1'), isEmpty);
+      expect(notifications, 0);
+    });
+
+    test('restoreAll puts them back and saves', () async {
+      final storage = StorageService.inMemoryForTesting();
+      final a = _record(oneRM: 100);
+      final repo = RecordsRepository(storage, {
+        'custom_1': [a],
+      });
+      final removed = await repo.deleteAll('custom_1');
+
+      await repo.restoreAll('custom_1', removed);
+
+      expect(repo.recordsFor('custom_1'), [a]);
+      expect((await storage.load())['custom_1'], [a]);
+    });
+
+    test('restoreAll keeps records added in the meantime', () async {
+      final a = _record(oneRM: 100);
+      final later = _record(oneRM: 120);
+      final repo = RecordsRepository(StorageService.inMemoryForTesting(), {
+        'custom_1': [a],
+      });
+      final removed = await repo.deleteAll('custom_1');
+      await repo.add('custom_1', later);
+
+      await repo.restoreAll('custom_1', removed);
+
+      expect(repo.recordsFor('custom_1'), unorderedEquals([a, later]));
+    });
+
+    test('restoreAll with nothing to restore does nothing', () async {
+      final repo = RecordsRepository(StorageService.inMemoryForTesting());
+      var notifications = 0;
+      repo.addListener(() => notifications++);
+
+      await repo.restoreAll('custom_1', const []);
+
+      expect(notifications, 0);
+    });
+
+    test('deleteAll rethrows a save failure but keeps the deletion', () async {
+      final storage = _FlakyStorage()..failNextSave = true;
+      final repo = RecordsRepository(storage, {
+        'custom_1': [_record()],
+      });
+
+      await expectLater(
+        repo.deleteAll('custom_1'),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(repo.recordsFor('custom_1'), isEmpty);
+    });
+  });
 }
 
 class _FlakyStorage implements StorageService {

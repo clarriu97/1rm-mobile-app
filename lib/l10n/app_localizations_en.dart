@@ -358,6 +358,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get create => 'Create';
 
   @override
+  String get editExercise => 'Edit exercise';
+
+  @override
+  String deletedExercise(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deleted $name and $count entries',
+      one: 'Deleted $name and 1 entry',
+      zero: 'Deleted $name',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categorySquat => 'Squat';
 
   @override

@@ -32,7 +32,8 @@ merge, while the local gate still guarantees they passed.
 1. Commit and push the branch.
 2. Run `tool/ci.sh all`. It runs every check and the e2e flows on the small
    and large iPhone simulators and on an Android emulator (it starts the first
-   AVD whose name contains `1rm` if none is running).
+   AVD whose name contains `1rm` if none is running, and shuts down whatever it
+   started). Setup of the Android side: README → Testing.
 3. If everything passes **and** there are no uncommitted changes, it records
    the pass for that commit and reports `local-e2e ✓` on GitHub with a summary
    of the devices it ran on. If the commit wasn't pushed yet, push it and run

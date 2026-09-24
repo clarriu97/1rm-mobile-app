@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_tokens.dart';
@@ -8,6 +9,17 @@ export 'industrial_decor.dart';
 
 class AppTheme {
   AppTheme._();
+
+  /// Each platform's own transition. iOS keeps its slide even with reduced
+  /// motion: the swipe-back gesture lives in it and must always work.
+  static const pageTransitions = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.android: _StaticWhenReducedMotion(
+        PredictiveBackPageTransitionsBuilder(),
+      ),
+    },
+  );
 
   static const String displayFont = 'BigShoulders';
   static const String bodyFont = 'Barlow';
@@ -95,6 +107,7 @@ class AppTheme {
       brightness: Brightness.dark,
       fontFamily: bodyFont,
       scaffoldBackgroundColor: AppColors.background,
+      pageTransitionsTheme: pageTransitions,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.accent,
         onPrimary: AppColors.onAccent,
@@ -200,4 +213,28 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// [builder]'s transition, or none when the system asks for reduced motion.
+class _StaticWhenReducedMotion extends PageTransitionsBuilder {
+  const _StaticWhenReducedMotion(this.builder);
+
+  final PageTransitionsBuilder builder;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => MediaQuery.disableAnimationsOf(context)
+      ? child
+      : builder.buildTransitions(
+          route,
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+        );
 }

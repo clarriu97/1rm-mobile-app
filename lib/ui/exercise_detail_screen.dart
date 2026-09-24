@@ -11,6 +11,8 @@ import 'add_entry_screen.dart';
 import 'theme/app_theme.dart';
 import 'history_screen.dart';
 import 'save_error.dart';
+import 'widgets/counting_weight.dart';
+import 'widgets/exercise_icon_hero.dart';
 import 'widgets/pr_celebration.dart';
 import 'widgets/progress_chart.dart';
 import 'widgets/segmented_chips.dart';
@@ -89,14 +91,17 @@ class ExerciseDetailScreen extends StatelessWidget {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  template.assetPath,
-                  excludeFromSemantics: true,
-                  width: 22,
-                  height: 22,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.accent,
-                    BlendMode.srcIn,
+                ExerciseIconHero(
+                  exerciseId: template.id,
+                  child: SvgPicture.asset(
+                    template.assetPath,
+                    excludeFromSemantics: true,
+                    width: 22,
+                    height: 22,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.accent,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -214,8 +219,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    formatWeight(best, unit, locale: locale),
+                  child: CountingWeight(
+                    key: const Key('best-one-rm'),
+                    weightInKg: best,
+                    unit: unit,
                     style: text.displayLarge?.copyWith(color: AppColors.accent),
                   ),
                 ),

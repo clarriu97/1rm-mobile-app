@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
+import '../models/app_language.dart';
 import '../models/weight_unit.dart';
+import '../repositories/language_repository.dart';
 import '../services/unit_service.dart';
 import 'theme/app_theme.dart';
 
@@ -8,10 +11,12 @@ class SettingsScreen extends StatefulWidget {
     super.key,
     required this.unitService,
     required this.currentUnit,
+    required this.language,
   });
 
   final UnitService unitService;
   final WeightUnit currentUnit;
+  final LanguageRepository language;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -34,32 +39,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          Text('Units', style: Theme.of(context).textTheme.titleMedium),
+          Text(l10n.units, style: titleStyle),
           const SizedBox(height: AppSpacing.md),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadii.md),
-              border: Border.all(color: AppColors.outline),
-            ),
-            child: Column(
+          _ChoiceGroup(
+            children: [
+              for (final unit in WeightUnit.values)
+                _ChoiceTile(
+                  key: Key('unit-${unit.name}'),
+                  label: unit.displayName,
+                  isSelected: _unit == unit,
+                  onTap: () => _onUnitChanged(unit),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(l10n.language, style: titleStyle),
+          const SizedBox(height: AppSpacing.md),
+          ListenableBuilder(
+            listenable: widget.language,
+            builder: (context, _) => _ChoiceGroup(
               children: [
-                _UnitTile(
-                  unit: WeightUnit.kg,
-                  isSelected: _unit == WeightUnit.kg,
-                  onTap: () => _onUnitChanged(WeightUnit.kg),
-                ),
-                Container(height: 0.5, color: AppColors.outline),
-                _UnitTile(
-                  unit: WeightUnit.lbs,
-                  isSelected: _unit == WeightUnit.lbs,
-                  onTap: () => _onUnitChanged(WeightUnit.lbs),
-                ),
+                for (final language in AppLanguage.values)
+                  _ChoiceTile(
+                    key: Key('language-${language.name}'),
+                    label: switch (language) {
+                      AppLanguage.system => l10n.languageSystem,
+                      AppLanguage.en => l10n.languageEnglish,
+                      AppLanguage.es => l10n.languageSpanish,
+                    },
+                    isSelected: widget.language.language == language,
+                    onTap: () => widget.language.setLanguage(language),
+                  ),
               ],
             ),
           ),
@@ -69,44 +86,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _UnitTile extends StatelessWidget {
-  const _UnitTile({
-    required this.unit,
+class _ChoiceGroup extends StatelessWidget {
+  const _ChoiceGroup({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.outline),
+      ),
+      child: Column(
+        children: [
+          for (final (index, child) in children.indexed) ...[
+            if (index > 0) Container(height: 0.5, color: AppColors.outline),
+            child,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoiceTile extends StatelessWidget {
+  const _ChoiceTile({
+    super.key,
+    required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
-  final WeightUnit unit;
+  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.lg,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  unit.displayName,
-                  style: Theme.of(context).textTheme.titleMedium,
+    return Semantics(
+      selected: isSelected,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.lg,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              if (isSelected)
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.accent,
-                  size: 24,
-                ),
-            ],
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.accent,
+                    size: 24,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/localized_names.dart';
 import '../models/weight_unit.dart';
 import 'theme/app_theme.dart';
 
@@ -75,27 +77,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final pages = [
-      const _OnboardingPage(
+      _OnboardingPage(
         illustration: 'assets/illustrations/onboarding_max.svg',
-        title: 'What is 1RM?',
-        description:
-            'Your One-Rep Max: the heaviest weight you can lift once. '
-            'The baseline for all your training.',
+        title: l10n.onboardingWhatTitle,
+        description: l10n.onboardingWhatBody,
       ),
-      const _OnboardingPage(
+      _OnboardingPage(
         illustration: 'assets/illustrations/onboarding_log.svg',
-        title: 'Log your lifts',
-        description:
-            'Enter any set — weight × reps. The Epley formula estimates '
-            'your max, no need to test it.',
+        title: l10n.onboardingLogTitle,
+        description: l10n.onboardingLogBody,
       ),
       _OnboardingPage(
         illustration: 'assets/illustrations/onboarding_table.svg',
-        title: 'Train smarter',
-        description:
-            'Get working weights for every percentage and rep range. '
-            'Which unit do you lift in?',
+        title: l10n.onboardingTrainTitle,
+        description: l10n.onboardingTrainBody,
         footer: _UnitChoice(
           selected: _unit,
           onChanged: (unit) => setState(() => _unit = unit),
@@ -147,10 +144,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           : _nextPage,
                       child: Text(
                         !_isLastPage
-                            ? 'Next'
+                            ? l10n.next
                             : _lifts.isEmpty
-                            ? 'Pick at least one lift'
-                            : 'Get Started',
+                            ? l10n.pickAtLeastOneLift
+                            : l10n.getStarted,
                       ),
                     ),
                   ),
@@ -166,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       key: const Key('onboarding-skip-button'),
                       onPressed: () =>
                           widget.onComplete((unit: _unit, lifts: null)),
-                      child: const Text('Skip'),
+                      child: Text(l10n.skip),
                     ),
                   ),
                 ],
@@ -255,11 +252,11 @@ class _PickLiftsPage extends StatelessWidget {
         ],
         stops: const [0, 0.9, 1],
       ).createShader(bounds),
-      child: _buildList(text),
+      child: _buildList(text, AppLocalizations.of(context)),
     );
   }
 
-  Widget _buildList(TextTheme text) {
+  Widget _buildList(TextTheme text, AppLocalizations l10n) {
     return ListView(
       key: const Key('pick-lifts-page'),
       // Extra bottom room so the last row clears the fade when scrolled.
@@ -271,27 +268,29 @@ class _PickLiftsPage extends StatelessWidget {
       ),
       children: [
         Text(
-          'Pick your lifts',
+          l10n.pickLiftsTitle,
           textAlign: TextAlign.center,
           style: text.displayMedium,
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Choose what shows on Home. You can change it any time '
-          'from Manage exercises.',
+          l10n.pickLiftsBody,
           textAlign: TextAlign.center,
           style: text.bodyLarge,
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          '${selected.length} selected',
+          l10n.selectedCount(selected.length),
           key: const Key('pick-lifts-count'),
           textAlign: TextAlign.center,
           style: text.labelMedium?.copyWith(color: AppColors.accent),
         ),
         for (final (category, group) in groupByCategory(exercises)) ...[
           const SizedBox(height: AppSpacing.lg),
-          Text(category.displayName.toUpperCase(), style: text.labelMedium),
+          Text(
+            l10n.categoryName(category).toUpperCase(),
+            style: text.labelMedium,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,
@@ -357,7 +356,7 @@ class _LiftChip extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Flexible(
                     child: Text(
-                      exercise.name,
+                      AppLocalizations.of(context).exerciseName(exercise),
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(
                         context,
@@ -417,7 +416,9 @@ class _UnitOption extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: unit == WeightUnit.kg ? 'Kilograms' : 'Pounds',
+      label: unit == WeightUnit.kg
+          ? AppLocalizations.of(context).kilograms
+          : AppLocalizations.of(context).pounds,
       child: Material(
         color: selected ? AppColors.accent : AppColors.surfaceRaised,
         shape: RoundedRectangleBorder(

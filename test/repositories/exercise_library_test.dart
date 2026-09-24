@@ -105,6 +105,22 @@ void main() {
       expect(lib.validateName('back squat'), ExerciseNameError.duplicate);
       expect(lib.validateName(' PIN PRESS '), ExerciseNameError.duplicate);
     });
+
+    test('rejects duplicates of the names shown in the user language', () {
+      const shown = ['Sentadilla trasera', 'Peso muerto'];
+      expect(
+        lib.validateName('sentadilla TRASERA', localizedNames: shown),
+        ExerciseNameError.duplicate,
+      );
+      expect(
+        lib.validateName('Back Squat', localizedNames: shown),
+        ExerciseNameError.duplicate,
+      );
+      expect(
+        lib.validateName('Sentadilla Zercher', localizedNames: shown),
+        isNull,
+      );
+    });
   });
 
   group('ExerciseLibrary — mutations', () {

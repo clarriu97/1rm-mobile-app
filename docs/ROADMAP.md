@@ -32,14 +32,25 @@ Android (phones; Android tablets must not break). Owner: Carlos Larriu
 | M2 · Identidad visual | ✅ done | Industrial/gym design system (tokens, Big Shoulders + Barlow), generated exercise icons and illustrations, app icon, splash, "1RM" name |
 | M3 · UX principal | ✅ done | Home cards with best 1RM + sparkline, live 1RM on add entry with dates, PR celebration, progress chart, %/reps tables, editable history with undo, 34-lift library with custom lifts and hiding, onboarding with kg/lbs and lift picking |
 | M3.5 · Testing en dispositivos | ✅ done | iPhone-only, layout matrix, goldens, e2e flows in CI |
-| **M4 · Calidad de lanzamiento** | **🔜 current** | #16 i18n es/en → #17 accessibility → #18 motion → #20 release config → #19 CI release builds (#51, local e2e gate, done). Issue bodies include testing follow-ups added on 2026-09-23 |
+| **M4 · Calidad de lanzamiento** | **🔜 current** | #16 i18n es/en (done) → #55 rename/delete custom lifts → #17 accessibility → #18 motion → #20 release config → #19 CI release builds (#51, local e2e gate, done). Issue bodies include testing follow-ups added on 2026-09-23 |
 | Fase 2 · Publicación | later | Store accounts, TestFlight/Play, real devices on Firebase Test Lab (#45), screenshots, ASO, monetization |
 | Post-v1 | backlog | #21: backup export/import, plate calculator, formula choice, light mode |
 
-**Next step:** M4 in the order above, starting with #16. Work one issue per
+**Next step:** M4 in the order above, continuing with #55. Work one issue per
 branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
+
+- **2026-09-24 · Localization (#16).** Strings in `lib/l10n/app_{en,es}.arb`
+  (gen-l10n; generated Dart committed next to them); exercise and family names
+  by stable id in `lib/l10n/localized_names.dart`. Numbers follow the language
+  (`116,7 kg` in Spanish), "reps" in both languages. Search in Manage
+  exercises matches the Spanish and the English name, and a new exercise may
+  repeat neither. The app follows the device language (English for any
+  language other than Spanish) unless the user picks one in Settings (Same as
+  device / English / Español), saved in preferences. The small iPhone runs
+  the e2e flows in Spanish, the large one in English (`tool/ci.sh`); flows
+  find text through `AppLocalizations`.
 
 - **2026-09-24 · Merge gate.** Pull requests run only deterministic checks
   (`analyze`, `test`, `goldens`). The e2e flows run locally through
@@ -70,7 +81,8 @@ branch and PR, following AGENTS.md → Workflow.
 - **2026-09-23 · v1 scope.** Progress chart and PRs, plus what a lifter really
   needs (past dates, editing, live estimate, unit choice). Every addition must
   pass "would a real user need this?".
-- **2026-09-23 · Languages** English + Spanish, following the system language.
+- **2026-09-23 · Languages** English + Spanish, following the system language
+  (a Settings override was added on 2026-09-24, #16).
 - **2026-09-23 · Visual direction** industrial / gym: dark iron and chalk,
   condensed display type, one safety-yellow accent. Clarity wins over
   decoration.

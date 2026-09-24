@@ -3,7 +3,7 @@ import '../theme/app_theme.dart';
 
 /// Compact single-choice control: one chip per value, the selected one
 /// filled with the accent. Each chip is a 48 dp tap target.
-class SegmentedChips<T> extends StatelessWidget {
+class SegmentedChips<T extends Enum> extends StatelessWidget {
   const SegmentedChips({
     super.key,
     required this.values,
@@ -18,7 +18,8 @@ class SegmentedChips<T> extends StatelessWidget {
   final String Function(T value) labelOf;
   final ValueChanged<T> onSelected;
 
-  /// Chips get `Key('$keyPrefix-${labelOf(value)}')` for tests.
+  /// Chips get `Key('$keyPrefix-${value.name}')` for tests: the same in
+  /// every language.
   final String keyPrefix;
 
   @override
@@ -28,7 +29,7 @@ class SegmentedChips<T> extends StatelessWidget {
       children: [
         for (final value in values)
           _Chip(
-            key: Key('$keyPrefix-${labelOf(value)}'),
+            key: Key('$keyPrefix-${value.name}'),
             label: labelOf(value),
             selected: value == selected,
             onTap: () => onSelected(value),

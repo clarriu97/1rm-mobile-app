@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/models/weight_unit.dart';
 
 import '../helpers.dart';
 
@@ -8,7 +9,8 @@ void onboardingFlows() {
     tester,
   ) async {
     await launchApp(tester);
-    expect(find.text('What is 1RM?'), findsOneWidget);
+    final welcome = find.text(l10n(tester).onboardingWhatTitle);
+    expect(welcome, findsOneWidget);
 
     await tapKey(tester, 'onboarding-next-button');
     await tapKey(tester, 'onboarding-next-button');
@@ -22,15 +24,16 @@ void onboardingFlows() {
     await tapKey(tester, 'onboarding-next-button');
 
     await waitFor(tester, find.text('1RM'));
-    await tapText(tester, 'Thruster');
+    await tapExercise(tester, 'thruster');
     await logEntry(tester, weight: '95', reps: '1');
-    expect(find.text('95.0 lbs'), findsWidgets);
+    final logged = find.text(weight(tester, 95, unit: WeightUnit.lbs));
+    expect(logged, findsWidgets);
 
     await relaunchApp(tester);
 
-    expect(find.text('What is 1RM?'), findsNothing);
-    await tapText(tester, 'Thruster');
-    expect(find.text('95.0 lbs'), findsWidgets);
+    expect(welcome, findsNothing);
+    await tapExercise(tester, 'thruster');
+    expect(logged, findsWidgets);
     await goBack(tester);
 
     await tapKey(tester, 'manage-exercises-button');
@@ -45,12 +48,13 @@ void onboardingFlows() {
     tester,
   ) async {
     await launchApp(tester);
+    final welcome = find.text(l10n(tester).onboardingWhatTitle);
     await tapKey(tester, 'onboarding-skip-button');
 
     await waitFor(tester, find.text('1RM'));
-    expect(find.text('Back Squat'), findsOneWidget);
+    expect(find.text(exerciseName(tester, 'back_squat')), findsOneWidget);
 
     await relaunchApp(tester);
-    expect(find.text('What is 1RM?'), findsNothing);
+    expect(welcome, findsNothing);
   });
 }

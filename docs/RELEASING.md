@@ -8,8 +8,8 @@ GitHub after merging, every night and for every release.
 |---|---|---|---|
 | Every push (pre-push hook) | format, analyze, unit/widget/layout-matrix tests, goldens | this Mac, `tool/ci.sh` | the push |
 | Every pull request | `analyze`, `test`, `goldens` | GitHub | the merge (required checks) |
-| Before merging | all of the above + e2e on the small and large iPhone simulators and an Android emulator | this Mac, `tool/ci.sh all` | the merge (`local-e2e` required check) |
-| After every merge, nightly, on demand | e2e on iPhone small/large, Android API 24 (small) and 35 (large) | GitHub, workflow **E2E** | nothing: a red run is fixed in the next PR |
+| Before merging | all of the above + e2e on the small (Spanish) and large (English) iPhone simulators and an Android emulator | this Mac, `tool/ci.sh all` | the merge (`local-e2e` required check) |
+| After every merge, nightly, on demand | e2e on iPhone small (Spanish) / large (English), Android API 24 (small) and 35 (large) | GitHub, workflow **E2E** | nothing: a red run is fixed in the next PR |
 | Every `v*` tag | tag = pubspec version, all checks, goldens, e2e on the 4 CI devices | GitHub, workflow **Release** | the release |
 
 ## Why the e2e flows don't run on pull requests

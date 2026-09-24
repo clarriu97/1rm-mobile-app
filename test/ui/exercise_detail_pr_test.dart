@@ -103,7 +103,7 @@ void main() {
       );
 
       expect(find.byKey(const Key('pr-badge')), findsNWidgets(2));
-      for (final weight in ['110.0 kg × 1 reps', '115.0 kg × 1 reps']) {
+      for (final weight in ['110.0 kg × 1 rep', '115.0 kg × 1 rep']) {
         expect(
           find.descendant(
             of: find.ancestor(
@@ -132,6 +132,48 @@ void main() {
       );
 
       expect(find.byKey(const Key('pr-badge')), findsNothing);
+    });
+  });
+  group('PR celebration in Spanish', () {
+    testWidgets('names the exercise in Spanish with decimal commas', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(
+          ExerciseDetailScreen(
+            template: _squat,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              _squat.id: [_record(100, DateTime(2026, 9))],
+            }),
+            unit: WeightUnit.kg,
+          ),
+          locale: const Locale('es'),
+        ),
+      );
+      await tester.tap(find.text('Añadir registro'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), '102,5');
+      await tester.enterText(find.byType(TextFormField).at(1), '1');
+      await tester.tap(find.text('Guardar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('NUEVO PR'), findsOneWidget);
+      expect(find.text('SENTADILLA TRASERA'), findsOneWidget);
+      expect(
+        find.text('+2,5 kg sobre tu mejor marca anterior'),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          'Nueva marca personal: Sentadilla trasera, 102,5 kg',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.pump(kPrCelebrationDuration);
+      await tester.pumpAndSettle();
+      handle.dispose();
     });
   });
 }

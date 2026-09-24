@@ -1,12 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/l10n/app_localizations_en.dart';
+import 'package:one_rm_mobile/l10n/app_localizations_es.dart';
 import 'package:one_rm_mobile/utils/dates.dart';
 
 void main() {
   final now = DateTime(2026, 9, 23, 18, 30);
+  final en = AppLocalizationsEn();
+  final es = AppLocalizationsEs();
 
   String ago(int days, {int hour = 12}) => formatRelativeDate(
     DateTime(now.year, now.month, now.day - days, hour),
     now,
+    en,
   );
 
   group('formatRelativeDate', () {
@@ -17,7 +22,7 @@ void main() {
 
     test('future dates are treated as Today', () {
       expect(
-        formatRelativeDate(now.add(const Duration(days: 3)), now),
+        formatRelativeDate(now.add(const Duration(days: 3)), now, en),
         'Today',
       );
     });
@@ -28,6 +33,7 @@ void main() {
         formatRelativeDate(
           DateTime(2026, 9, 22, 23, 59),
           DateTime(2026, 9, 23, 0, 1),
+          en,
         ),
         'Yesterday',
       );
@@ -60,13 +66,30 @@ void main() {
 
     test('crosses month and year boundaries by calendar day', () {
       expect(
-        formatRelativeDate(DateTime(2025, 12, 31), DateTime(2026)),
+        formatRelativeDate(DateTime(2025, 12, 31), DateTime(2026), en),
         'Yesterday',
       );
       expect(
-        formatRelativeDate(DateTime(2026, 2, 28), DateTime(2026, 3, 2)),
+        formatRelativeDate(DateTime(2026, 2, 28), DateTime(2026, 3, 2), en),
         '2 days ago',
       );
+    });
+
+    test('in Spanish, singular and plural at every step', () {
+      String agoEs(int days) => formatRelativeDate(
+        DateTime(now.year, now.month, now.day - days, 12),
+        now,
+        es,
+      );
+      expect(agoEs(0), 'Hoy');
+      expect(agoEs(1), 'Ayer');
+      expect(agoEs(2), 'Hace 2 días');
+      expect(agoEs(7), 'Hace 1 semana');
+      expect(agoEs(14), 'Hace 2 semanas');
+      expect(agoEs(31), 'Hace 1 mes');
+      expect(agoEs(61), 'Hace 2 meses');
+      expect(agoEs(365), 'Hace 1 año');
+      expect(agoEs(730), 'Hace 2 años');
     });
   });
 }

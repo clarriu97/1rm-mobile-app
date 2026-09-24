@@ -64,12 +64,18 @@ class ExerciseLibrary extends ChangeNotifier {
 
   bool isCustom(String id) => _custom.any((c) => c.id == id);
 
-  ExerciseNameError? validateName(String name) {
+  /// [localizedNames] are the names shown in the user's language, which a
+  /// new exercise must not repeat either.
+  ExerciseNameError? validateName(
+    String name, {
+    Iterable<String> localizedNames = const [],
+  }) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return ExerciseNameError.empty;
     if (trimmed.length > maxNameLength) return ExerciseNameError.tooLong;
     final lower = trimmed.toLowerCase();
-    if (all.any((e) => e.name.toLowerCase() == lower)) {
+    final taken = [...all.map((e) => e.name), ...localizedNames];
+    if (taken.any((n) => n.toLowerCase() == lower)) {
       return ExerciseNameError.duplicate;
     }
     return null;

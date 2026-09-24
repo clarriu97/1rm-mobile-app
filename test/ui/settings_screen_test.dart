@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/models/app_language.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
+import 'package:one_rm_mobile/repositories/language_repository.dart';
+import 'package:one_rm_mobile/services/language_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
 import 'package:one_rm_mobile/ui/settings_screen.dart';
 
@@ -13,7 +16,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
+          SettingsScreen(
+            unitService: unitService,
+            currentUnit: WeightUnit.kg,
+            language: testLanguage(),
+          ),
         ),
       );
 
@@ -21,7 +28,7 @@ void main() {
       expect(find.text('Units'), findsOneWidget);
       expect(find.text('kg'), findsOneWidget);
       expect(find.text('lbs'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsNWidgets(2));
     });
 
     testWidgets('shows checkmark on kg when kg is selected', (tester) async {
@@ -29,7 +36,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
+          SettingsScreen(
+            unitService: unitService,
+            currentUnit: WeightUnit.kg,
+            language: testLanguage(),
+          ),
         ),
       );
 
@@ -63,7 +74,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          SettingsScreen(unitService: unitService, currentUnit: WeightUnit.kg),
+          SettingsScreen(
+            unitService: unitService,
+            currentUnit: WeightUnit.kg,
+            language: testLanguage(),
+          ),
         ),
       );
 
@@ -90,7 +105,11 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          SettingsScreen(unitService: unitService, currentUnit: WeightUnit.lbs),
+          SettingsScreen(
+            unitService: unitService,
+            currentUnit: WeightUnit.lbs,
+            language: testLanguage(),
+          ),
         ),
       );
 
@@ -98,6 +117,85 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(await unitService.getUnit(), WeightUnit.kg);
+    });
+  });
+
+  group('SettingsScreen — language', () {
+    Future<LanguageRepository> pump(
+      WidgetTester tester, {
+      AppLanguage initial = AppLanguage.system,
+    }) async {
+      final language = LanguageRepository(
+        LanguageService.forTesting(language: initial),
+        language: initial,
+      );
+      await tester.pumpWidget(
+        buildTestApp(
+          SettingsScreen(
+            unitService: UnitService.forTesting(),
+            currentUnit: WeightUnit.kg,
+            language: language,
+          ),
+        ),
+      );
+      return language;
+    }
+
+    Finder check(String key) => find.descendant(
+      of: find.byKey(Key(key)),
+      matching: find.byIcon(Icons.check_circle_rounded),
+    );
+
+    testWidgets('offers the device language, English and Spanish', (
+      tester,
+    ) async {
+      await pump(tester);
+
+      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('Same as device'), findsOneWidget);
+      expect(find.text('English'), findsOneWidget);
+      expect(find.text('Español'), findsOneWidget);
+      expect(check('language-system'), findsOneWidget);
+      expect(check('language-en'), findsNothing);
+      expect(check('language-es'), findsNothing);
+    });
+
+    testWidgets('marks the saved choice', (tester) async {
+      await pump(tester, initial: AppLanguage.es);
+
+      expect(check('language-es'), findsOneWidget);
+      expect(check('language-system'), findsNothing);
+    });
+
+    testWidgets('tapping a language saves it and moves the mark', (
+      tester,
+    ) async {
+      final language = await pump(tester);
+
+      await tester.tap(find.text('Español'));
+      await tester.pumpAndSettle();
+
+      expect(language.language, AppLanguage.es);
+      expect(check('language-es'), findsOneWidget);
+      expect(check('language-system'), findsNothing);
+    });
+
+    testWidgets('choosing a language keeps the unit untouched', (tester) async {
+      final units = UnitService.forTesting(unit: WeightUnit.lbs);
+      await tester.pumpWidget(
+        buildTestApp(
+          SettingsScreen(
+            unitService: units,
+            currentUnit: WeightUnit.lbs,
+            language: testLanguage(),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('English'));
+      await tester.pumpAndSettle();
+
+      expect(await units.getUnit(), WeightUnit.lbs);
     });
   });
 }

@@ -1,17 +1,13 @@
 /// Lift families, in the order they're listed in the app.
 enum ExerciseCategory {
-  squat('Squat'),
-  hinge('Deadlift & hinge'),
-  bench('Bench & dips'),
-  overhead('Overhead'),
-  pull('Pulls & rows'),
-  clean('Clean & jerk'),
-  snatch('Snatch'),
-  custom('Custom');
-
-  const ExerciseCategory(this.displayName);
-
-  final String displayName;
+  squat,
+  hinge,
+  bench,
+  overhead,
+  pull,
+  clean,
+  snatch,
+  custom,
 }
 
 class ExerciseRecord {

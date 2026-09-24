@@ -191,17 +191,17 @@ void main() {
 
       testWidgets('accepts 999.9 kg (just under max)', (tester) async {
         await openAndSubmit(tester, weight: '999.9', reps: '1');
-        expect(find.text('Max 1000 kg'), findsNothing);
+        expect(find.text('Max 1,000 kg'), findsNothing);
       });
 
       testWidgets('rejects 1000.1 kg (just over max)', (tester) async {
         await openAndSubmit(tester, weight: '1000.1', reps: '1');
-        expect(find.text('Max 1000 kg'), findsOneWidget);
+        expect(find.text('Max 1,000 kg'), findsOneWidget);
       });
 
       testWidgets('rejects 9999 kg (way over max)', (tester) async {
         await openAndSubmit(tester, weight: '9999', reps: '1');
-        expect(find.text('Max 1000 kg'), findsOneWidget);
+        expect(find.text('Max 1,000 kg'), findsOneWidget);
       });
 
       testWidgets('rejects negative weight', (tester) async {
@@ -339,7 +339,7 @@ void main() {
       await tester.enterText(find.byType(TextFormField).at(1), '100');
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
-      expect(find.text('Max 1000 kg'), findsOneWidget);
+      expect(find.text('Max 1,000 kg'), findsOneWidget);
       expect(find.text('Max 50 reps'), findsOneWidget);
     });
   });
@@ -488,7 +488,7 @@ void main() {
 
       testWidgets('accepts 2204 lbs (just under max)', (tester) async {
         await openAndSubmitLbs(tester, weight: '2204', reps: '1');
-        expect(find.text('Max 2205 lbs'), findsNothing);
+        expect(find.text('Max 2,205 lbs'), findsNothing);
       });
 
       testWidgets('accepts 2204.62 lbs (exactly at max)', (tester) async {
@@ -525,12 +525,12 @@ void main() {
 
       testWidgets('rejects 2205 lbs (just over max)', (tester) async {
         await openAndSubmitLbs(tester, weight: '2205', reps: '1');
-        expect(find.text('Max 2205 lbs'), findsOneWidget);
+        expect(find.text('Max 2,205 lbs'), findsOneWidget);
       });
 
       testWidgets('rejects 9999 lbs (way over max)', (tester) async {
         await openAndSubmitLbs(tester, weight: '9999', reps: '1');
-        expect(find.text('Max 2205 lbs'), findsOneWidget);
+        expect(find.text('Max 2,205 lbs'), findsOneWidget);
       });
     });
 
@@ -843,6 +843,74 @@ void main() {
       );
 
       expect(_fieldText(tester, 0), '225');
+    });
+  });
+  group('AddEntryScreen in Spanish', () {
+    Future<void> pump(WidgetTester tester, WeightUnit unit) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          AddEntryScreen(
+            exerciseName: 'Peso muerto',
+            assetPath: 'assets/icons/deadlift.svg',
+            unit: unit,
+            clock: () => DateTime(2026, 9, 23, 10),
+          ),
+          locale: const Locale('es'),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('labels, hint with a decimal comma and relative date', (
+      tester,
+    ) async {
+      await pump(tester, WeightUnit.kg);
+
+      expect(find.text('INTRODUCE TU SERIE'), findsOneWidget);
+      expect(find.text('Peso'), findsOneWidget);
+      expect(find.text('112,5'), findsOneWidget);
+      expect(find.text('Hoy'), findsOneWidget);
+      expect(find.text('1RM ESTIMADO'), findsOneWidget);
+      expect(find.text('Guardar'), findsOneWidget);
+    });
+
+    testWidgets('a decimal comma is accepted and the estimate uses one', (
+      tester,
+    ) async {
+      await pump(tester, WeightUnit.kg);
+
+      await tester.enterText(find.byType(TextFormField).at(0), '112,5');
+      await tester.enterText(find.byType(TextFormField).at(1), '3');
+      await tester.pump();
+
+      expect(find.text('123,8 kg'), findsOneWidget);
+    });
+
+    testWidgets('validation messages', (tester) async {
+      await pump(tester, WeightUnit.lbs);
+
+      await tester.tap(find.text('Guardar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Obligatorio'), findsNWidgets(2));
+
+      await tester.enterText(find.byType(TextFormField).at(0), '9999');
+      await tester.enterText(find.byType(TextFormField).at(1), '51');
+      await tester.tap(find.text('Guardar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Máx. 2.205 lbs'), findsOneWidget);
+      expect(find.text('Máx. 50 reps'), findsOneWidget);
+    });
+
+    testWidgets('warns about high reps', (tester) async {
+      await pump(tester, WeightUnit.kg);
+
+      await tester.enterText(find.byType(TextFormField).at(1), '12');
+      await tester.pump();
+
+      expect(
+        find.text('Las estimaciones son menos precisas por encima de 10 reps.'),
+        findsOneWidget,
+      );
     });
   });
 }

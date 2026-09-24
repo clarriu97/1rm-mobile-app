@@ -138,6 +138,7 @@ void main() {
       List<ExerciseRecord> records, {
       Set<ExerciseRecord>? prs,
       bool reduceMotion = false,
+      Locale? locale,
     }) => tester.pumpWidget(
       MediaQuery(
         data: MediaQueryData(disableAnimations: reduceMotion),
@@ -152,6 +153,7 @@ void main() {
               ),
             ),
           ),
+          locale: locale,
         ),
       ),
     );
@@ -188,7 +190,7 @@ void main() {
         _record(120, DateTime(2026, 9, 20)),
       ]);
 
-      await tester.tap(find.byKey(const Key('range-3M')));
+      await tester.tap(find.byKey(const Key('range-threeMonths')));
       await tester.pumpAndSettle();
 
       expect(chart(tester).data.lineBarsData.single.spots, hasLength(2));
@@ -202,7 +204,7 @@ void main() {
         _record(110, DateTime(2024, 3, 5)),
       ]);
 
-      await tester.tap(find.byKey(const Key('range-1Y')));
+      await tester.tap(find.byKey(const Key('range-year')));
       await tester.pumpAndSettle();
 
       expect(find.text('Not enough entries in this range.'), findsOneWidget);
@@ -236,6 +238,36 @@ void main() {
         findsOneWidget,
       );
       handle.dispose();
+    });
+
+    testWidgets('in Spanish: ranges, messages and screen reader text', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, [
+        _record(100, DateTime(2026, 9, 2)),
+        _record(120.5, DateTime(2026, 9, 10)),
+      ], locale: const Locale('es'));
+
+      expect(find.text('Progreso'), findsOneWidget);
+      expect(find.text('3M'), findsOneWidget);
+      expect(find.text('1A'), findsOneWidget);
+      expect(find.text('TODO'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          'Gráfico de progreso: 1RM de 100,0 kg a 120,5 kg en 2 registros',
+        ),
+        findsOneWidget,
+      );
+      handle.dispose();
+
+      await pump(tester, [
+        _record(100, DateTime(2026, 9, 2)),
+      ], locale: const Locale('es'));
+      expect(
+        find.text('Apunta al menos dos sesiones para ver tu progreso.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('does not animate with reduced motion', (tester) async {

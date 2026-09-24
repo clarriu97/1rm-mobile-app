@@ -65,11 +65,13 @@ jobs:
             target: default
             profile: Nexus 5
             snapshot: false
-          # Newest API, on a large 412 × 915 dp screen.
+          # Newest API, on a large 412 × 915 dp screen; also launches the
+          # release (R8) build, which the debug-only e2e flows can't cover.
           - api-level: 35
             target: google_apis
             profile: pixel_7
             snapshot: true
+            release-smoke: true
     env:
       EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
     steps:
@@ -127,4 +129,4 @@ jobs:
           # Turns on "Remove animations": Android runs exercise the static
           # fallbacks, iOS runs the full motion.
           disable-animations: true
-          script: tool/ci.sh e2e-android
+          script: tool/ci.sh e2e-android${{ matrix.release-smoke && ' && tool/ci.sh smoke-android-release' || '' }}

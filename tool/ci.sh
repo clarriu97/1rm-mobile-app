@@ -2,7 +2,12 @@
 # The checks CI runs, runnable locally with the same commands.
 #
 #   tool/ci.sh                 checks + goldens (goldens on macOS only)   ~1 min
-#   tool/ci.sh all             the above + every e2e target available     ~5-10 min
+#   tool/ci.sh all             the above + e2e on every target available  ~6-10 min
+#                              and, when it all passes on a pushed commit
+#                              with no local changes, reports the
+#                              `local-e2e` status that merging into main needs
+#   tool/ci.sh report          report `local-e2e` for HEAD after pushing, if
+#                              `tool/ci.sh all` already passed on it
 #
 #   tool/ci.sh checks          lint + unit
 #   tool/ci.sh lint            format and analyze
@@ -10,12 +15,21 @@
 #   tool/ci.sh goldens         pixel comparisons (macOS)
 #   tool/ci.sh boot-ios SIZE   boot the simulator for SIZE (small|large), print its id
 #   tool/ci.sh e2e-ios SIZE    e2e flows on that simulator (boots it if needed)
-#   tool/ci.sh e2e-android     e2e flows on the running Android emulator/device
+#   tool/ci.sh e2e-android     e2e flows on an Android emulator (starts one if needed)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 E2E=integration_test/app_test.dart
+
+# Where `tool/ci.sh all` remembers the commits it passed on.
+STAMPS=.dart_tool/local-e2e
+
+# Android SDK tools, installed by Android Studio.
+ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
+for dir in "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/emulator"; do
+  if [[ -d "$dir" ]]; then PATH="$dir:$PATH"; fi
+done
 
 # Safety net for a run stuck before the build finishes. A healthy run takes
 # 3 min locally and up to ~12 min on a slow CI runner; hangs after the build
@@ -176,11 +190,34 @@ android_device() {
   adb devices | awk 'NR > 1 && $2 == "device" { print $1; exit }'
 }
 
+# Prints a running Android device, starting an emulator (the first AVD whose
+# name contains "1rm", else the first one) when none is running. Prints
+# nothing when there is no emulator to start.
+boot_android() {
+  local device avd _
+  device=$(android_device)
+  if [[ -z "$device" ]] && command -v emulator >/dev/null; then
+    avd=$(emulator -list-avds 2>/dev/null | grep -i 1rm | head -1 || true)
+    [[ -z "$avd" ]] && avd=$(emulator -list-avds 2>/dev/null | head -1 || true)
+    if [[ -n "$avd" ]]; then
+      echo "Starting Android emulator $avd..." >&2
+      emulator -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot-save >/dev/null 2>&1 &
+      adb wait-for-device
+      for _ in $(seq 90); do
+        [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] && break
+        sleep 2
+      done
+      device=$(android_device)
+    fi
+  fi
+  echo "$device"
+}
+
 e2e_android() {
   local device
-  device=$(android_device)
+  device=$(boot_android)
   if [[ -z "$device" ]]; then
-    echo "No Android emulator or device running (start one from Android Studio → Device Manager)." >&2
+    echo "No Android emulator available: create one in Android Studio → Device Manager." >&2
     return 1
   fi
   # boot_completed can be set before the package manager accepts installs.
@@ -189,27 +226,67 @@ e2e_android() {
     adb -s "$device" shell pm path android >/dev/null 2>&1 && break
     sleep 2
   done
-  step "e2e on Android $device"
+  step "e2e on Android $device (API $(adb -s "$device" shell getprop ro.build.version.sdk | tr -d '\r'))"
   run_e2e "$device"
 }
 
 all() {
+  local passed="" sha
+  sha=$(git rev-parse HEAD)
   checks
   goldens
   if [[ "$(uname)" == Darwin ]]; then
     e2e_ios small
     e2e_ios large
+    passed="iOS small, iOS large"
   fi
-  if [[ -n "$(android_device)" ]]; then
+  if [[ -n "$(boot_android)" ]]; then
     e2e_android
+    passed="${passed:+$passed, }Android API $(adb shell getprop ro.build.version.sdk | tr -d '\r')"
   else
-    echo "⚠︎ Android e2e skipped: no emulator running. CI still runs it."
+    echo "⚠︎ Android e2e skipped: no emulator. CI runs it on main."
+    passed="${passed:+$passed; }Android skipped"
   fi
+  if [[ -n "$(git status --porcelain)" || "$(git rev-parse HEAD)" != "$sha" ]]; then
+    echo "⚠︎ Not recording a pass: the tests ran on uncommitted changes." >&2
+    return 0
+  fi
+  mkdir -p "$STAMPS"
+  echo "e2e passed locally: $passed" >"$STAMPS/$sha"
+  report
+}
+
+# Reports the `local-e2e` commit status for HEAD on GitHub, which the main
+# branch protection requires before merging. Only for a commit that
+# `tool/ci.sh all` passed on, with no local changes, once it is pushed.
+report() {
+  local sha repo stamp
+  sha=$(git rev-parse HEAD)
+  stamp="$STAMPS/$sha"
+  if [[ ! -f "$stamp" ]]; then
+    echo "tool/ci.sh all has not passed on $sha; run it first." >&2
+    return 1
+  fi
+  if [[ -n "$(git status --porcelain)" ]]; then
+    echo "Local changes on top of $sha; commit or stash them first." >&2
+    return 1
+  fi
+  git fetch -q origin 2>/dev/null || true
+  if [[ -z "$(git branch -r --contains "$sha" 2>/dev/null)" ]]; then
+    echo "⚠︎ $sha is not pushed yet: push it, then run tool/ci.sh report." >&2
+    return 0
+  fi
+  repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+  gh api -X POST "repos/$repo/statuses/$sha" \
+    -f state=success -f context=local-e2e \
+    -f description="$(head -c 140 "$stamp")" >/dev/null
+  step "local-e2e reported on $sha: $(cat "$stamp")"
 }
 
 case "${1:-}" in
   "") checks; goldens ;;
   all) all ;;
+  report) report ;;
   checks) checks ;;
   lint) lint ;;
   unit) unit ;;
@@ -217,5 +294,5 @@ case "${1:-}" in
   boot-ios) boot_ios "${2:?size: small|large}" ;;
   e2e-ios) e2e_ios "${2:?size: small|large}" ;;
   e2e-android) e2e_android ;;
-  *) sed -n '2,13p' "$0"; exit 1 ;;
+  *) sed -n '2,20p' "$0"; exit 1 ;;
 esac

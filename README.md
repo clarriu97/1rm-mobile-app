@@ -76,7 +76,7 @@ The same commands CI runs are wrapped in `tool/ci.sh`, so a local run is identic
 
 ```bash
 tool/ci.sh                  # format, analyze, unit/widget/matrix tests, goldens (~1 min)
-tool/ci.sh all              # + e2e on the small and large iPhone simulators and a running Android emulator
+tool/ci.sh all              # + e2e on the small and large iPhone simulators and an Android emulator; reports local-e2e
 tool/ci.sh e2e-ios small    # one e2e target: small | large
 tool/ci.sh e2e-android      # e2e on the running emulator/device
 ```
@@ -98,11 +98,13 @@ flutter test integration_test/app_test.dart -d <device-id>
 
 All e2e flows live in `integration_test/flows/` and run from the single entry point `integration_test/app_test.dart`, so the app is built and installed once per run.
 
-### CI
+### CI and the merge gate
 
-Every pull request runs:
-- **Flutter CI**: format + analyze, unit/widget/matrix tests (Linux), goldens (macOS).
-- **E2E**: all `integration_test/` flows on the smallest and largest current iPhone simulators (macOS) and on Android emulators with API 24 on a small screen and API 35 on a large one (Linux).
+- **Every pull request** (~2 min): format + analyze, unit/widget/matrix tests (Linux), goldens (macOS).
+- **Before merging**: `tool/ci.sh all` runs the e2e flows locally and reports the `local-e2e` status on the commit; `main` requires it.
+- **After every merge, nightly and for every `v*` tag**: the e2e flows on the smallest and largest current iPhone simulators and on Android emulators (API 24 small screen, API 35 large screen).
+
+Why it's split this way, and how to release: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Built With
 

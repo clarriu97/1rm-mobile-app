@@ -105,12 +105,13 @@ flutter analyze
 flutter test                       # full suite — a partial pass is a failure
 flutter test --update-goldens --tags golden   # regenerate screenshots (macOS only)
 flutter test integration_test/app_test.dart -d <device-id>   # e2e flows on a simulator/emulator/device
-tool/ci.sh                         # exactly what CI runs (tool/ci.sh all adds every e2e target)
+tool/ci.sh                         # exactly what the PR checks run (~1 min)
+tool/ci.sh all                     # + e2e on iPhone small/large and Android; reports `local-e2e` (merge gate)
 flutter devices
 flutter run -d <device-id>         # iPhone (USB or Wi-Fi) or simulator; keep it running for hot reload
 ```
 
-**Every change must pass `tool/ci.sh` (format, analyze, full `flutter test`, goldens) before it is considered done; run `tool/ci.sh all` before opening a PR that touches UI or flows.** Iterate autonomously until green.
+**Every change must pass `tool/ci.sh` (format, analyze, full `flutter test`, goldens) before it is considered done.** Iterate autonomously until green.
 
 When the app is running (via `flutter run` or the Dart MCP server), hot reload after editing UI in `lib/`, and hot restart after changing `main()`, `initState`, or global/static state. Don't reload for edits outside `lib/` or comment-only changes.
 
@@ -120,5 +121,7 @@ When the app is running (via `flutter run` or the Dart MCP server), hot reload a
 - One branch per issue: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `chore/<slug>`.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `test:`, `docs:`, `build:`, `ci:`).
 - PR body contains `Closes #<issue>`, a summary, and how it was verified (tests + device screenshot for UI changes).
-- Merge with squash once CI is green.
+- Before merging, on the PR's final head commit (pushed, no local changes): run `tool/ci.sh all`. It reports the `local-e2e` status that `main` requires; any new commit (including updating the branch with `main`) needs a new run. Never report that status by hand.
+- Merge with squash once `analyze`, `test`, `goldens` and `local-e2e` are green. Then check the **E2E** run on `main`; if it fails, fix it in the next PR.
+- Releases: follow `docs/RELEASING.md` (version bump PR → green E2E on main → `vX.Y.Z` tag → green **Release** workflow).
 - Never commit secrets: `.env`, keystores, `key.properties`, and provisioning profiles stay out of git.

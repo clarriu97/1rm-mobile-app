@@ -4,13 +4,20 @@ name: E2E
 # largest current iPhone, and Android on the oldest supported API with a small
 # screen and the newest API with a large one. Same commands as
 # `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android` locally.
+#
+# Not run on pull requests: device runs on shared CI machines occasionally
+# fail to attach to the app, which says nothing about the code. Before a
+# merge, `tool/ci.sh all` runs these flows locally and reports the
+# `local-e2e` status that main requires (see docs/RELEASING.md). Here they run
+# after every merge, every night, on demand, and for every release tag.
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  schedule:
+    - cron: "0 3 * * *"
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: e2e-${{ github.ref }}

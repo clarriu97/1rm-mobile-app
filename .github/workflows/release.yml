@@ -1,0 +1,28 @@
+name: Release
+
+# Runs for every version tag (v1.2.3). A release ships only if everything
+# passes: the tag matches pubspec.yaml, the checks, the goldens and the e2e
+# flows on all four CI devices. Phase 2 adds the store builds and uploads here.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  version:
+    name: Tag matches pubspec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match pubspec.yaml version $version" >&2
+            exit 1
+          fi
+
+  checks:
+    uses: ./.github/workflows/flutter.yml
+
+  e2e:
+    uses: ./.github/workflows/e2e.yml

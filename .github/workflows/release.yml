@@ -13,7 +13,7 @@ jobs:
     name: Tag matches pubspec
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: |
           version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then

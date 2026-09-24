@@ -614,6 +614,18 @@ abstract class AppLocalizations {
   /// **'Create'**
   String get create;
 
+  /// No description provided for @editExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit exercise'**
+  String get editExercise;
+
+  /// No description provided for @deletedExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Deleted {name}} =1{Deleted {name} and 1 entry} other{Deleted {name} and {count} entries}}'**
+  String deletedExercise(String name, int count);
+
   /// No description provided for @categorySquat.
   ///
   /// In en, this message translates to:

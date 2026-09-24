@@ -12,6 +12,7 @@ import '../utils/formulas.dart';
 import 'add_entry_screen.dart';
 import 'save_error.dart';
 import 'theme/app_theme.dart';
+import 'undo_snack_bar.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
@@ -50,7 +51,6 @@ class HistoryScreen extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, ExerciseRecord record) async {
     HapticFeedback.lightImpact();
-    final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
     try {
       await records.delete(template.id, record);
@@ -58,25 +58,17 @@ class HistoryScreen extends StatelessWidget {
       if (context.mounted) showSaveError(context);
       return;
     }
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.deletedSet(
-              l10n.set(
-                formatWeight(record.weight, unit, locale: l10n.localeName),
-                record.reps,
-              ),
-            ),
-          ),
-          action: SnackBarAction(
-            label: l10n.undo,
-            textColor: AppColors.accent,
-            onPressed: () => records.add(template.id, record),
-          ),
+    if (!context.mounted) return;
+    showUndoSnackBar(
+      context,
+      message: l10n.deletedSet(
+        l10n.set(
+          formatWeight(record.weight, unit, locale: l10n.localeName),
+          record.reps,
         ),
-      );
+      ),
+      onUndo: () => records.add(template.id, record),
+    );
   }
 
   @override

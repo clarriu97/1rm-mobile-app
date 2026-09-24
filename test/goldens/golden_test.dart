@@ -148,8 +148,11 @@ final Map<String, _Screen> _screens = {
       clock: _clock,
     ),
   ),
-  'manage_exercises': (t, l) =>
-      _show(t, l, ManageExercisesScreen(library: testLibrary())),
+  'manage_exercises': (t, l) => _show(
+    t,
+    l,
+    ManageExercisesScreen(library: testLibrary(), records: _records()),
+  ),
 };
 
 /// Screens also captured in Spanish, whose longer text is the one that

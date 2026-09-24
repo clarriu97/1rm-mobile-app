@@ -238,4 +238,120 @@ void main() {
       expect(lib.isHidden('thruster'), isFalse);
     });
   });
+  group('ExerciseLibrary — rename and delete custom exercises', () {
+    const zercher = CustomExerciseData(id: 'custom_1', name: 'Zercer Squat');
+    const pin = CustomExerciseData(id: 'custom_2', name: 'Pin Press');
+
+    test('renameCustom trims, keeps the id, persists and notifies', () async {
+      final service = ExerciseLibraryService.forTesting(custom: [zercher]);
+      final lib = library(service: service, custom: [zercher]);
+      var notifications = 0;
+      lib.addListener(() => notifications++);
+
+      await lib.renameCustom('custom_1', '  Zercher Squat ');
+
+      expect(lib.all.last.id, 'custom_1');
+      expect(lib.all.last.name, 'Zercher Squat');
+      expect((await service.loadCustom()).single.name, 'Zercher Squat');
+      expect(notifications, 1);
+    });
+
+    test('a rename may change only the case of its own name', () async {
+      final lib = library(custom: [zercher]);
+      expect(lib.validateName('zercer squat', renaming: 'custom_1'), isNull);
+      await lib.renameCustom('custom_1', 'ZERCER SQUAT');
+      expect(lib.all.last.name, 'ZERCER SQUAT');
+    });
+
+    test('a rename may not take another exercise name', () async {
+      final lib = library(custom: [zercher, pin]);
+
+      expect(
+        lib.validateName('pin press', renaming: 'custom_1'),
+        ExerciseNameError.duplicate,
+      );
+      expect(
+        lib.validateName('Deadlift', renaming: 'custom_1'),
+        ExerciseNameError.duplicate,
+      );
+      await expectLater(
+        lib.renameCustom('custom_1', 'Pin Press'),
+        throwsArgumentError,
+      );
+      await expectLater(lib.renameCustom('custom_1', ' '), throwsArgumentError);
+      expect(
+        lib.all.firstWhere((e) => e.id == 'custom_1').name,
+        'Zercer Squat',
+      );
+    });
+
+    test('built-in exercises cannot be renamed or deleted', () async {
+      final lib = library();
+      await expectLater(
+        lib.renameCustom('back_squat', 'Squat'),
+        throwsArgumentError,
+      );
+      await expectLater(lib.removeCustom('back_squat'), throwsArgumentError);
+      await expectLater(lib.removeCustom('custom_404'), throwsArgumentError);
+      expect(lib.all, hasLength(defaultExercises.length));
+    });
+
+    test('removeCustom deletes it and its visibility, and persists', () async {
+      final service = ExerciseLibraryService.forTesting(
+        custom: [zercher, pin],
+        hidden: {'custom_1'},
+      );
+      final lib = library(
+        service: service,
+        custom: [zercher, pin],
+        hidden: {'custom_1'},
+      );
+      var notifications = 0;
+      lib.addListener(() => notifications++);
+
+      final removed = await lib.removeCustom('custom_1');
+
+      expect(removed.exercise.name, 'Zercer Squat');
+      expect(removed.index, 0);
+      expect(removed.hidden, isTrue);
+      expect(lib.isCustom('custom_1'), isFalse);
+      expect(lib.all.map((e) => e.id), isNot(contains('custom_1')));
+      expect(await service.loadCustom(), hasLength(1));
+      expect(await service.loadHidden(), isEmpty);
+      expect(notifications, 1);
+    });
+
+    test('restoreCustom puts it back in place with its visibility', () async {
+      final service = ExerciseLibraryService.forTesting(
+        custom: [zercher, pin],
+        hidden: {'custom_1'},
+      );
+      final lib = library(
+        service: service,
+        custom: [zercher, pin],
+        hidden: {'custom_1'},
+      );
+      final removed = await lib.removeCustom('custom_1');
+
+      await lib.restoreCustom(removed);
+
+      expect(lib.all.where((e) => lib.isCustom(e.id)).map((e) => e.id), [
+        'custom_1',
+        'custom_2',
+      ]);
+      expect(lib.isHidden('custom_1'), isTrue);
+      expect((await service.loadCustom()).first.id, 'custom_1');
+      expect(await service.loadHidden(), {'custom_1'});
+    });
+
+    test('restoring twice does not duplicate it', () async {
+      final lib = library(custom: [zercher]);
+      final removed = await lib.removeCustom('custom_1');
+
+      await lib.restoreCustom(removed);
+      await lib.restoreCustom(removed);
+
+      expect(lib.all.where((e) => e.id == 'custom_1'), hasLength(1));
+    });
+  });
 }

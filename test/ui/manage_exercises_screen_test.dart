@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
+import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/repositories/exercise_library.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
+import 'package:one_rm_mobile/services/exercise_library_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
@@ -14,10 +16,18 @@ import '../helpers/test_app.dart';
 Future<void> _pumpManage(
   WidgetTester tester,
   ExerciseLibrary library, {
+  RecordsRepository? records,
   Locale? locale,
 }) async {
   await tester.pumpWidget(
-    buildTestApp(ManageExercisesScreen(library: library), locale: locale),
+    buildTestApp(
+      ManageExercisesScreen(
+        library: library,
+        records:
+            records ?? RecordsRepository(StorageService.inMemoryForTesting()),
+      ),
+      locale: locale,
+    ),
   );
   await tester.pumpAndSettle();
 }
@@ -318,6 +328,173 @@ void main() {
       );
       expect(detail.template.assetPath, customExerciseIcon);
       expect(detail.template.id, startsWith('custom_'));
+    });
+  });
+  group('ManageExercisesScreen — edit custom exercises', () {
+    const typo = CustomExerciseData(id: 'custom_1', name: 'Zercer Squat');
+
+    ExerciseLibrary withCustom({Set<String> hidden = const {}}) =>
+        ExerciseLibrary(
+          ExerciseLibraryService.forTesting(custom: [typo], hidden: hidden),
+          custom: [typo],
+          hidden: hidden,
+        );
+
+    ExerciseRecord entry(double weight) => ExerciseRecord(
+      weight: weight,
+      reps: 1,
+      oneRM: weight,
+      date: DateTime(2026, 9),
+    );
+
+    Future<void> openEditor(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('edit-custom_1')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('edit-custom_1')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> saveName(WidgetTester tester, String name) async {
+      await tester.enterText(find.byKey(const Key('edit-exercise-name')), name);
+      await tester.tap(find.byKey(const Key('save-exercise-button')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('only custom exercises can be edited', (tester) async {
+      await _pumpManage(tester, withCustom());
+
+      expect(find.byKey(const Key('edit-back_squat')), findsNothing);
+      await openEditor(tester);
+      expect(find.text('Edit exercise'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('edit-exercise-name')))
+            .controller!
+            .text,
+        'Zercer Squat',
+      );
+    });
+
+    testWidgets('renaming keeps the id and its records', (tester) async {
+      final library = withCustom();
+      final records = RecordsRepository(StorageService.inMemoryForTesting(), {
+        'custom_1': [entry(100)],
+      });
+      await _pumpManage(tester, library, records: records);
+
+      await openEditor(tester);
+      await saveName(tester, ' Zercher Squat ');
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('Zercher Squat'), findsOneWidget);
+      expect(find.text('Zercer Squat'), findsNothing);
+      expect(library.all.last.id, 'custom_1');
+      expect(records.recordsFor('custom_1'), hasLength(1));
+    });
+
+    testWidgets('an invalid new name shows why and keeps the dialog', (
+      tester,
+    ) async {
+      final library = withCustom();
+      await _pumpManage(tester, library);
+      await openEditor(tester);
+
+      await saveName(tester, '  ');
+      expect(find.text('Enter a name'), findsOneWidget);
+
+      await saveName(tester, 'deadlift');
+      expect(find.text('That exercise already exists'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(library.all.last.name, 'Zercer Squat');
+    });
+
+    testWidgets('its own name in another case is not a duplicate', (
+      tester,
+    ) async {
+      final library = withCustom();
+      await _pumpManage(tester, library);
+      await openEditor(tester);
+
+      await saveName(tester, 'ZERCER SQUAT');
+
+      expect(library.all.last.name, 'ZERCER SQUAT');
+    });
+
+    testWidgets('cancel changes nothing', (tester) async {
+      final library = withCustom();
+      await _pumpManage(tester, library);
+      await openEditor(tester);
+
+      await tester.enterText(
+        find.byKey(const Key('edit-exercise-name')),
+        'Something else',
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(library.all.last.name, 'Zercer Squat');
+    });
+
+    testWidgets('deleting removes it and its records, with undo', (
+      tester,
+    ) async {
+      final library = withCustom(hidden: {'custom_1'});
+      final records = RecordsRepository(StorageService.inMemoryForTesting(), {
+        'custom_1': [entry(100), entry(110)],
+      });
+      await _pumpManage(tester, library, records: records);
+      await openEditor(tester);
+
+      await tester.tap(find.byKey(const Key('delete-exercise-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(library.isCustom('custom_1'), isFalse);
+      expect(records.recordsFor('custom_1'), isEmpty);
+      expect(find.text('Deleted Zercer Squat and 2 entries'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(library.isCustom('custom_1'), isTrue);
+      expect(library.isHidden('custom_1'), isTrue);
+      expect(records.recordsFor('custom_1'), hasLength(2));
+    });
+
+    testWidgets('deleting one without records says just its name', (
+      tester,
+    ) async {
+      await _pumpManage(tester, withCustom());
+      await openEditor(tester);
+
+      await tester.tap(find.byKey(const Key('delete-exercise-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Deleted Zercer Squat'), findsOneWidget);
+    });
+
+    testWidgets('in Spanish', (tester) async {
+      await _pumpManage(
+        tester,
+        withCustom(),
+        records: RecordsRepository(StorageService.inMemoryForTesting(), {
+          'custom_1': [entry(100)],
+        }),
+        locale: const Locale('es'),
+      );
+
+      await openEditor(tester);
+      expect(find.byTooltip('Editar ejercicio'), findsOneWidget);
+      expect(find.text('Editar ejercicio'), findsOneWidget);
+      expect(find.text('Guardar'), findsOneWidget);
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Borrado: Zercer Squat y 1 registro'), findsOneWidget);
+      expect(find.text('Deshacer'), findsOneWidget);
     });
   });
 }

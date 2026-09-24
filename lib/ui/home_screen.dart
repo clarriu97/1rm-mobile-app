@@ -66,7 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openLibrary() async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (context) => ManageExercisesScreen(library: widget.library),
+        builder: (context) => ManageExercisesScreen(
+          library: widget.library,
+          records: widget.records,
+        ),
       ),
     );
   }

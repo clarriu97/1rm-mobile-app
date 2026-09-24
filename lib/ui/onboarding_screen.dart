@@ -204,10 +204,22 @@ class _OnboardingPage extends StatelessWidget {
           children: [
             KnurlPanel(
               borderColor: AppColors.accent,
-              child: SvgPicture.asset(illustration, width: 128, height: 128),
+              child: SvgPicture.asset(
+                illustration,
+                width: 128,
+                height: 128,
+                excludeFromSemantics: true,
+              ),
             ),
             const SizedBox(height: AppSpacing.xxl),
-            Text(title, textAlign: TextAlign.center, style: text.displayMedium),
+            Semantics(
+              header: true,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: text.displayMedium,
+              ),
+            ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               description,
@@ -267,10 +279,13 @@ class _PickLiftsPage extends StatelessWidget {
         AppSpacing.xxl * 2,
       ),
       children: [
-        Text(
-          l10n.pickLiftsTitle,
-          textAlign: TextAlign.center,
-          style: text.displayMedium,
+        Semantics(
+          header: true,
+          child: Text(
+            l10n.pickLiftsTitle,
+            textAlign: TextAlign.center,
+            style: text.displayMedium,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
@@ -287,9 +302,12 @@ class _PickLiftsPage extends StatelessWidget {
         ),
         for (final (category, group) in groupByCategory(exercises)) ...[
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            l10n.categoryName(category).toUpperCase(),
-            style: text.labelMedium,
+          Semantics(
+            header: true,
+            child: Text(
+              l10n.categoryName(category).toUpperCase(),
+              style: text.labelMedium,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
@@ -349,6 +367,7 @@ class _LiftChip extends StatelessWidget {
                 children: [
                   SvgPicture.asset(
                     exercise.assetPath,
+                    excludeFromSemantics: true,
                     width: 24,
                     height: 24,
                     colorFilter: ColorFilter.mode(foreground, BlendMode.srcIn),

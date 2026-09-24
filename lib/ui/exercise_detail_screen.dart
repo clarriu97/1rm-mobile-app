@@ -91,6 +91,7 @@ class ExerciseDetailScreen extends StatelessWidget {
               children: [
                 SvgPicture.asset(
                   template.assetPath,
+                  excludeFromSemantics: true,
                   width: 22,
                   height: 22,
                   colorFilter: const ColorFilter.mode(
@@ -270,6 +271,7 @@ class ExerciseDetailScreen extends StatelessWidget {
           children: [
             SvgPicture.asset(
               template.assetPath,
+              excludeFromSemantics: true,
               width: 72,
               height: 72,
               colorFilter: const ColorFilter.mode(
@@ -333,12 +335,21 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
       children: [
         Row(
           children: [
-            Expanded(child: Text(l10n.workingWeights, style: text.titleMedium)),
+            Expanded(
+              child: Semantics(
+                container: true,
+                header: true,
+                child: Text(l10n.workingWeights, style: text.titleMedium),
+              ),
+            ),
             SegmentedChips<_TableMode>(
               values: _TableMode.values,
               selected: _mode,
               labelOf: (mode) =>
                   mode == _TableMode.percent ? '%' : l10n.tableReps,
+              semanticLabelOf: (mode) => mode == _TableMode.percent
+                  ? l10n.tablePercentSemantics
+                  : l10n.tableRepsSemantics,
               onSelected: (mode) => setState(() => _mode = mode),
               keyPrefix: 'table',
             ),
@@ -354,13 +365,17 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
           ),
           child: Column(
             children: [
-              _TableRow(
-                left: _mode == _TableMode.percent
-                    ? l10n.tablePercentage
-                    : l10n.tableReps,
-                right: l10n.tableWeight,
-                style: text.labelMedium,
-                divider: false,
+              // Screen readers get each row as "100%, 132 kg"; the column
+              // titles would only be noise between them.
+              ExcludeSemantics(
+                child: _TableRow(
+                  left: _mode == _TableMode.percent
+                      ? l10n.tablePercentage
+                      : l10n.tableReps,
+                  right: l10n.tableWeight,
+                  style: text.labelMedium,
+                  divider: false,
+                ),
               ),
               for (final row in rows)
                 _TableRow(
@@ -405,23 +420,25 @@ class _TableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
-      ),
-      decoration: divider
-          ? const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.outline)),
-            )
-          : null,
-      child: Row(
-        children: [
-          Expanded(child: Text(left, style: style)),
-          Expanded(
-            child: Text(right, textAlign: TextAlign.right, style: style),
-          ),
-        ],
+    return MergeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.md,
+        ),
+        decoration: divider
+            ? const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.outline)),
+              )
+            : null,
+        child: Row(
+          children: [
+            Expanded(child: Text(left, style: style)),
+            Expanded(
+              child: Text(right, textAlign: TextAlign.right, style: style),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
 
+import '../helpers/semantics.dart';
 import '../helpers/test_app.dart';
 
 void main() {
@@ -237,6 +238,99 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Yesterday'), findsOneWidget);
+    });
+  });
+  group('ExerciseDetailScreen — screen reader', () {
+    Future<SemanticsHandle> pump(WidgetTester tester) async {
+      final semantics = tester.ensureSemantics();
+      tester.view
+        ..physicalSize = const Size(800, 3000)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestApp(
+          ExerciseDetailScreen(
+            template: defaultExercises.first,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              defaultExercises.first.id: [
+                ExerciseRecord(
+                  weight: 150,
+                  reps: 1,
+                  oneRM: 150,
+                  date: DateTime(2026, 9, 2),
+                ),
+                ExerciseRecord(
+                  weight: 140,
+                  reps: 1,
+                  oneRM: 140,
+                  date: DateTime(2026, 8, 2),
+                ),
+              ],
+            }),
+            unit: WeightUnit.kg,
+            clock: () => DateTime(2026, 9, 23),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return semantics;
+    }
+
+    testWidgets('abbreviated chips are read in words', (tester) async {
+      final semantics = await pump(tester);
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Last 3 months')),
+        isSemantics(isButton: true, isSelected: false),
+      );
+      expect(find.bySemanticsLabel('Last year'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('All time')),
+        isSemantics(isButton: true, isSelected: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('By percentage')),
+        isSemantics(isButton: true, isSelected: true),
+      );
+      expect(find.bySemanticsLabel('By reps'), findsOneWidget);
+      expect(find.bySemanticsLabel('3M'), findsNothing);
+      semantics.dispose();
+    });
+
+    testWidgets('sections are headers', (tester) async {
+      final semantics = await pump(tester);
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Progress')),
+        isSemantics(isHeader: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Working weights')),
+        isSemantics(isHeader: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('each working weight is read as one row', (tester) async {
+      final semantics = await pump(tester);
+
+      expect(find.bySemanticsLabel(RegExp(r'^100%\s+150 kg$')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^50%\s+75 kg$')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('PERCENTAGE')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('table-reps')));
+      await tester.pumpAndSettle();
+      expect(
+        find.bySemanticsLabel(RegExp(r'^1 rep\s+150 kg$')),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('icons in the title are decoration', (tester) async {
+      final semantics = await pump(tester);
+      expect(imageLabels(tester), isEmpty);
+      semantics.dispose();
     });
   });
 }

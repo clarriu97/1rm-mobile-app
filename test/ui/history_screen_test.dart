@@ -262,4 +262,46 @@ void main() {
       expect(find.text('Deshacer'), findsOneWidget);
     });
   });
+  group('HistoryScreen — screen reader', () {
+    testWidgets('an entry says it opens the editor; delete is labeled', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(
+          HistoryScreen(
+            template: defaultExercises.first,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              defaultExercises.first.id: [
+                ExerciseRecord(
+                  weight: 120,
+                  reps: 3,
+                  oneRM: 132,
+                  date: DateTime(2026, 9, 22),
+                ),
+              ],
+            }),
+            unit: WeightUnit.kg,
+            clock: () => DateTime(2026, 9, 23),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel(
+            RegExp(r'^120\.0 kg × 3 reps\s+1RM: 132\.0 kg'),
+          ),
+        ),
+        isSemantics(hasTapAction: true, onTapHint: 'Edit'),
+      );
+      expect(find.byTooltip('Delete'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Back Squat History')),
+        isSemantics(isHeader: true, isImage: false),
+      );
+      semantics.dispose();
+    });
+  });
 }

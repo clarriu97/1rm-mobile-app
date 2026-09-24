@@ -198,4 +198,38 @@ void main() {
       expect(await units.getUnit(), WeightUnit.lbs);
     });
   });
+  group('SettingsScreen — screen reader', () {
+    testWidgets('sections are headers; choices say which is selected', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(
+          SettingsScreen(
+            unitService: UnitService.forTesting(),
+            currentUnit: WeightUnit.kg,
+            language: testLanguage(),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Units')),
+        isSemantics(isHeader: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Language')),
+        isSemantics(isHeader: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('kg')),
+        isSemantics(isButton: true, isSelected: true),
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('lbs')),
+        isSemantics(isButton: true, isSelected: false),
+      );
+      semantics.dispose();
+    });
+  });
 }

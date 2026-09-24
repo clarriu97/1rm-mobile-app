@@ -109,7 +109,13 @@ class _ProgressChartState extends State<ProgressChart> {
       children: [
         Row(
           children: [
-            Expanded(child: Text(l10n.progress, style: text.titleMedium)),
+            Expanded(
+              child: Semantics(
+                container: true,
+                header: true,
+                child: Text(l10n.progress, style: text.titleMedium),
+              ),
+            ),
             SegmentedChips<ProgressRange>(
               values: ProgressRange.values,
               selected: _range,
@@ -117,6 +123,11 @@ class _ProgressChartState extends State<ProgressChart> {
                 ProgressRange.threeMonths => l10n.rangeThreeMonths,
                 ProgressRange.year => l10n.rangeYear,
                 ProgressRange.all => l10n.rangeAll,
+              },
+              semanticLabelOf: (range) => switch (range) {
+                ProgressRange.threeMonths => l10n.rangeThreeMonthsSemantics,
+                ProgressRange.year => l10n.rangeYearSemantics,
+                ProgressRange.all => l10n.rangeAllSemantics,
               },
               onSelected: (range) => setState(() => _range = range),
               keyPrefix: 'range',

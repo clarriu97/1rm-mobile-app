@@ -355,4 +355,57 @@ void main() {
       expect(result()!.lifts, {'hip_thrust'});
     });
   });
+  group('OnboardingScreen — lift chips contrast', () {
+    for (final locale in const [Locale('en'), Locale('es')]) {
+      testWidgets('selected and unselected chips meet AA ($locale)', (
+        tester,
+      ) async {
+        // Tall enough that no chip sits under the list's fading bottom edge,
+        // which the layout matrix can't avoid on real screen sizes.
+        tester.view
+          ..physicalSize = const Size(1000, 3000)
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(
+          buildTestApp(OnboardingScreen(onComplete: (_) {}), locale: locale),
+        );
+        for (var i = 0; i < 3; i++) {
+          await tester.tap(find.byKey(const Key('onboarding-next-button')));
+          await tester.pumpAndSettle();
+        }
+        final list = tester.state<ScrollableState>(
+          find.descendant(
+            of: find.byKey(const Key('pick-lifts-page')),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        expect(list.position.maxScrollExtent, 0, reason: 'everything fits');
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        semantics.dispose();
+      });
+    }
+  });
+  group('OnboardingScreen — screen reader', () {
+    testWidgets('page titles are headers; illustrations are decoration', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        buildTestApp(OnboardingScreen(onComplete: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('What is 1RM?')),
+        isSemantics(isHeader: true),
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('image', caseSensitive: false)),
+        findsNothing,
+      );
+      semantics.dispose();
+    });
+  });
 }

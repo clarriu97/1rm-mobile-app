@@ -46,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          Text(l10n.units, style: titleStyle),
+          Semantics(header: true, child: Text(l10n.units, style: titleStyle)),
           const SizedBox(height: AppSpacing.md),
           _ChoiceGroup(
             children: [
@@ -60,7 +60,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Text(l10n.language, style: titleStyle),
+          Semantics(
+            header: true,
+            child: Text(l10n.language, style: titleStyle),
+          ),
           const SizedBox(height: AppSpacing.md),
           ListenableBuilder(
             listenable: widget.language,

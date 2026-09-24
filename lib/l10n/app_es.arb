@@ -141,5 +141,17 @@
   "exercisePowerSnatch": "Power Snatch",
   "exerciseHangPowerSnatch": "Hang Power Snatch",
   "exerciseHangSquatSnatch": "Hang Squat Snatch",
-  "exerciseSnatchBalance": "Snatch Balance"
+  "exerciseSnatchBalance": "Snatch Balance",
+
+  "exerciseCardSemantics": "{exercise}, mejor 1RM {weight}, {when}",
+  "exerciseCardEmptySemantics": "{exercise}, aún no hay registros",
+  "rangeThreeMonthsSemantics": "Últimos 3 meses",
+  "rangeYearSemantics": "Último año",
+  "rangeAllSemantics": "Todo el historial",
+  "tablePercentSemantics": "Por porcentaje",
+  "tableRepsSemantics": "Por repeticiones",
+  "editHint": "Editar",
+  "dateSemantics": "Fecha: {when}, {date}",
+  "changeDateHint": "Cambiar fecha",
+  "estimateEmptySemantics": "Introduce peso y reps"
 }

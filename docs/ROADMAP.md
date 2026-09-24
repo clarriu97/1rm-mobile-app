@@ -32,14 +32,21 @@ Android (phones; Android tablets must not break). Owner: Carlos Larriu
 | M2 · Identidad visual | ✅ done | Industrial/gym design system (tokens, Big Shoulders + Barlow), generated exercise icons and illustrations, app icon, splash, "1RM" name |
 | M3 · UX principal | ✅ done | Home cards with best 1RM + sparkline, live 1RM on add entry with dates, PR celebration, progress chart, %/reps tables, editable history with undo, 34-lift library with custom lifts and hiding, onboarding with kg/lbs and lift picking |
 | M3.5 · Testing en dispositivos | ✅ done | iPhone-only, layout matrix, goldens, e2e flows in CI |
-| **M4 · Calidad de lanzamiento** | **🔜 current** | #16 i18n es/en (done) → #55 rename/delete custom lifts (done) → #17 accessibility → #18 motion → #20 release config → #19 CI release builds (#51, local e2e gate, done). Issue bodies include testing follow-ups added on 2026-09-23 |
+| **M4 · Calidad de lanzamiento** | **🔜 current** | #16 i18n es/en (done) → #55 rename/delete custom lifts (done) → #17 accessibility (done) → #18 motion → #20 release config → #19 CI release builds (#51, local e2e gate, done). Issue bodies include testing follow-ups added on 2026-09-23 |
 | Fase 2 · Publicación | later | Store accounts, TestFlight/Play, real devices on Firebase Test Lab (#45), screenshots, ASO, monetization |
 | Post-v1 | backlog | #21: backup export/import, plate calculator, formula choice, light mode |
 
-**Next step:** M4 in the order above, continuing with #17. Work one issue per
+**Next step:** M4 in the order above, continuing with #18. Work one issue per
 branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
+
+- **2026-09-24 · Accessibility gate (#17).** The layout matrix runs Flutter's
+  tap-target (48 dp / 44 pt), labeled-tap-target and AA text-contrast
+  guidelines on every scenario at 100 % text, and adds a bold-text variant at
+  200 %. Two documented exceptions measure a mid-scroll or faded state
+  instead of the design, which is checked elsewhere. Screen-reader labels are
+  tested per screen; VoiceOver/TalkBack get a manual pass per release.
 
 - **2026-09-24 · Localization (#16).** Strings in `lib/l10n/app_{en,es}.arb`
   (gen-l10n; generated Dart committed next to them); exercise and family names

@@ -166,6 +166,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
           children: [
             SvgPicture.asset(
               widget.assetPath,
+              excludeFromSemantics: true,
               width: 22,
               height: 22,
               colorFilter: const ColorFilter.mode(
@@ -308,53 +309,61 @@ class _DateField extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final localizations = MaterialLocalizations.of(context);
+    final l10n = AppLocalizations.of(context);
     final radius = BorderRadius.circular(AppRadii.sm);
-    return Material(
-      color: AppColors.surfaceRaised,
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: const BorderSide(color: AppColors.outline),
-      ),
-      child: InkWell(
-        key: const Key('entry-date-field'),
-        onTap: onTap,
-        borderRadius: radius,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: kMinTapTarget + 8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.event_rounded,
-                  size: 20,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm,
-                    ),
-                    // Wraps the date under the label when both don't fit.
-                    child: Wrap(
-                      spacing: AppSpacing.sm,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(label, style: text.titleMedium),
-                        Text(
-                          localizations.formatMediumDate(date),
-                          style: text.bodyMedium,
-                        ),
-                      ],
+    return Semantics(
+      button: true,
+      label: l10n.dateSemantics(label, localizations.formatMediumDate(date)),
+      onTapHint: l10n.changeDateHint,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.surfaceRaised,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: const BorderSide(color: AppColors.outline),
+        ),
+        child: InkWell(
+          key: const Key('entry-date-field'),
+          onTap: onTap,
+          borderRadius: radius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: kMinTapTarget + 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.event_rounded,
+                    size: 20,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.sm,
+                      ),
+                      // Wraps the date under the label when both don't fit.
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(label, style: text.titleMedium),
+                          Text(
+                            localizations.formatMediumDate(date),
+                            style: text.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textMuted,
-                ),
-              ],
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -373,33 +382,41 @@ class _EstimatePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    return KnurlPanel(
-      key: const Key('estimate-panel'),
-      borderColor: estimate == null ? AppColors.outline : AppColors.accent,
-      child: SizedBox(
-        width: double.infinity,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.estimatedOneRm, style: text.labelMedium),
-            const SizedBox(height: AppSpacing.sm),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                estimate == null
-                    ? '—'
-                    : formatWeight(estimate!, unit, locale: l10n.localeName),
-                key: const Key('estimate-value'),
-                style: text.displayLarge?.copyWith(
-                  fontSize: 56,
-                  color: estimate == null
-                      ? AppColors.textMuted
-                      : AppColors.accent,
+    return Semantics(
+      container: true,
+      label: l10n.estimatedOneRm,
+      value: estimate == null
+          ? l10n.estimateEmptySemantics
+          : formatWeight(estimate!, unit, locale: l10n.localeName),
+      excludeSemantics: true,
+      child: KnurlPanel(
+        key: const Key('estimate-panel'),
+        borderColor: estimate == null ? AppColors.outline : AppColors.accent,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.estimatedOneRm, style: text.labelMedium),
+              const SizedBox(height: AppSpacing.sm),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  estimate == null
+                      ? '—'
+                      : formatWeight(estimate!, unit, locale: l10n.localeName),
+                  key: const Key('estimate-value'),
+                  style: text.displayLarge?.copyWith(
+                    fontSize: 56,
+                    color: estimate == null
+                        ? AppColors.textMuted
+                        : AppColors.accent,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

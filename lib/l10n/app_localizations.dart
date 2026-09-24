@@ -877,6 +877,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Snatch Balance'**
   String get exerciseSnatchBalance;
+
+  /// No description provided for @exerciseCardSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{exercise}, best 1RM {weight}, {when}'**
+  String exerciseCardSemantics(String exercise, String weight, String when);
+
+  /// No description provided for @exerciseCardEmptySemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{exercise}, no records yet'**
+  String exerciseCardEmptySemantics(String exercise);
+
+  /// No description provided for @rangeThreeMonthsSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get rangeThreeMonthsSemantics;
+
+  /// No description provided for @rangeYearSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Last year'**
+  String get rangeYearSemantics;
+
+  /// No description provided for @rangeAllSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get rangeAllSemantics;
+
+  /// No description provided for @tablePercentSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'By percentage'**
+  String get tablePercentSemantics;
+
+  /// No description provided for @tableRepsSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'By reps'**
+  String get tableRepsSemantics;
+
+  /// No description provided for @editHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editHint;
+
+  /// No description provided for @dateSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Date: {when}, {date}'**
+  String dateSemantics(String when, String date);
+
+  /// No description provided for @changeDateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date'**
+  String get changeDateHint;
+
+  /// No description provided for @estimateEmptySemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter weight and reps'**
+  String get estimateEmptySemantics;
 }
 
 class _AppLocalizationsDelegate

@@ -55,7 +55,9 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
    request and release the next patch version; never move a published tag.
 5. Manual smoke test of the release build on a real iPhone (and Android when
    available): fresh install, update over the previous version with data,
-   Spanish and English, 200 % text size. Phase 2 (#45) adds real devices on
+   Spanish and English, 200 % text size and bold text, and one pass over
+   every screen with VoiceOver (and TalkBack): each card, number, chart and
+   icon button is announced with a name that makes sense. Phase 2 (#45) adds real devices on
    Firebase Test Lab and the store uploads to this workflow.
 
 ## When the E2E run on main fails

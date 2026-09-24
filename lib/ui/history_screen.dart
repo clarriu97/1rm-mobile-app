@@ -81,6 +81,7 @@ class HistoryScreen extends StatelessWidget {
           children: [
             SvgPicture.asset(
               template.assetPath,
+              excludeFromSemantics: true,
               width: 20,
               height: 20,
               colorFilter: const ColorFilter.mode(
@@ -234,71 +235,74 @@ class _HistoryEntry extends StatelessWidget {
             borderRadius: radius,
             side: const BorderSide(color: AppColors.outline),
           ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: radius,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: AppSpacing.lg,
-                top: AppSpacing.md,
-                bottom: AppSpacing.md,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          spacing: AppSpacing.sm,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              l10n.set(
-                                formatWeight(
-                                  record.weight,
-                                  unit,
-                                  locale: locale,
+          child: Semantics(
+            onTapHint: l10n.editHint,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: radius,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.lg,
+                  top: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: AppSpacing.sm,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                l10n.set(
+                                  formatWeight(
+                                    record.weight,
+                                    unit,
+                                    locale: locale,
+                                  ),
+                                  record.reps,
                                 ),
-                                record.reps,
+                                style: text.titleMedium,
                               ),
-                              style: text.titleMedium,
-                            ),
-                            if (isPR) const _PrBadge(),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          l10n.oneRmValue(
-                            formatWeight(record.oneRM, unit, locale: locale),
+                              if (isPR) const _PrBadge(),
+                            ],
                           ),
-                          style: text.bodyMedium,
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.oneRmValue(
+                              formatWeight(record.oneRM, unit, locale: locale),
+                            ),
+                            style: text.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      dateLabel,
-                      style: text.bodySmall,
-                      textAlign: TextAlign.end,
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        dateLabel,
+                        style: text.bodySmall,
+                        textAlign: TextAlign.end,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    constraints: const BoxConstraints(
-                      minWidth: kMinTapTarget,
-                      minHeight: kMinTapTarget,
+                    IconButton(
+                      constraints: const BoxConstraints(
+                        minWidth: kMinTapTarget,
+                        minHeight: kMinTapTarget,
+                      ),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                      color: AppColors.textMuted,
+                      onPressed: onDelete,
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).deleteButtonTooltip,
                     ),
-                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                    color: AppColors.textMuted,
-                    onPressed: onDelete,
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).deleteButtonTooltip,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -4,6 +4,7 @@
 // (one flow: add --plain-name '<test name>')
 import 'package:flutter_test/flutter_test.dart';
 
+import 'flows/about_flow.dart';
 import 'flows/history_flow.dart';
 import 'flows/language_flow.dart';
 import 'flows/log_and_pr_flow.dart';
@@ -21,4 +22,5 @@ void main() {
   group('manage exercises', manageExercisesFlows);
   group('units', unitsFlows);
   group('language', languageFlows);
+  group('about', aboutFlows);
 }

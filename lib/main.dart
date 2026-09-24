@@ -7,6 +7,7 @@ import 'repositories/language_repository.dart';
 import 'repositories/records_repository.dart';
 import 'services/exercise_library_service.dart';
 import 'services/language_service.dart';
+import 'services/link_service.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
 import 'services/unit_service.dart';
@@ -42,6 +43,7 @@ Future<OneRMApp> loadApp() async {
     onboarding: onboarding,
     unitService: unitService,
     language: language,
+    links: LinkService.getInstance(),
     countryCode: PlatformDispatcher.instance.locale.countryCode,
   );
 }
@@ -54,6 +56,7 @@ class OneRMApp extends StatelessWidget {
     required this.onboarding,
     required this.unitService,
     required this.language,
+    required this.links,
     this.countryCode,
   });
 
@@ -62,6 +65,7 @@ class OneRMApp extends StatelessWidget {
   final OnboardingService onboarding;
   final UnitService unitService;
   final LanguageRepository language;
+  final LinkService links;
 
   /// Device region, used to pick the default unit during onboarding.
   final String? countryCode;
@@ -83,6 +87,7 @@ class OneRMApp extends StatelessWidget {
           library: library,
           unitService: unitService,
           language: language,
+          links: links,
           countryCode: countryCode,
         ),
       ),
@@ -97,6 +102,7 @@ class _AppGate extends StatefulWidget {
     required this.library,
     required this.unitService,
     required this.language,
+    required this.links,
     required this.countryCode,
   });
 
@@ -105,6 +111,7 @@ class _AppGate extends StatefulWidget {
   final ExerciseLibrary library;
   final UnitService unitService;
   final LanguageRepository language;
+  final LinkService links;
   final String? countryCode;
 
   @override
@@ -153,6 +160,7 @@ class _AppGateState extends State<_AppGate> {
       library: widget.library,
       unitService: widget.unitService,
       language: widget.language,
+      links: widget.links,
     );
   }
 }

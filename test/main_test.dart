@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/main.dart';
 import 'package:one_rm_mobile/services/exercise_library_service.dart';
 import 'package:one_rm_mobile/services/language_service.dart';
@@ -35,6 +36,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -56,6 +58,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -77,6 +80,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -103,6 +107,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -131,6 +136,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -156,6 +162,7 @@ void main() {
           onboarding: onboarding,
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pump();
@@ -181,6 +188,7 @@ void main() {
           onboarding: OnboardingService.forTesting(completed: onboarded),
           unitService: UnitService.forTesting(),
           language: language ?? testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -279,6 +287,7 @@ void main() {
           onboarding: OnboardingService.forTesting(),
           unitService: unitService,
           language: testLanguage(),
+          links: LinkService.forTesting(),
           countryCode: countryCode,
         ),
       );
@@ -331,6 +340,7 @@ void main() {
           onboarding: OnboardingService.forTesting(),
           unitService: UnitService.forTesting(),
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();
@@ -358,6 +368,7 @@ void main() {
           onboarding: OnboardingService.forTesting(),
           unitService: UnitService.forTesting(),
           language: testLanguage(),
+          links: LinkService.forTesting(),
         ),
       );
       await tester.pumpAndSettle();

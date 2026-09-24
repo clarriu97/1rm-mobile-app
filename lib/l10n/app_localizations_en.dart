@@ -536,4 +536,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get estimateEmptySemantics => 'Enter weight and reps';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get aboutTagline => 'Estimate, log and track your one-rep max.';
+
+  @override
+  String version(String version, int build) {
+    return 'Version $version ($build)';
+  }
+
+  @override
+  String get dataStaysOnDevice =>
+      'Everything you log stays on this phone. No accounts, no tracking.';
+
+  @override
+  String get website => 'Website';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
+
+  @override
+  String get termsOfUse => 'Terms of use';
+
+  @override
+  String get contact => 'Contact';
+
+  @override
+  String get licenses => 'Open-source licenses';
+
+  @override
+  String couldNotOpen(String link) {
+    return 'Could not open $link.';
+  }
 }

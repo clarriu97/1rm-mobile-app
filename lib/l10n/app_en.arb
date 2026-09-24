@@ -178,5 +178,18 @@
   "dateSemantics": "Date: {when}, {date}",
   "@dateSemantics": {"placeholders": {"when": {"type": "String"}, "date": {"type": "String"}}},
   "changeDateHint": "Change date",
-  "estimateEmptySemantics": "Enter weight and reps"
+  "estimateEmptySemantics": "Enter weight and reps",
+
+  "about": "About",
+  "aboutTagline": "Estimate, log and track your one-rep max.",
+  "version": "Version {version} ({build})",
+  "@version": {"placeholders": {"version": {"type": "String"}, "build": {"type": "int"}}},
+  "dataStaysOnDevice": "Everything you log stays on this phone. No accounts, no tracking.",
+  "website": "Website",
+  "privacyPolicy": "Privacy policy",
+  "termsOfUse": "Terms of use",
+  "contact": "Contact",
+  "licenses": "Open-source licenses",
+  "couldNotOpen": "Could not open {link}.",
+  "@couldNotOpen": {"placeholders": {"link": {"type": "String"}}}
 }

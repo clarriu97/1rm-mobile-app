@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
@@ -184,6 +185,7 @@ void main() {
             library: testLibrary(),
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -210,6 +212,7 @@ void main() {
             library: testLibrary(),
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );

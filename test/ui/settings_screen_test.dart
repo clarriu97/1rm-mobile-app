@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/models/app_language.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/language_repository.dart';
 import 'package:one_rm_mobile/services/language_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
+import 'package:one_rm_mobile/ui/about_screen.dart';
 import 'package:one_rm_mobile/ui/settings_screen.dart';
 
 import '../helpers/test_app.dart';
@@ -20,6 +22,7 @@ void main() {
             unitService: unitService,
             currentUnit: WeightUnit.kg,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -40,6 +43,7 @@ void main() {
             unitService: unitService,
             currentUnit: WeightUnit.kg,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -78,6 +82,7 @@ void main() {
             unitService: unitService,
             currentUnit: WeightUnit.kg,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -109,6 +114,7 @@ void main() {
             unitService: unitService,
             currentUnit: WeightUnit.lbs,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -135,6 +141,7 @@ void main() {
             unitService: UnitService.forTesting(),
             currentUnit: WeightUnit.kg,
             language: language,
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -188,6 +195,7 @@ void main() {
             unitService: units,
             currentUnit: WeightUnit.lbs,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -209,6 +217,7 @@ void main() {
             unitService: UnitService.forTesting(),
             currentUnit: WeightUnit.kg,
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );
@@ -230,6 +239,26 @@ void main() {
         isSemantics(isButton: true, isSelected: false),
       );
       semantics.dispose();
+    });
+  });
+  group('SettingsScreen — about', () {
+    testWidgets('About opens the about screen', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          SettingsScreen(
+            unitService: UnitService.forTesting(),
+            currentUnit: WeightUnit.kg,
+            language: testLanguage(),
+            links: LinkService.forTesting(),
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('about-button')));
+      await tester.tap(find.byKey(const Key('about-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AboutScreen), findsOneWidget);
     });
   });
 }

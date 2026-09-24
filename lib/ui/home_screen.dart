@@ -7,6 +7,7 @@ import '../models/weight_unit.dart';
 import '../repositories/exercise_library.dart';
 import '../repositories/language_repository.dart';
 import '../repositories/records_repository.dart';
+import '../services/link_service.dart';
 import '../services/unit_service.dart';
 import '../utils/dates.dart';
 import '../utils/formulas.dart';
@@ -25,6 +26,7 @@ class HomeScreen extends StatefulWidget {
     required this.library,
     required this.unitService,
     required this.language,
+    required this.links,
     this.clock = DateTime.now,
   });
 
@@ -32,6 +34,7 @@ class HomeScreen extends StatefulWidget {
   final ExerciseLibrary library;
   final UnitService unitService;
   final LanguageRepository language;
+  final LinkService links;
   final DateTime Function() clock;
 
   @override
@@ -59,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
           unitService: widget.unitService,
           currentUnit: _unit,
           language: widget.language,
+          links: widget.links,
         ),
       ),
     );

@@ -45,7 +45,9 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
 ## Releasing a version
 
 1. Bump `version:` in `pubspec.yaml` (`1.2.3+45`: name + build number, which
-   must always grow) in a pull request, and merge it through the gates above.
+   must always grow) and the same values in `lib/data/app_info.dart` (shown
+   in About; a test fails if they differ) in a pull request, and merge it
+   through the gates above.
 2. Check the latest **E2E** run on `main` is green.
 3. Tag the merge commit and push the tag:
    ```bash
@@ -57,8 +59,29 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
    available): fresh install, update over the previous version with data,
    Spanish and English, 200 % text size and bold text, and one pass over
    every screen with VoiceOver (and TalkBack): each card, number, chart and
-   icon button is announced with a name that makes sense. Phase 2 (#45) adds real devices on
-   Firebase Test Lab and the store uploads to this workflow.
+   icon button is announced with a name that makes sense. Phase 2 (#45) adds
+   real devices on Firebase Test Lab and the store uploads to this workflow.
+
+## Android release signing
+
+Release builds are signed with the upload key named in `android/key.properties`
+(git-ignored, like the keystore). Without that file they fall back to the debug
+key, which is fine for local and CI builds but rejected by Google Play. Set it
+up once, before the first Play upload (phase 2), and keep both files in a
+password manager backup:
+
+```bash
+keytool -genkey -v -keystore ~/1rm-upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+`android/key.properties`:
+
+```properties
+storeFile=/Users/<you>/1rm-upload-keystore.jks
+storePassword=<password>
+keyAlias=upload
+keyPassword=<password>
+```
 
 ## When the E2E run on main fails
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
@@ -37,6 +38,7 @@ Future<void> _pumpHome(
         library: library ?? testLibrary(),
         unitService: UnitService.forTesting(unit: unit),
         language: testLanguage(),
+        links: LinkService.forTesting(),
       ),
     ),
   );
@@ -157,6 +159,7 @@ void main() {
               library: testLibrary(),
               unitService: UnitService.forTesting(unit: WeightUnit.lbs),
               language: testLanguage(),
+              links: LinkService.forTesting(),
             ),
           ),
         ),
@@ -177,6 +180,7 @@ void main() {
           library: testLibrary(),
           unitService: UnitService.forTesting(),
           language: testLanguage(),
+          links: LinkService.forTesting(),
           clock: () => DateTime(2026, 3, 10, 7),
         ),
       ),
@@ -196,6 +200,7 @@ void main() {
             library: testLibrary(),
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
             clock: () => DateTime(2026, 9, 23, 10),
           ),
           locale: const Locale('es'),
@@ -218,6 +223,7 @@ void main() {
             library: testLibrary(),
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
           locale: const Locale('es'),
         ),
@@ -239,6 +245,7 @@ void main() {
             library: testLibrary(),
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
             clock: () => DateTime(2026, 9, 23, 10),
           ),
           locale: locale,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/repositories/exercise_library.dart';
@@ -271,6 +272,7 @@ void main() {
             library: library,
             unitService: UnitService.forTesting(),
             language: testLanguage(),
+            links: LinkService.forTesting(),
           ),
         ),
       );

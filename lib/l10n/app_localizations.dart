@@ -943,6 +943,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter weight and reps'**
   String get estimateEmptySemantics;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @aboutTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate, log and track your one-rep max.'**
+  String get aboutTagline;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} ({build})'**
+  String version(String version, int build);
+
+  /// No description provided for @dataStaysOnDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you log stays on this phone. No accounts, no tracking.'**
+  String get dataStaysOnDevice;
+
+  /// No description provided for @website.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get website;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @termsOfUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of use'**
+  String get termsOfUse;
+
+  /// No description provided for @contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contact;
+
+  /// No description provided for @licenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licenses'**
+  String get licenses;
+
+  /// No description provided for @couldNotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open {link}.'**
+  String couldNotOpen(String link);
 }
 
 class _AppLocalizationsDelegate

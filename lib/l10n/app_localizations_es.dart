@@ -545,4 +545,39 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get estimateEmptySemantics => 'Introduce peso y reps';
+
+  @override
+  String get about => 'Acerca de';
+
+  @override
+  String get aboutTagline => 'Estima, apunta y sigue tu repetición máxima.';
+
+  @override
+  String version(String version, int build) {
+    return 'Versión $version ($build)';
+  }
+
+  @override
+  String get dataStaysOnDevice =>
+      'Todo lo que apuntas se queda en este móvil. Sin cuentas ni seguimiento.';
+
+  @override
+  String get website => 'Web';
+
+  @override
+  String get privacyPolicy => 'Política de privacidad';
+
+  @override
+  String get termsOfUse => 'Condiciones de uso';
+
+  @override
+  String get contact => 'Contacto';
+
+  @override
+  String get licenses => 'Licencias de código abierto';
+
+  @override
+  String couldNotOpen(String link) {
+    return 'No se pudo abrir $link.';
+  }
 }

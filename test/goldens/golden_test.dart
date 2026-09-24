@@ -8,12 +8,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
+import 'package:one_rm_mobile/ui/about_screen.dart';
 import 'package:one_rm_mobile/ui/add_entry_screen.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
 import 'package:one_rm_mobile/ui/history_screen.dart';
@@ -108,6 +110,7 @@ final Map<String, _Screen> _screens = {
       library: testLibrary(),
       unitService: UnitService.forTesting(),
       language: testLanguage(),
+      links: LinkService.forTesting(),
       clock: _clock,
     ),
   ),
@@ -148,6 +151,7 @@ final Map<String, _Screen> _screens = {
       clock: _clock,
     ),
   ),
+  'about': (t, l) => _show(t, l, AboutScreen(links: LinkService.forTesting())),
   'manage_exercises': (t, l) => _show(
     t,
     l,

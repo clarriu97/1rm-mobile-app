@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_rm_mobile/services/link_service.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
 import 'package:one_rm_mobile/l10n/app_localizations.dart';
 import 'package:one_rm_mobile/l10n/localized_names.dart';
@@ -16,6 +17,7 @@ import 'package:one_rm_mobile/repositories/records_repository.dart';
 import 'package:one_rm_mobile/services/exercise_library_service.dart';
 import 'package:one_rm_mobile/services/storage_service.dart';
 import 'package:one_rm_mobile/services/unit_service.dart';
+import 'package:one_rm_mobile/ui/about_screen.dart';
 import 'package:one_rm_mobile/ui/add_entry_screen.dart';
 import 'package:one_rm_mobile/ui/exercise_detail_screen.dart';
 import 'package:one_rm_mobile/ui/history_screen.dart';
@@ -153,6 +155,7 @@ final Map<String, _Scenario> _scenarios = {
       library: _library(),
       unitService: UnitService.forTesting(unit: WeightUnit.lbs),
       language: testLanguage(),
+      links: LinkService.forTesting(),
     ),
   ),
   'home empty': (t, d) => _pump(
@@ -163,6 +166,7 @@ final Map<String, _Scenario> _scenarios = {
       library: testLibrary(),
       unitService: UnitService.forTesting(),
       language: testLanguage(),
+      links: LinkService.forTesting(),
     ),
   ),
   'home with everything hidden': (t, d) => _pump(
@@ -173,6 +177,7 @@ final Map<String, _Scenario> _scenarios = {
       library: testLibrary(hidden: {for (final e in defaultExercises) e.id}),
       unitService: UnitService.forTesting(),
       language: testLanguage(),
+      links: LinkService.forTesting(),
     ),
   ),
   'detail with records': (t, d) => _pump(t, d, _detail(_sampleRecords())),
@@ -287,8 +292,27 @@ final Map<String, _Scenario> _scenarios = {
       unitService: UnitService.forTesting(),
       currentUnit: WeightUnit.kg,
       language: testLanguage(),
+      links: LinkService.forTesting(),
     ),
   ),
+  'about': (t, d) => _pump(t, d, AboutScreen(links: LinkService.forTesting())),
+  'about, a link that could not open': (t, d) async {
+    await _pump(
+      t,
+      d,
+      AboutScreen(links: LinkService.forTesting(succeeds: false)),
+    );
+    final contact = find.byKey(const Key('about-contact'));
+    await t.scrollUntilVisible(
+      contact,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await t.pumpAndSettle();
+    await t.tap(contact);
+    await t.pumpAndSettle();
+    expect(find.byType(SnackBar), findsOneWidget);
+  },
   'PR celebration': (t, d) async {
     await _pump(
       t,

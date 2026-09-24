@@ -3,7 +3,9 @@ import '../l10n/app_localizations.dart';
 import '../models/app_language.dart';
 import '../models/weight_unit.dart';
 import '../repositories/language_repository.dart';
+import '../services/link_service.dart';
 import '../services/unit_service.dart';
+import 'about_screen.dart';
 import 'theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -12,11 +14,13 @@ class SettingsScreen extends StatefulWidget {
     required this.unitService,
     required this.currentUnit,
     required this.language,
+    required this.links,
   });
 
   final UnitService unitService;
   final WeightUnit currentUnit;
   final LanguageRepository language;
+  final LinkService links;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -82,6 +86,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
               ],
             ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          _ChoiceGroup(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  key: const Key('about-button'),
+                  minTileHeight: kMinTapTarget + 8,
+                  leading: const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.accent,
+                  ),
+                  title: Text(
+                    l10n.about,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                  onTap: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AboutScreen(links: widget.links),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

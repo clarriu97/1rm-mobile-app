@@ -153,5 +153,16 @@
   "editHint": "Editar",
   "dateSemantics": "Fecha: {when}, {date}",
   "changeDateHint": "Cambiar fecha",
-  "estimateEmptySemantics": "Introduce peso y reps"
+  "estimateEmptySemantics": "Introduce peso y reps",
+
+  "about": "Acerca de",
+  "aboutTagline": "Estima, apunta y sigue tu repetición máxima.",
+  "version": "Versión {version} ({build})",
+  "dataStaysOnDevice": "Todo lo que apuntas se queda en este móvil. Sin cuentas ni seguimiento.",
+  "website": "Web",
+  "privacyPolicy": "Política de privacidad",
+  "termsOfUse": "Condiciones de uso",
+  "contact": "Contacto",
+  "licenses": "Licencias de código abierto",
+  "couldNotOpen": "No se pudo abrir {link}."
 }

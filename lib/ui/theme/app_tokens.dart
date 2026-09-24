@@ -1,3 +1,5 @@
+import 'package:flutter/animation.dart';
+
 /// Spacing scale (logical pixels).
 class AppSpacing {
   AppSpacing._();
@@ -21,3 +23,13 @@ class AppRadii {
 
 /// Minimum size for anything tappable.
 const double kMinTapTarget = 48;
+
+/// Motion durations and easing. Anything non-essential falls back to a
+/// static change when `MediaQuery.disableAnimations` is on.
+class AppMotion {
+  AppMotion._();
+
+  static const Duration medium = Duration(milliseconds: 300);
+  static const Duration long = Duration(milliseconds: 600);
+  static const Curve curve = Curves.easeOutCubic;
+}

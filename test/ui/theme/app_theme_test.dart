@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/ui/theme/app_theme.dart';
@@ -91,6 +92,99 @@ void main() {
       final border =
           theme.inputDecorationTheme.focusedBorder! as OutlineInputBorder;
       expect(border.borderSide.color, AppColors.accent);
+    });
+  });
+  group('AppTheme page transitions', () {
+    Future<void> pushSecond(
+      WidgetTester tester, {
+      required TargetPlatform platform,
+      required bool reduceMotion,
+    }) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(disableAnimations: reduceMotion),
+          child: MaterialApp(
+            theme: AppTheme.dark.copyWith(platform: platform),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const Scaffold(body: Text('second')),
+                    ),
+                  ),
+                  child: const Text('go'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    Offset secondPage(WidgetTester tester) =>
+        tester.getTopLeft(find.text('second'));
+
+    test('iOS slides like iOS; Android uses predictive back', () {
+      final builders = AppTheme.pageTransitions.builders;
+      expect(
+        builders[TargetPlatform.iOS],
+        isA<CupertinoPageTransitionsBuilder>(),
+      );
+      expect(builders[TargetPlatform.android], isNotNull);
+    });
+
+    testWidgets('Android animates the push', (tester) async {
+      await pushSecond(
+        tester,
+        platform: TargetPlatform.android,
+        reduceMotion: false,
+      );
+      expect(tester.hasRunningAnimations, isTrue);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Android with reduced motion shows the page at once', (
+      tester,
+    ) async {
+      await pushSecond(
+        tester,
+        platform: TargetPlatform.android,
+        reduceMotion: true,
+      );
+      expect(secondPage(tester), Offset.zero);
+      final opacities = tester.widgetList<FadeTransition>(
+        find.ancestor(
+          of: find.text('second'),
+          matching: find.byType(FadeTransition),
+        ),
+      );
+      expect(opacities.every((f) => f.opacity.value == 1), isTrue);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('iOS keeps its slide and the back swipe with reduced motion', (
+      tester,
+    ) async {
+      await pushSecond(
+        tester,
+        platform: TargetPlatform.iOS,
+        reduceMotion: true,
+      );
+      expect(secondPage(tester).dx, greaterThan(0));
+      await tester.pumpAndSettle();
+
+      await tester.timedDragFrom(
+        const Offset(2, 300),
+        const Offset(600, 0),
+        const Duration(milliseconds: 300),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('second'), findsNothing);
+      expect(find.text('go'), findsOneWidget);
     });
   });
 }

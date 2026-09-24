@@ -13,6 +13,7 @@ import 'add_entry_screen.dart';
 import 'save_error.dart';
 import 'theme/app_theme.dart';
 import 'undo_snack_bar.dart';
+import 'widgets/staggered_list.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
@@ -139,7 +140,7 @@ class HistoryScreen extends StatelessWidget {
             );
           }
 
-          return ListView(
+          return StaggeredList(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               0,

@@ -14,7 +14,9 @@ import 'exercise_detail_screen.dart';
 import 'manage_exercises_screen.dart';
 import 'settings_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/exercise_icon_hero.dart';
 import 'widgets/sparkline.dart';
+import 'widgets/staggered_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -109,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final hasAnyRecord = exercises.any(
             (e) => widget.records.latestFor(e.id) != null,
           );
-          return ListView(
+          return StaggeredList(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.sm,
@@ -259,14 +261,17 @@ class _ExerciseCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  SvgPicture.asset(
-                    template.assetPath,
-                    excludeFromSemantics: true,
-                    width: 44,
-                    height: 44,
-                    colorFilter: ColorFilter.mode(
-                      hasData ? AppColors.accent : AppColors.textSecondary,
-                      BlendMode.srcIn,
+                  ExerciseIconHero(
+                    exerciseId: template.id,
+                    child: SvgPicture.asset(
+                      template.assetPath,
+                      excludeFromSemantics: true,
+                      width: 44,
+                      height: 44,
+                      colorFilter: ColorFilter.mode(
+                        hasData ? AppColors.accent : AppColors.textSecondary,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),

@@ -2,7 +2,8 @@
 # The checks CI runs, runnable locally with the same commands.
 #
 #   tool/ci.sh                 checks + goldens (goldens on macOS only)   ~1 min
-#   tool/ci.sh all             the above + e2e on every target available  ~6-10 min
+#   tool/ci.sh all             the above + release builds + e2e on every
+#                              target available                          ~7-11 min
 #                              and, when it all passes on a pushed commit
 #                              with no local changes, reports the
 #                              `local-e2e` status that merging into main needs
@@ -366,7 +367,13 @@ all() {
   sha=$(git rev-parse HEAD)
   checks
   goldens
+  if [[ -d "$ANDROID_HOME" ]]; then
+    build_android
+  else
+    echo "⚠︎ Android release build skipped: no Android SDK. CI builds it on main."
+  fi
   if [[ "$(uname)" == Darwin ]]; then
+    build_ios
     e2e_ios small
     e2e_ios large
     passed="iOS small, iOS large"

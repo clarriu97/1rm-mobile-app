@@ -60,51 +60,6 @@ jobs:
           name: coverage
           path: coverage/lcov.info
 
-  # Release builds as the stores get them: Android with R8, iOS without code
-  # signing (signing arrives with the store accounts in phase 2).
-  build-android:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Cached: what every run would otherwise download before compiling a
-      # line (Gradle dependencies, the Flutter Android engine, CMake).
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-          cache: gradle
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-          # Its own key, so the SDK cache keeps the Android engine artifacts.
-          cache-key: "flutter-:os:-:channel:-:version:-:arch:-android"
-
-      - uses: actions/cache@v4
-        with:
-          path: /usr/local/lib/android/sdk/cmake
-          key: android-cmake-${{ runner.os }}-3.22.1
-
-      - run: flutter pub get
-
-      - run: tool/ci.sh build-android
-
-  build-ios:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - run: flutter pub get
-
-      - run: tool/ci.sh build-ios
-
   goldens:
     # Goldens are generated on macOS; comparing on the same OS keeps text
     # antialiasing identical.

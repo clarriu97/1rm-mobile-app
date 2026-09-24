@@ -7,9 +7,9 @@ GitHub after merging, every night and for every release.
 | When | What runs | Where | Blocks |
 |---|---|---|---|
 | Every push (pre-push hook) | format, analyze, unit/widget/layout-matrix tests, goldens | this Mac, `tool/ci.sh` | the push |
-| Every pull request | `analyze`, `test`, `goldens` | GitHub | the merge (required checks) |
-| Before merging | all of the above + e2e on the small (Spanish) and large (English) iPhone simulators and an Android emulator | this Mac, `tool/ci.sh all` | the merge (`local-e2e` required check) |
-| After every merge, nightly, on demand | e2e on iPhone small (Spanish) / large (English), Android API 24 (small) and 35 (large) | GitHub, workflow **E2E** | nothing: a red run is fixed in the next PR |
+| Every pull request | `analyze`, `test` (with coverage, uploaded as an artifact), `goldens` | GitHub | the merge (required checks) |
+| Before merging | all of the above + release builds (Android app bundle with R8, iOS without signing) + e2e on the small (Spanish) and large (English) iPhone simulators and an Android emulator | this Mac, `tool/ci.sh all` | the merge (`local-e2e` required check) |
+| After every merge, nightly, on demand | release builds, e2e on iPhone small (Spanish) / large (English), Android API 24 (small) and 35 (large), and a smoke test of the Android release build on API 35 | GitHub, workflow **E2E** | nothing: a red run is fixed in the next PR |
 | Every `v*` tag | tag = pubspec version, all checks, goldens, e2e on the 4 CI devices | GitHub, workflow **Release** | the release |
 
 ## Why the e2e flows don't run on pull requests

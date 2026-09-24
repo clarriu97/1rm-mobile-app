@@ -32,14 +32,29 @@ Android (phones; Android tablets must not break). Owner: Carlos Larriu
 | M2 · Identidad visual | ✅ done | Industrial/gym design system (tokens, Big Shoulders + Barlow), generated exercise icons and illustrations, app icon, splash, "1RM" name |
 | M3 · UX principal | ✅ done | Home cards with best 1RM + sparkline, live 1RM on add entry with dates, PR celebration, progress chart, %/reps tables, editable history with undo, 34-lift library with custom lifts and hiding, onboarding with kg/lbs and lift picking |
 | M3.5 · Testing en dispositivos | ✅ done | iPhone-only, layout matrix, goldens, e2e flows in CI |
-| **M4 · Calidad de lanzamiento** | **🔜 current** | #16 i18n es/en (done) → #55 rename/delete custom lifts (done) → #17 accessibility (done) → #18 motion (done) → #20 release config (done) → #19 CI release builds (#51, local e2e gate, done). Issue bodies include testing follow-ups added on 2026-09-23 |
-| Fase 2 · Publicación | later | Store accounts, TestFlight/Play, real devices on Firebase Test Lab (#45), screenshots, ASO, monetization |
+| M4 · Calidad de lanzamiento | ✅ done | es/en with a language picker, rename/delete custom lifts, accessibility (screen reader, a11y guidelines, bold text), motion with reduced-motion fallbacks, release config (portrait, privacy manifest, R8, signing, About), release builds in the merge gate, coverage, Dependabot |
+| **Fase 2 · Publicación** | **🔜 next** | Store accounts, TestFlight/Play, real devices on Firebase Test Lab (#45), screenshots, ASO, monetization |
 | Post-v1 | backlog | #21: backup export/import, plate calculator, formula choice, light mode |
 
-**Next step:** M4 in the order above, continuing with #19, the last one. Work one issue per
+**Next step:** Fase 2 · Publicación. It starts with the owner's accounts
+(Apple Developer Program, Google Play Console) and the Android upload
+keystore (docs/RELEASING.md); then TestFlight/Play internal testing, real
+devices (#45), store screenshots and listing. Work one issue per
 branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
+
+- **2026-09-24 · Release builds in the merge gate (#19).** Measured on GitHub:
+  the Android app bundle takes 4.0 min even with caches (Gradle, Flutter
+  Android engine, CMake) and the iOS release build 2.9–4.3 min, against
+  ~2.8 min for today's PR checks. So `tool/ci.sh all` builds both locally
+  (incremental, well under a minute) before reporting `local-e2e`, and GitHub
+  builds them after every merge, nightly and for releases. `flutter drive`
+  refuses release mode, so the R8 build gets a smoke test
+  (`tool/ci.sh smoke-android-release`: first run, storage, relaunch) on API 35
+  in the E2E workflow. Coverage is uploaded from the `test` job (96.8 % of
+  lib/ lines). Dependabot opens one grouped PR a week for pub and for Actions;
+  the Flutter SDK stays pinned and is bumped by hand.
 
 - **2026-09-24 · Release config (#20).** Portrait only on iPhone and Android
   phones; `ITSAppUsesNonExemptEncryption=false`; app privacy manifest (no

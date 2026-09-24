@@ -4,7 +4,8 @@ name: E2E
 # current iPhone in Spanish and the largest in English, and Android on the
 # oldest supported API with a small screen and the newest API with a large
 # one. Same commands as `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android`
-# locally.
+# locally. Plus the release builds (Android app bundle with R8, iOS without
+# code signing) and a smoke test of the Android release build.
 #
 # Not run on pull requests: device runs on shared CI machines occasionally
 # fail to attach to the app, which says nothing about the code. Before a
@@ -28,6 +29,52 @@ env:
   FLUTTER_VERSION: "3.47.5"
 
 jobs:
+  # Release builds as the stores get them: Android with R8, iOS without code
+  # signing (signing arrives with the store accounts in phase 2). Pull
+  # requests don't wait for them: `tool/ci.sh all` builds both locally.
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cached: what every run would otherwise download before compiling a
+      # line (Gradle dependencies, the Flutter Android engine, CMake).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+          # Its own key, so the SDK cache keeps the Android engine artifacts.
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-android"
+
+      - uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/cmake
+          key: android-cmake-${{ runner.os }}-3.22.1
+
+      - run: flutter pub get
+
+      - run: tool/ci.sh build-android
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - run: tool/ci.sh build-ios
+
   ios:
     name: iOS · ${{ matrix.size }}
     runs-on: macos-latest

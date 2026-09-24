@@ -1,9 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'l10n/app_localizations.dart';
 import 'repositories/exercise_library.dart';
+import 'repositories/language_repository.dart';
 import 'repositories/records_repository.dart';
 import 'services/exercise_library_service.dart';
+import 'services/language_service.dart';
 import 'services/onboarding_service.dart';
 import 'services/storage_service.dart';
 import 'services/unit_service.dart';
@@ -29,12 +32,16 @@ Future<OneRMApp> loadApp() async {
   );
   final onboarding = await OnboardingService.getInstance();
   final unitService = await UnitService.getInstance();
+  final language = await LanguageRepository.load(
+    await LanguageService.getInstance(),
+  );
 
   return OneRMApp(
     records: records,
     library: library,
     onboarding: onboarding,
     unitService: unitService,
+    language: language,
     countryCode: PlatformDispatcher.instance.locale.countryCode,
   );
 }
@@ -46,6 +53,7 @@ class OneRMApp extends StatelessWidget {
     required this.library,
     required this.onboarding,
     required this.unitService,
+    required this.language,
     this.countryCode,
   });
 
@@ -53,22 +61,30 @@ class OneRMApp extends StatelessWidget {
   final ExerciseLibrary library;
   final OnboardingService onboarding;
   final UnitService unitService;
+  final LanguageRepository language;
 
   /// Device region, used to pick the default unit during onboarding.
   final String? countryCode;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '1RM',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      home: _AppGate(
-        onboarding: onboarding,
-        records: records,
-        library: library,
-        unitService: unitService,
-        countryCode: countryCode,
+    return ListenableBuilder(
+      listenable: language,
+      builder: (context, _) => MaterialApp(
+        title: '1RM',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: language.language.locale,
+        home: _AppGate(
+          onboarding: onboarding,
+          records: records,
+          library: library,
+          unitService: unitService,
+          language: language,
+          countryCode: countryCode,
+        ),
       ),
     );
   }
@@ -80,6 +96,7 @@ class _AppGate extends StatefulWidget {
     required this.records,
     required this.library,
     required this.unitService,
+    required this.language,
     required this.countryCode,
   });
 
@@ -87,6 +104,7 @@ class _AppGate extends StatefulWidget {
   final RecordsRepository records;
   final ExerciseLibrary library;
   final UnitService unitService;
+  final LanguageRepository language;
   final String? countryCode;
 
   @override
@@ -134,6 +152,7 @@ class _AppGateState extends State<_AppGate> {
       records: widget.records,
       library: widget.library,
       unitService: widget.unitService,
+      language: widget.language,
     );
   }
 }

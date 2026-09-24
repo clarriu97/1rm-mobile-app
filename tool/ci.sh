@@ -14,7 +14,8 @@
 #   tool/ci.sh unit            unit, widget and layout-matrix tests
 #   tool/ci.sh goldens         pixel comparisons (macOS)
 #   tool/ci.sh boot-ios SIZE   boot the simulator for SIZE (small|large), print its id
-#   tool/ci.sh e2e-ios SIZE    e2e flows on that simulator (boots it if needed)
+#   tool/ci.sh e2e-ios SIZE    e2e flows on that simulator (boots it if needed),
+#                              in Spanish on the small one, English on the large
 #   tool/ci.sh e2e-android     e2e flows on an Android emulator (starts one if needed)
 set -euo pipefail
 
@@ -163,8 +164,17 @@ boot_ios() {
   echo "$udid"
 }
 
+# The small iPhone runs the flows in Spanish: its longer text on the narrowest
+# screen is where layouts break. The large one runs them in English.
+ios_language() {
+  case "$1" in
+    small) echo es ;;
+    *) echo en ;;
+  esac
+}
+
 e2e_ios() {
-  local udid was_booted="" status=0
+  local udid was_booted="" status=0 language
   if [[ -z "${SIM_UDID:-}" ]]; then
     udid=$(ios_udid "$1")
     if xcrun simctl list devices | grep "$udid" | grep -q Booted; then
@@ -174,8 +184,11 @@ e2e_ios() {
   # CI boots the simulator in an earlier step and passes its id along:
   # listing simulators while one boots can take minutes.
   udid=${SIM_UDID:-$(boot_ios "$1")}
-  step "e2e on the $1 iPhone simulator ($udid)"
+  language=$(ios_language "$1")
+  step "e2e on the $1 iPhone simulator ($udid), in $language"
   xcrun simctl bootstatus "$udid" -b >/dev/null
+  # Apps launched from now on read it; the region stays as it was.
+  xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array "$language"
   wait_for_log_stream "$udid"
   run_e2e "$udid" || status=$?
   # Shut down what this run booted; leave a simulator you had open.

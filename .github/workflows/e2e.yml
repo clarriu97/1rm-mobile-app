@@ -1,9 +1,10 @@
 name: E2E
 
-# The integration_test flows on real simulators/emulators: the smallest and
-# largest current iPhone, and Android on the oldest supported API with a small
-# screen and the newest API with a large one. Same commands as
-# `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android` locally.
+# The integration_test flows on real simulators/emulators: the smallest
+# current iPhone in Spanish and the largest in English, and Android on the
+# oldest supported API with a small screen and the newest API with a large
+# one. Same commands as `tool/ci.sh e2e-ios <size>` / `tool/ci.sh e2e-android`
+# locally.
 #
 # Not run on pull requests: device runs on shared CI machines occasionally
 # fail to attach to the app, which says nothing about the code. Before a

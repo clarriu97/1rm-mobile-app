@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/localized_names.dart';
 import '../repositories/exercise_library.dart';
 import 'theme/app_theme.dart';
 
@@ -43,14 +45,20 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Exercises')),
+      appBar: AppBar(title: Text(l10n.exercises)),
       body: ListenableBuilder(
         listenable: library,
         builder: (context, _) {
           final query = _search.text.trim().toLowerCase();
+          // English names match too: lifters often know a lift by both.
           final matches = library.all
-              .where((e) => e.name.toLowerCase().contains(query))
+              .where(
+                (e) =>
+                    l10n.exerciseName(e).toLowerCase().contains(query) ||
+                    e.name.toLowerCase().contains(query),
+              )
               .toList();
           return ListView(
             padding: const EdgeInsets.fromLTRB(
@@ -65,12 +73,12 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
                 controller: _search,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Search exercises',
+                  hintText: l10n.searchExercises,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: query.isEmpty
                       ? null
                       : IconButton(
-                          tooltip: 'Clear search',
+                          tooltip: l10n.clearSearch,
                           icon: const Icon(Icons.close_rounded),
                           onPressed: _search.clear,
                         ),
@@ -78,7 +86,7 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                '${library.visible.length} of ${library.all.length} shown on Home',
+                l10n.shownOnHome(library.visible.length, library.all.length),
                 key: const Key('shown-count'),
                 style: text.bodySmall,
               ),
@@ -86,7 +94,7 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
                   child: Text(
-                    'No exercises match "${_search.text.trim()}".',
+                    l10n.noExercisesMatch(_search.text.trim()),
                     textAlign: TextAlign.center,
                     style: text.bodyLarge,
                   ),
@@ -96,7 +104,7 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
                 Semantics(
                   header: true,
                   child: Text(
-                    category.displayName.toUpperCase(),
+                    l10n.categoryName(category).toUpperCase(),
                     style: text.labelMedium,
                   ),
                 ),
@@ -104,10 +112,7 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
                 _ExerciseGroup(library: library, exercises: group),
               ],
               const SizedBox(height: AppSpacing.md),
-              Text(
-                'Hidden exercises keep all their records.',
-                style: text.bodySmall,
-              ),
+              Text(l10n.hiddenKeepRecords, style: text.bodySmall),
             ],
           );
         },
@@ -123,7 +128,7 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
           key: const Key('new-exercise-button'),
           onPressed: _addExercise,
           icon: const Icon(Icons.add_rounded),
-          label: const Text('New exercise'),
+          label: Text(l10n.newExercise),
         ),
       ),
     );
@@ -173,7 +178,10 @@ class _ExerciseGroup extends StatelessWidget {
                     BlendMode.srcIn,
                   ),
                 ),
-                title: Text(exercise.name, style: text.titleMedium),
+                title: Text(
+                  AppLocalizations.of(context).exerciseName(exercise),
+                  style: text.titleMedium,
+                ),
               ),
             ),
         ],
@@ -202,14 +210,19 @@ class _NewExerciseDialogState extends State<_NewExerciseDialog> {
   }
 
   void _submit() {
-    final error = widget.library.validateName(_controller.text);
+    final l10n = AppLocalizations.of(context);
+    final error = widget.library.validateName(
+      _controller.text,
+      localizedNames: widget.library.all.map(l10n.exerciseName),
+    );
     if (error != null) {
       setState(
         () => _error = switch (error) {
-          ExerciseNameError.empty => 'Enter a name',
-          ExerciseNameError.tooLong =>
-            'Max ${ExerciseLibrary.maxNameLength} characters',
-          ExerciseNameError.duplicate => 'That exercise already exists',
+          ExerciseNameError.empty => l10n.enterAName,
+          ExerciseNameError.tooLong => l10n.maxCharacters(
+            ExerciseLibrary.maxNameLength,
+          ),
+          ExerciseNameError.duplicate => l10n.exerciseExists,
         },
       );
       return;
@@ -219,8 +232,9 @@ class _NewExerciseDialogState extends State<_NewExerciseDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('New exercise'),
+      title: Text(l10n.newExercise),
       content: TextField(
         key: const Key('new-exercise-name'),
         controller: _controller,
@@ -228,8 +242,8 @@ class _NewExerciseDialogState extends State<_NewExerciseDialog> {
         textCapitalization: TextCapitalization.words,
         maxLength: ExerciseLibrary.maxNameLength,
         decoration: InputDecoration(
-          labelText: 'Name',
-          hintText: 'Zercher Squat',
+          labelText: l10n.nameLabel,
+          hintText: l10n.nameHint,
           errorText: _error,
         ),
         onChanged: (_) {
@@ -240,13 +254,13 @@ class _NewExerciseDialogState extends State<_NewExerciseDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
         ),
         TextButton(
           key: const Key('create-exercise-button'),
           onPressed: _submit,
           style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-          child: const Text('Create'),
+          child: Text(l10n.create),
         ),
       ],
     );

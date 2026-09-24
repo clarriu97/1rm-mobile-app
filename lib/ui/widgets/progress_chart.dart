@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/exercise.dart';
 import '../../models/weight_unit.dart';
 import '../../utils/formulas.dart';
@@ -9,13 +10,9 @@ import '../theme/app_theme.dart';
 import 'segmented_chips.dart';
 
 enum ProgressRange {
-  threeMonths('3M'),
-  year('1Y'),
-  all('ALL');
-
-  const ProgressRange(this.label);
-
-  final String label;
+  threeMonths,
+  year,
+  all;
 
   /// First day included in the range, or null for everything.
   DateTime? startFrom(DateTime now) => switch (this) {
@@ -104,6 +101,7 @@ class _ProgressChartState extends State<ProgressChart> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final inRange = recordsInRange(widget.records, _range, widget.now);
 
     return Column(
@@ -111,11 +109,15 @@ class _ProgressChartState extends State<ProgressChart> {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Progress', style: text.titleMedium)),
+            Expanded(child: Text(l10n.progress, style: text.titleMedium)),
             SegmentedChips<ProgressRange>(
               values: ProgressRange.values,
               selected: _range,
-              labelOf: (range) => range.label,
+              labelOf: (range) => switch (range) {
+                ProgressRange.threeMonths => l10n.rangeThreeMonths,
+                ProgressRange.year => l10n.rangeYear,
+                ProgressRange.all => l10n.rangeAll,
+              },
               onSelected: (range) => setState(() => _range = range),
               keyPrefix: 'range',
             ),
@@ -138,11 +140,9 @@ class _ProgressChartState extends State<ProgressChart> {
                 AppSpacing.sm,
               ),
               child: widget.records.length < 2
-                  ? const _ChartMessage(
-                      'Log at least two sessions to see your progress.',
-                    )
+                  ? _ChartMessage(l10n.chartNeedsTwoSessions)
                   : inRange.length < 2
-                  ? const _ChartMessage('Not enough entries in this range.')
+                  ? _ChartMessage(l10n.chartNotEnoughInRange)
                   : _buildChart(context, inRange),
             ),
           ),
@@ -154,6 +154,8 @@ class _ProgressChartState extends State<ProgressChart> {
   Widget _buildChart(BuildContext context, List<ExerciseRecord> points) {
     final text = Theme.of(context).textTheme;
     final localizations = MaterialLocalizations.of(context);
+    final l10n = AppLocalizations.of(context);
+    final locale = l10n.localeName;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final spots = progressSpots(points, widget.unit);
     final bounds = progressYBounds(spots);
@@ -161,12 +163,11 @@ class _ProgressChartState extends State<ProgressChart> {
         ? spots.first.x + 1
         : spots.last.x;
     final labelStyle = text.bodySmall;
-    final first = formatWeight(points.first.oneRM, widget.unit);
-    final last = formatWeight(points.last.oneRM, widget.unit);
+    final first = formatWeight(points.first.oneRM, widget.unit, locale: locale);
+    final last = formatWeight(points.last.oneRM, widget.unit, locale: locale);
 
     return Semantics(
-      label:
-          'Progress chart: 1RM from $first to $last over ${points.length} entries',
+      label: l10n.chartSemantics(first, last, points.length),
       child: ExcludeSemantics(
         child: LineChart(
           key: const Key('progress-line-chart'),
@@ -237,6 +238,7 @@ class _ProgressChartState extends State<ProgressChart> {
                           text: formatWeight(
                             points[spot.spotIndex].oneRM,
                             widget.unit,
+                            locale: locale,
                           ),
                           style: text.titleSmall?.copyWith(
                             color: AppColors.accent,

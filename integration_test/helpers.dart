@@ -3,8 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:one_rm_mobile/data/default_exercises.dart';
+import 'package:one_rm_mobile/l10n/app_localizations.dart';
+import 'package:one_rm_mobile/l10n/localized_names.dart';
 import 'package:one_rm_mobile/main.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
+import 'package:one_rm_mobile/utils/formulas.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -114,6 +118,34 @@ Future<void> typeInto(WidgetTester tester, String key, String text) async {
 
 Future<void> tapText(WidgetTester tester, String text) =>
     _scrollAndTap(tester, find.text(text));
+
+/// The app's texts in the language the device runs in: flows never depend
+/// on English.
+AppLocalizations l10n(WidgetTester tester) =>
+    AppLocalizations.of(tester.element(find.byType(Navigator).first));
+
+MaterialLocalizations materialL10n(WidgetTester tester) =>
+    MaterialLocalizations.of(tester.element(find.byType(Navigator).first));
+
+/// [value] as the app shows it in [unit], in the device language.
+String weight(
+  WidgetTester tester,
+  double value, {
+  WeightUnit unit = WeightUnit.kg,
+  int decimals = 1,
+}) => formatUnitValue(
+  value,
+  unit,
+  locale: l10n(tester).localeName,
+  decimals: decimals,
+);
+
+/// Name of the built-in exercise [id] in the device language.
+String exerciseName(WidgetTester tester, String id) =>
+    l10n(tester).exerciseName(defaultExercises.firstWhere((e) => e.id == id));
+
+Future<void> tapExercise(WidgetTester tester, String id) =>
+    tapText(tester, exerciseName(tester, id));
 
 /// From an exercise's detail screen, logs weight × reps and returns there.
 Future<void> logEntry(

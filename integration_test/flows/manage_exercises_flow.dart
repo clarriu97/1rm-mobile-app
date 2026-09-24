@@ -13,7 +13,11 @@ void manageExercisesFlows() {
     await typeInto(tester, 'exercise-search', 'thru');
     await tapKey(tester, 'toggle-thruster');
 
-    await typeInto(tester, 'exercise-search', 'back squat');
+    await typeInto(
+      tester,
+      'exercise-search',
+      exerciseName(tester, 'back_squat'),
+    );
     await tapKey(tester, 'toggle-back_squat');
 
     await typeInto(tester, 'exercise-search', '');
@@ -25,17 +29,17 @@ void manageExercisesFlows() {
     await tapKey(tester, 'create-exercise-button');
 
     await goBack(tester);
-    expect(find.text('Back Squat'), findsNothing);
-    await tapText(tester, 'Thruster');
+    expect(find.text(exerciseName(tester, 'back_squat')), findsNothing);
+    await tapExercise(tester, 'thruster');
     await goBack(tester);
     await tapText(tester, 'Zercher Squat');
     await logEntry(tester, weight: '100', reps: '1');
-    expect(find.text('100.0 kg'), findsWidgets);
+    expect(find.text(weight(tester, 100)), findsWidgets);
     await goBack(tester);
 
     await relaunchApp(tester);
-    expect(find.text('Back Squat'), findsNothing);
+    expect(find.text(exerciseName(tester, 'back_squat')), findsNothing);
     await tapText(tester, 'Zercher Squat');
-    expect(find.text('100.0 kg'), findsWidgets);
+    expect(find.text(weight(tester, 100)), findsWidgets);
   });
 }

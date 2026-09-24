@@ -50,7 +50,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Find the text we added FittedBox to.
-        const latestText = 'Latest: 123456.7 kg × 9999 reps → 987654.3 kg';
+        const latestText =
+            'Latest: 123,456.7 kg × 9999 reps · 1RM 987,654.3 kg';
         expect(find.text(latestText), findsOneWidget);
 
         // Verify that a FittedBox wraps this specific Text
@@ -133,9 +134,9 @@ void main() {
     ) async {
       await pump(tester, 150, WeightUnit.kg);
       await showTable(tester);
-      await tester.ensureVisible(find.byKey(const Key('table-REPS')));
+      await tester.ensureVisible(find.byKey(const Key('table-reps')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('table-REPS')));
+      await tester.tap(find.byKey(const Key('table-reps')));
       await tester.pumpAndSettle();
 
       expect(find.text('REPS'), findsWidgets);
@@ -152,13 +153,13 @@ void main() {
     ) async {
       await pump(tester, 150, WeightUnit.kg);
       await showTable(tester);
-      await tester.ensureVisible(find.byKey(const Key('table-REPS')));
+      await tester.ensureVisible(find.byKey(const Key('table-reps')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('table-REPS')));
+      await tester.tap(find.byKey(const Key('table-reps')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('table-%')));
+      await tester.ensureVisible(find.byKey(const Key('table-percent')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('table-%')));
+      await tester.tap(find.byKey(const Key('table-percent')));
       await tester.pumpAndSettle();
 
       expect(find.text('100%'), findsOneWidget);
@@ -209,7 +210,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('range-1Y')));
+      await tester.tap(find.byKey(const Key('range-year')));
       await tester.pumpAndSettle();
 
       // Both entries are more than a year before the injected "now".

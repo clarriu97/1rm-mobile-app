@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/localized_names.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
@@ -28,10 +30,11 @@ class ExerciseDetailScreen extends StatelessWidget {
   final DateTime Function() clock;
 
   Future<void> _addEntry(BuildContext context) async {
+    final exerciseName = AppLocalizations.of(context).exerciseName(template);
     final record = await Navigator.of(context).push<ExerciseRecord>(
       MaterialPageRoute<ExerciseRecord>(
         builder: (context) => AddEntryScreen(
-          exerciseName: template.name,
+          exerciseName: exerciseName,
           assetPath: template.assetPath,
           unit: unit,
           clock: clock,
@@ -51,7 +54,7 @@ class ExerciseDetailScreen extends StatelessWidget {
     if (isPR && context.mounted) {
       await showPrCelebration(
         context,
-        exerciseName: template.name,
+        exerciseName: exerciseName,
         oneRM: record.oneRM,
         previousBest: previousBest!,
         unit: unit,
@@ -79,6 +82,7 @@ class ExerciseDetailScreen extends StatelessWidget {
       builder: (context, _) {
         final best = records.bestOneRMFor(template.id);
         final latest = records.latestFor(template.id);
+        final l10n = AppLocalizations.of(context);
 
         return Scaffold(
           appBar: AppBar(
@@ -96,7 +100,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Flexible(
-                  child: Text(template.name, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    l10n.exerciseName(template),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -104,7 +111,7 @@ class ExerciseDetailScreen extends StatelessWidget {
               if (best != null)
                 IconButton(
                   icon: const Icon(Icons.history_rounded),
-                  tooltip: 'History',
+                  tooltip: l10n.history,
                   onPressed: () => _openHistory(context),
                 ),
             ],
@@ -157,7 +164,7 @@ class ExerciseDetailScreen extends StatelessWidget {
               key: const Key('add-entry-button'),
               onPressed: () => _addEntry(context),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Entry'),
+              label: Text(l10n.addEntry),
             ),
           ),
         );
@@ -171,6 +178,8 @@ class ExerciseDetailScreen extends StatelessWidget {
     ExerciseRecord? latest,
   ) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    final locale = l10n.localeName;
     return KnurlPanel(
       padding: EdgeInsets.zero,
       child: Column(
@@ -189,7 +198,9 @@ class ExerciseDetailScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('BEST 1RM', style: text.labelMedium),
+                    Flexible(
+                      child: Text(l10n.bestOneRm, style: text.labelMedium),
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     const Icon(
                       Icons.emoji_events_rounded,
@@ -203,7 +214,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    formatWeight(best, unit),
+                    formatWeight(best, unit, locale: locale),
                     style: text.displayLarge?.copyWith(color: AppColors.accent),
                   ),
                 ),
@@ -222,7 +233,17 @@ class ExerciseDetailScreen extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'Latest: ${formatWeight(latest.weight, unit)} × ${latest.reps} reps → ${formatWeight(latest.oneRM, unit)}',
+                            l10n.latestSet(
+                              l10n.set(
+                                formatWeight(
+                                  latest.weight,
+                                  unit,
+                                  locale: locale,
+                                ),
+                                latest.reps,
+                              ),
+                              formatWeight(latest.oneRM, unit, locale: locale),
+                            ),
                             style: text.bodyMedium,
                           ),
                         ),
@@ -240,6 +261,7 @@ class ExerciseDetailScreen extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
@@ -256,10 +278,10 @@ class ExerciseDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            Text('No records yet', style: text.headlineMedium),
+            Text(l10n.noRecordsYet, style: text.headlineMedium),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Tap "Add Entry" to log your first\ntraining data for this exercise.',
+              l10n.emptyExerciseBody,
               textAlign: TextAlign.center,
               style: text.bodyLarge,
             ),
@@ -290,6 +312,7 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final rows = _mode == _TableMode.percent
         ? [
             for (final e in generatePercentageTable(widget.oneRM, widget.unit))
@@ -301,11 +324,7 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
           ]
         : [
             for (final e in generateRepsTable(widget.oneRM, widget.unit))
-              (
-                label: e.reps == 1 ? '1 rep' : '${e.reps} reps',
-                weight: e.weight,
-                top: e.reps == 1,
-              ),
+              (label: l10n.reps(e.reps), weight: e.weight, top: e.reps == 1),
           ];
     final increment = widget.unit.roundingIncrement;
 
@@ -314,11 +333,12 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Working weights', style: text.titleMedium)),
+            Expanded(child: Text(l10n.workingWeights, style: text.titleMedium)),
             SegmentedChips<_TableMode>(
               values: _TableMode.values,
               selected: _mode,
-              labelOf: (mode) => mode == _TableMode.percent ? '%' : 'REPS',
+              labelOf: (mode) =>
+                  mode == _TableMode.percent ? '%' : l10n.tableReps,
               onSelected: (mode) => setState(() => _mode = mode),
               keyPrefix: 'table',
             ),
@@ -335,15 +355,21 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
           child: Column(
             children: [
               _TableRow(
-                left: _mode == _TableMode.percent ? 'PERCENTAGE' : 'REPS',
-                right: 'WEIGHT',
+                left: _mode == _TableMode.percent
+                    ? l10n.tablePercentage
+                    : l10n.tableReps,
+                right: l10n.tableWeight,
                 style: text.labelMedium,
                 divider: false,
               ),
               for (final row in rows)
                 _TableRow(
                   left: row.label,
-                  right: formatUnitValue(row.weight, widget.unit),
+                  right: formatUnitValue(
+                    row.weight,
+                    widget.unit,
+                    locale: l10n.localeName,
+                  ),
                   style: text.titleMedium?.copyWith(
                     color: row.top ? AppColors.accent : AppColors.textPrimary,
                     fontWeight: row.top ? FontWeight.w700 : FontWeight.w500,
@@ -354,7 +380,9 @@ class _WorkingWeightsState extends State<_WorkingWeights> {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Rounded to the nearest ${increment.toStringAsFixed(0)} ${widget.unit.displayName}.',
+          l10n.roundedTo(
+            formatUnitValue(increment, widget.unit, locale: l10n.localeName),
+          ),
           style: text.bodySmall,
         ),
       ],

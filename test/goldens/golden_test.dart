@@ -81,33 +81,39 @@ Future<void> _loadSvgs(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-typedef _Screen = Future<void> Function(WidgetTester);
+typedef _Screen = Future<void> Function(WidgetTester, Locale);
 
-Future<void> _show(WidgetTester tester, Widget home) async {
-  await tester.pumpWidget(buildTestApp(home, platform: TargetPlatform.iOS));
+Future<void> _show(WidgetTester tester, Locale locale, Widget home) async {
+  await tester.pumpWidget(
+    buildTestApp(home, platform: TargetPlatform.iOS, locale: locale),
+  );
   await tester.pumpAndSettle();
 }
 
 final Map<String, _Screen> _screens = {
-  'onboarding_welcome': (t) => _show(t, OnboardingScreen(onComplete: (_) {})),
-  'onboarding_lifts': (t) async {
-    await _show(t, OnboardingScreen(onComplete: (_) {}));
+  'onboarding_welcome': (t, l) =>
+      _show(t, l, OnboardingScreen(onComplete: (_) {})),
+  'onboarding_lifts': (t, l) async {
+    await _show(t, l, OnboardingScreen(onComplete: (_) {}));
     for (var i = 0; i < 3; i++) {
       await t.tap(find.byKey(const Key('onboarding-next-button')));
       await t.pumpAndSettle();
     }
   },
-  'home': (t) => _show(
+  'home': (t, l) => _show(
     t,
+    l,
     HomeScreen(
       records: _records(),
       library: testLibrary(),
       unitService: UnitService.forTesting(),
+      language: testLanguage(),
       clock: _clock,
     ),
   ),
-  'detail': (t) => _show(
+  'detail': (t, l) => _show(
     t,
+    l,
     ExerciseDetailScreen(
       template: _squat,
       records: _records(),
@@ -115,9 +121,10 @@ final Map<String, _Screen> _screens = {
       clock: _clock,
     ),
   ),
-  'add_entry': (t) async {
+  'add_entry': (t, l) async {
     await _show(
       t,
+      l,
       AddEntryScreen(
         exerciseName: _squat.name,
         assetPath: _squat.assetPath,
@@ -131,8 +138,9 @@ final Map<String, _Screen> _screens = {
     FocusManager.instance.primaryFocus?.unfocus();
     await t.pumpAndSettle();
   },
-  'history': (t) => _show(
+  'history': (t, l) => _show(
     t,
+    l,
     HistoryScreen(
       template: _squat,
       records: _records(),
@@ -140,23 +148,40 @@ final Map<String, _Screen> _screens = {
       clock: _clock,
     ),
   ),
-  'manage_exercises': (t) =>
-      _show(t, ManageExercisesScreen(library: testLibrary())),
+  'manage_exercises': (t, l) =>
+      _show(t, l, ManageExercisesScreen(library: testLibrary())),
+};
+
+/// Screens also captured in Spanish, whose longer text is the one that
+/// breaks layouts.
+const _spanishScreens = {
+  'onboarding_welcome',
+  'onboarding_lifts',
+  'home',
+  'detail',
 };
 
 void main() {
   _devices.forEach((deviceName, device) {
     group(deviceName, () {
       _screens.forEach((screenName, show) {
-        testWidgets(screenName, (tester) async {
-          device.apply(tester);
-          await show(tester);
-          await _loadSvgs(tester);
-          await expectLater(
-            find.byType(MaterialApp),
-            matchesGoldenFile('goldens/$screenName.$deviceName.png'),
-          );
-        });
+        for (final locale in [
+          const Locale('en'),
+          if (_spanishScreens.contains(screenName)) const Locale('es'),
+        ]) {
+          final name = locale.languageCode == 'en'
+              ? screenName
+              : '${screenName}_${locale.languageCode}';
+          testWidgets(name, (tester) async {
+            device.apply(tester);
+            await show(tester, locale);
+            await _loadSvgs(tester);
+            await expectLater(
+              find.byType(MaterialApp),
+              matchesGoldenFile('goldens/$name.$deviceName.png'),
+            );
+          });
+        }
       });
     });
   });

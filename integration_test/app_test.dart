@@ -5,6 +5,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'flows/history_flow.dart';
+import 'flows/language_flow.dart';
 import 'flows/log_and_pr_flow.dart';
 import 'flows/manage_exercises_flow.dart';
 import 'flows/onboarding_flow.dart';
@@ -19,4 +20,5 @@ void main() {
   group('history', historyFlows);
   group('manage exercises', manageExercisesFlows);
   group('units', unitsFlows);
+  group('language', languageFlows);
 }

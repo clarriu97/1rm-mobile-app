@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import '../models/weight_unit.dart';
 
 const int maxReps = 50;
@@ -48,11 +49,29 @@ double roundToNearest(double value, [double increment = 1.0]) {
   return (value / increment).round() * increment;
 }
 
-String formatWeight(double weightInKg, WeightUnit unit, [int decimals = 1]) {
+/// [value] with exactly [decimals] decimals and the separators of [locale]
+/// (`112.5` in English, `112,5` in Spanish).
+String formatNumber(double value, {required String locale, int decimals = 0}) =>
+    NumberFormat.decimalPatternDigits(
+      locale: locale,
+      decimalDigits: decimals,
+    ).format(value);
+
+String formatWeight(
+  double weightInKg,
+  WeightUnit unit, {
+  required String locale,
+  int decimals = 1,
+}) {
   final displayValue = unit == WeightUnit.lbs
       ? kgToLbs(weightInKg)
       : weightInKg;
-  return '${displayValue.toStringAsFixed(decimals)} ${unit.displayName}';
+  return formatUnitValue(
+    displayValue,
+    unit,
+    locale: locale,
+    decimals: decimals,
+  );
 }
 
 /// Above this many reps the Epley estimate gets noticeably less reliable.
@@ -103,5 +122,10 @@ List<RepMaxEntry> generateRepsTable(
 }
 
 /// Formats a value that is already in [unit] (no conversion).
-String formatUnitValue(double value, WeightUnit unit, [int decimals = 0]) =>
-    '${value.toStringAsFixed(decimals)} ${unit.displayName}';
+String formatUnitValue(
+  double value,
+  WeightUnit unit, {
+  required String locale,
+  int decimals = 0,
+}) =>
+    '${formatNumber(value, locale: locale, decimals: decimals)} ${unit.displayName}';

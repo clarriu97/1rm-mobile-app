@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/localized_names.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../repositories/records_repository.dart';
@@ -26,10 +28,11 @@ class HistoryScreen extends StatelessWidget {
   final DateTime Function() clock;
 
   Future<void> _edit(BuildContext context, ExerciseRecord record) async {
+    final exerciseName = AppLocalizations.of(context).exerciseName(template);
     final updated = await Navigator.of(context).push<ExerciseRecord>(
       MaterialPageRoute<ExerciseRecord>(
         builder: (context) => AddEntryScreen(
-          exerciseName: template.name,
+          exerciseName: exerciseName,
           assetPath: template.assetPath,
           unit: unit,
           initial: record,
@@ -48,6 +51,7 @@ class HistoryScreen extends StatelessWidget {
   Future<void> _delete(BuildContext context, ExerciseRecord record) async {
     HapticFeedback.lightImpact();
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     try {
       await records.delete(template.id, record);
     } on Exception {
@@ -59,10 +63,15 @@ class HistoryScreen extends StatelessWidget {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            'Deleted ${formatWeight(record.weight, unit)} × ${record.reps}',
+            l10n.deletedSet(
+              l10n.set(
+                formatWeight(record.weight, unit, locale: l10n.localeName),
+                record.reps,
+              ),
+            ),
           ),
           action: SnackBarAction(
-            label: 'Undo',
+            label: l10n.undo,
             textColor: AppColors.accent,
             onPressed: () => records.add(template.id, record),
           ),
@@ -72,6 +81,7 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -89,7 +99,7 @@ class HistoryScreen extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Text(
-                '${template.name} History',
+                l10n.historyTitle(l10n.exerciseName(template)),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -107,7 +117,7 @@ class HistoryScreen extends StatelessWidget {
           if (sorted.isEmpty) {
             return Center(
               child: Text(
-                'No records yet',
+                l10n.noRecordsYet,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             );
@@ -129,7 +139,7 @@ class HistoryScreen extends StatelessWidget {
                 record: record,
                 unit: unit,
                 isPR: prs.contains(record),
-                dateLabel: _dateLabel(localizations, record.date, now),
+                dateLabel: _dateLabel(localizations, l10n, record.date, now),
                 onTap: () => _edit(context, record),
                 onDelete: () => _delete(context, record),
               ),
@@ -152,6 +162,7 @@ class HistoryScreen extends StatelessWidget {
 
   static String _dateLabel(
     MaterialLocalizations localizations,
+    AppLocalizations l10n,
     DateTime date,
     DateTime now,
   ) {
@@ -161,7 +172,7 @@ class HistoryScreen extends StatelessWidget {
       now.day,
     ).difference(DateTime(date.year, date.month, date.day)).inDays;
     return days < 7
-        ? formatRelativeDate(date, now)
+        ? formatRelativeDate(date, now, l10n)
         : localizations.formatShortMonthDay(date);
   }
 }
@@ -204,6 +215,8 @@ class _HistoryEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    final locale = l10n.localeName;
     final radius = BorderRadius.circular(AppRadii.md);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -250,7 +263,14 @@ class _HistoryEntry extends StatelessWidget {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
-                              '${formatWeight(record.weight, unit)} × ${record.reps} reps',
+                              l10n.set(
+                                formatWeight(
+                                  record.weight,
+                                  unit,
+                                  locale: locale,
+                                ),
+                                record.reps,
+                              ),
                               style: text.titleMedium,
                             ),
                             if (isPR) const _PrBadge(),
@@ -258,7 +278,9 @@ class _HistoryEntry extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '1RM: ${formatWeight(record.oneRM, unit)}',
+                          l10n.oneRmValue(
+                            formatWeight(record.oneRM, unit, locale: locale),
+                          ),
                           style: text.bodyMedium,
                         ),
                       ],
@@ -280,7 +302,9 @@ class _HistoryEntry extends StatelessWidget {
                     icon: const Icon(Icons.delete_outline_rounded, size: 20),
                     color: AppColors.textMuted,
                     onPressed: onDelete,
-                    tooltip: 'Delete',
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).deleteButtonTooltip,
                   ),
                 ],
               ),
@@ -297,6 +321,7 @@ class _PrBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       key: const Key('pr-badge'),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -305,8 +330,8 @@ class _PrBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Text(
-        'PR',
-        semanticsLabel: 'Personal record',
+        l10n.prBadge,
+        semanticsLabel: l10n.personalRecord,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: AppColors.onAccent,
           fontWeight: FontWeight.w700,

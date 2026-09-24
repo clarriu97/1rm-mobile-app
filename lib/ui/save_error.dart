@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 void showSaveError(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Could not save. Check your device storage.')),
+    SnackBar(content: Text(AppLocalizations.of(context).saveError)),
   );
 }

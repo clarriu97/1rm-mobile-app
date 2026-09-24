@@ -35,6 +35,7 @@ Future<void> _pumpHome(
         records: RecordsRepository(StorageService.inMemoryForTesting(), data),
         library: library ?? testLibrary(),
         unitService: UnitService.forTesting(unit: unit),
+        language: testLanguage(),
       ),
     ),
   );
@@ -154,6 +155,7 @@ void main() {
               }),
               library: testLibrary(),
               unitService: UnitService.forTesting(unit: WeightUnit.lbs),
+              language: testLanguage(),
             ),
           ),
         ),
@@ -173,6 +175,7 @@ void main() {
           }),
           library: testLibrary(),
           unitService: UnitService.forTesting(),
+          language: testLanguage(),
           clock: () => DateTime(2026, 3, 10, 7),
         ),
       ),
@@ -180,5 +183,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Yesterday'), findsOneWidget);
+  });
+  group('HomeScreen in Spanish', () {
+    testWidgets('names, relative dates and weights', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          HomeScreen(
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              _squat.id: [_record(112.5, date: DateTime(2026, 9, 22, 18))],
+            }),
+            library: testLibrary(),
+            unitService: UnitService.forTesting(),
+            language: testLanguage(),
+            clock: () => DateTime(2026, 9, 23, 10),
+          ),
+          locale: const Locale('es'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sentadilla trasera'), findsOneWidget);
+      expect(find.text('Ayer'), findsOneWidget);
+      expect(find.text('112,5 kg'), findsOneWidget);
+      expect(find.text('Aún no hay registros'), findsWidgets);
+      expect(find.byTooltip('Ajustes'), findsOneWidget);
+    });
+
+    testWidgets('first-lift hint', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          HomeScreen(
+            records: RecordsRepository(StorageService.inMemoryForTesting()),
+            library: testLibrary(),
+            unitService: UnitService.forTesting(),
+            language: testLanguage(),
+          ),
+          locale: const Locale('es'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('APUNTA TU PRIMERA SERIE'), findsOneWidget);
+    });
   });
 }

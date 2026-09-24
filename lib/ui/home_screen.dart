@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../data/default_exercises.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/localized_names.dart';
 import '../models/weight_unit.dart';
 import '../repositories/exercise_library.dart';
+import '../repositories/language_repository.dart';
 import '../repositories/records_repository.dart';
 import '../services/unit_service.dart';
 import '../utils/dates.dart';
@@ -19,12 +22,14 @@ class HomeScreen extends StatefulWidget {
     required this.records,
     required this.library,
     required this.unitService,
+    required this.language,
     this.clock = DateTime.now,
   });
 
   final RecordsRepository records;
   final ExerciseLibrary library;
   final UnitService unitService;
+  final LanguageRepository language;
   final DateTime Function() clock;
 
   @override
@@ -48,8 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openSettings() async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (context) =>
-            SettingsScreen(unitService: widget.unitService, currentUnit: _unit),
+        builder: (context) => SettingsScreen(
+          unitService: widget.unitService,
+          currentUnit: _unit,
+          language: widget.language,
+        ),
       ),
     );
     _loadUnit();
@@ -78,13 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('1RM'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_rounded),
-            tooltip: 'Settings',
+            tooltip: l10n.settings,
             onPressed: _openSettings,
           ),
         ],
@@ -125,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   key: const Key('manage-exercises-button'),
                   onPressed: _openLibrary,
                   icon: const Icon(Icons.tune_rounded, size: 20),
-                  label: const Text('Manage exercises'),
+                  label: Text(l10n.manageExercises),
                 ),
               ),
             ],
@@ -144,7 +153,7 @@ class _AllHiddenHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
       child: Text(
-        'All exercises are hidden.',
+        AppLocalizations.of(context).allExercisesHidden,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodyLarge,
       ),
@@ -158,6 +167,7 @@ class _FirstLiftHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: KnurlPanel(
@@ -171,12 +181,9 @@ class _FirstLiftHint extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('LOG YOUR FIRST LIFT', style: text.labelMedium),
+                  Text(l10n.firstLiftTitle, style: text.labelMedium),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Pick an exercise and enter a set you did — any weight, any reps.',
-                    style: text.bodyMedium,
-                  ),
+                  Text(l10n.firstLiftBody, style: text.bodyMedium),
                 ],
               ),
             ),
@@ -207,6 +214,7 @@ class _ExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final best = records.bestOneRMFor(template.id);
     final latest = records.latestFor(template.id);
     final hasData = best != null;
@@ -248,7 +256,7 @@ class _ExerciseCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        template.name,
+                        l10n.exerciseName(template),
                         style: text.titleMedium,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -256,8 +264,8 @@ class _ExerciseCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         latest == null
-                            ? 'No records yet'
-                            : formatRelativeDate(latest.date, now),
+                            ? l10n.noRecordsYet
+                            : formatRelativeDate(latest.date, now, l10n),
                         style: text.bodySmall,
                       ),
                     ],
@@ -275,7 +283,7 @@ class _ExerciseCard extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerRight,
                             child: Text(
-                              formatWeight(best, unit),
+                              formatWeight(best, unit, locale: l10n.localeName),
                               style: text.displaySmall?.copyWith(
                                 color: AppColors.accent,
                               ),

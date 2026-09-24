@@ -146,29 +146,73 @@ void main() {
   });
   group('formatWeight', () {
     test('formats kg with 1 decimal by default', () {
-      expect(formatWeight(100.0, WeightUnit.kg), '100.0 kg');
+      expect(formatWeight(100.0, WeightUnit.kg, locale: 'en'), '100.0 kg');
     });
 
     test('formats lbs with 1 decimal by default', () {
-      expect(formatWeight(100.0, WeightUnit.lbs), '220.5 lbs');
+      expect(formatWeight(100.0, WeightUnit.lbs, locale: 'en'), '220.5 lbs');
     });
 
     test('formats kg with 0 decimals', () {
-      expect(formatWeight(100.0, WeightUnit.kg, 0), '100 kg');
+      expect(
+        formatWeight(100.0, WeightUnit.kg, locale: 'en', decimals: 0),
+        '100 kg',
+      );
     });
 
     test('formats lbs with 0 decimals', () {
-      expect(formatWeight(100.0, WeightUnit.lbs, 0), '220 lbs');
+      expect(
+        formatWeight(100.0, WeightUnit.lbs, locale: 'en', decimals: 0),
+        '220 lbs',
+      );
     });
 
     test('formats decimal kg correctly', () {
-      expect(formatWeight(112.5, WeightUnit.kg), '112.5 kg');
+      expect(formatWeight(112.5, WeightUnit.kg, locale: 'en'), '112.5 kg');
     });
 
     test('formats decimal kg to lbs correctly', () {
-      expect(formatWeight(112.5, WeightUnit.lbs), '248.0 lbs');
+      expect(formatWeight(112.5, WeightUnit.lbs, locale: 'en'), '248.0 lbs');
+    });
+
+    test('uses a decimal comma in Spanish', () {
+      expect(formatWeight(112.5, WeightUnit.kg, locale: 'es'), '112,5 kg');
+      expect(formatWeight(100.0, WeightUnit.lbs, locale: 'es'), '220,5 lbs');
+    });
+
+    test('groups thousands the way each language does', () {
+      expect(formatWeight(1000, WeightUnit.kg, locale: 'en'), '1,000.0 kg');
+      expect(formatWeight(1000, WeightUnit.kg, locale: 'es'), '1.000,0 kg');
+      expect(
+        formatWeight(1000, WeightUnit.lbs, locale: 'es', decimals: 0),
+        '2.205 lbs',
+      );
+    });
+
+    test('negative gains and zero keep their sign and decimals', () {
+      expect(formatWeight(0, WeightUnit.kg, locale: 'es'), '0,0 kg');
+      expect(formatWeight(-2.5, WeightUnit.kg, locale: 'en'), '-2.5 kg');
     });
   });
+
+  group('formatNumber', () {
+    test('0 decimals by default', () {
+      expect(formatNumber(225, locale: 'en'), '225');
+      expect(formatNumber(224.6, locale: 'es'), '225');
+    });
+
+    test('pads to the requested decimals', () {
+      expect(formatNumber(112.5, locale: 'en', decimals: 1), '112.5');
+      expect(formatNumber(112.5, locale: 'es', decimals: 1), '112,5');
+      expect(formatNumber(100, locale: 'es', decimals: 2), '100,00');
+    });
+
+    test('a region-specific locale formats like its language', () {
+      expect(formatNumber(112.5, locale: 'es_MX', decimals: 1), '112.5');
+      expect(formatNumber(112.5, locale: 'es_ES', decimals: 1), '112,5');
+    });
+  });
+
   group('generatePercentageTable with unit', () {
     test('uses kg rounding increment by default', () {
       final table = generatePercentageTable(100);
@@ -295,9 +339,19 @@ void main() {
 
   group('formatUnitValue', () {
     test('formats without converting, 0 decimals by default', () {
-      expect(formatUnitValue(220, WeightUnit.lbs), '220 lbs');
-      expect(formatUnitValue(117, WeightUnit.kg), '117 kg');
-      expect(formatUnitValue(117.25, WeightUnit.kg, 1), '117.3 kg');
+      expect(formatUnitValue(220, WeightUnit.lbs, locale: 'en'), '220 lbs');
+      expect(formatUnitValue(117, WeightUnit.kg, locale: 'en'), '117 kg');
+      expect(
+        formatUnitValue(117.25, WeightUnit.kg, locale: 'en', decimals: 1),
+        '117.3 kg',
+      );
+    });
+
+    test('uses the separators of the locale', () {
+      expect(
+        formatUnitValue(117.25, WeightUnit.kg, locale: 'es', decimals: 1),
+        '117,3 kg',
+      );
     });
   });
 }

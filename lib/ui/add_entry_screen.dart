@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../l10n/app_localizations.dart';
 import '../models/exercise.dart';
 import '../models/weight_unit.dart';
 import '../utils/dates.dart';
@@ -115,26 +116,35 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
   }
 
   String? _validateWeight(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Required';
+    final l10n = AppLocalizations.of(context);
+    if (value == null || value.trim().isEmpty) return l10n.required;
     final v = tryParseWeight(value.trim());
-    if (v == null || v <= 0) return 'Invalid';
+    if (v == null || v <= 0) return l10n.invalid;
     if (v > widget.unit.maxWeight) {
-      return 'Max ${widget.unit.maxWeight.toStringAsFixed(0)} ${widget.unit.displayName}';
+      return l10n.maxWeight(
+        formatUnitValue(
+          widget.unit.maxWeight,
+          widget.unit,
+          locale: l10n.localeName,
+        ),
+      );
     }
     return null;
   }
 
   String? _validateReps(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Required';
+    final l10n = AppLocalizations.of(context);
+    if (value == null || value.trim().isEmpty) return l10n.required;
     final v = int.tryParse(value.trim());
-    if (v == null || v <= 0) return 'Invalid';
-    if (v > maxReps) return 'Max $maxReps reps';
+    if (v == null || v <= 0) return l10n.invalid;
+    if (v > maxReps) return l10n.maxReps(maxReps);
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final inputStyle = text.headlineMedium?.copyWith(fontSize: 30);
     final estimate = estimateOneRMFromInput(
       _weightController.text,
@@ -148,7 +158,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
-          tooltip: 'Close',
+          tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
@@ -178,7 +188,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isEditing ? 'EDIT ENTRY' : 'ENTER YOUR LIFT',
+                _isEditing ? l10n.editEntry : l10n.enterYourLift,
                 style: text.labelMedium,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -189,10 +199,14 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                     child: TextFormField(
                       controller: _weightController,
                       decoration: InputDecoration(
-                        labelText: 'Weight',
+                        labelText: l10n.weight,
                         hintText: widget.unit == WeightUnit.lbs
-                            ? '225'
-                            : '112.5',
+                            ? formatNumber(225, locale: l10n.localeName)
+                            : formatNumber(
+                                112.5,
+                                locale: l10n.localeName,
+                                decimals: 1,
+                              ),
                         suffixText: widget.unit.displayName,
                       ),
                       style: inputStyle,
@@ -210,8 +224,8 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                     child: TextFormField(
                       controller: _repsController,
                       focusNode: _repsFocus,
-                      decoration: const InputDecoration(
-                        labelText: 'Reps',
+                      decoration: InputDecoration(
+                        labelText: l10n.repsLabel,
                         hintText: '5',
                       ),
                       style: inputStyle,
@@ -226,7 +240,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               _DateField(
-                label: formatRelativeDate(_date, widget.clock()),
+                label: formatRelativeDate(_date, widget.clock(), l10n),
                 date: _date,
                 onTap: _pickDate,
               ),
@@ -246,7 +260,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Estimates are less accurate above $accurateRepsLimit reps.',
+                        l10n.highRepsWarning(accurateRepsLimit),
                         style: text.bodySmall,
                       ),
                     ),
@@ -271,7 +285,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
           child: ElevatedButton(
             key: const Key('save-entry-button'),
             onPressed: _save,
-            child: Text(_isEditing ? 'Save changes' : 'Save'),
+            child: Text(_isEditing ? l10n.saveChanges : l10n.save),
           ),
         ),
       ),
@@ -358,6 +372,7 @@ class _EstimatePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return KnurlPanel(
       key: const Key('estimate-panel'),
       borderColor: estimate == null ? AppColors.outline : AppColors.accent,
@@ -366,13 +381,15 @@ class _EstimatePanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ESTIMATED 1RM', style: text.labelMedium),
+            Text(l10n.estimatedOneRm, style: text.labelMedium),
             const SizedBox(height: AppSpacing.sm),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                estimate == null ? '—' : formatWeight(estimate!, unit),
+                estimate == null
+                    ? '—'
+                    : formatWeight(estimate!, unit, locale: l10n.localeName),
                 key: const Key('estimate-value'),
                 style: text.displayLarge?.copyWith(
                   fontSize: 56,

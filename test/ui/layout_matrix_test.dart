@@ -1,11 +1,14 @@
-// Every screen, in every relevant state, on every supported screen size and
-// system text size. A RenderFlex overflow or any layout exception fails the
-// test, including in content that is only reached by scrolling.
+// Every screen, in every relevant state, on every supported screen size,
+// system text size and language. A RenderFlex overflow or any layout
+// exception fails the test, including in content that is only reached by
+// scrolling.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:one_rm_mobile/data/default_exercises.dart';
+import 'package:one_rm_mobile/l10n/app_localizations.dart';
+import 'package:one_rm_mobile/l10n/localized_names.dart';
 import 'package:one_rm_mobile/models/exercise.dart';
 import 'package:one_rm_mobile/models/weight_unit.dart';
 import 'package:one_rm_mobile/repositories/exercise_library.dart';
@@ -26,7 +29,9 @@ import 'package:one_rm_mobile/utils/formulas.dart';
 import '../helpers/devices.dart';
 import '../helpers/test_app.dart';
 
-typedef _Scenario = Future<void> Function(WidgetTester, TestDevice);
+typedef _Target = ({TestDevice device, Locale locale});
+
+typedef _Scenario = Future<void> Function(WidgetTester, _Target);
 
 final _now = DateTime.now();
 
@@ -38,10 +43,21 @@ final _longCustom = CustomExerciseData(
 
 final _squat = defaultExercises.firstWhere((e) => e.id == 'back_squat');
 
-/// The longest built-in name.
+/// The longest built-in name in English.
 final _sdhp = defaultExercises.firstWhere(
   (e) => e.id == 'sumo_deadlift_high_pull',
 );
+
+/// The longest built-in name in Spanish.
+final _closeGrip = defaultExercises.firstWhere(
+  (e) => e.id == 'close_grip_bench_press',
+);
+
+String _longestName(Locale locale) {
+  final l10n = lookupAppLocalizations(locale);
+  final names = [l10n.exerciseName(_sdhp), l10n.exerciseName(_closeGrip)];
+  return names.reduce((a, b) => a.length >= b.length ? a : b);
+}
 
 ExerciseRecord _record(double weight, int reps, int daysAgo) => ExerciseRecord(
   weight: weight,
@@ -58,11 +74,12 @@ Map<String, List<ExerciseRecord>> _sampleRecords() => {
     _record(180, 1, 1),
   ],
   _sdhp.id: [_record(WeightUnit.kg.maxWeight, maxReps, 3)],
+  _closeGrip.id: [_record(WeightUnit.kg.maxWeight, maxReps, 2)],
   _longCustom.id: [_record(60, 8, 0)],
 };
 
 ExerciseLibrary _library({Set<String> hidden = const {}}) {
-  final shown = {_sdhp.id};
+  final shown = {_sdhp.id, _closeGrip.id};
   return ExerciseLibrary(
     ExerciseLibraryService.forTesting(
       custom: [_longCustom],
@@ -78,17 +95,19 @@ ExerciseLibrary _library({Set<String> hidden = const {}}) {
 RecordsRepository _records([Map<String, List<ExerciseRecord>>? data]) =>
     RecordsRepository(StorageService.inMemoryForTesting(), data ?? {});
 
-Future<void> _pump(WidgetTester tester, TestDevice device, Widget home) async {
-  await tester.pumpWidget(buildTestApp(home, platform: device.platform));
+Future<void> _pump(WidgetTester tester, _Target target, Widget home) async {
+  await tester.pumpWidget(
+    buildTestApp(home, platform: target.device.platform, locale: target.locale),
+  );
   await tester.pumpAndSettle();
 }
 
 Future<void> _onboardingPage(
   WidgetTester tester,
-  TestDevice device,
+  _Target target,
   int page,
 ) async {
-  await _pump(tester, device, OnboardingScreen(onComplete: (_) {}));
+  await _pump(tester, target, OnboardingScreen(onComplete: (_) {}));
   for (var i = 0; i < page; i++) {
     await tester.tap(find.byKey(const Key('onboarding-next-button')));
     await tester.pumpAndSettle();
@@ -101,8 +120,8 @@ Widget _detail(Map<String, List<ExerciseRecord>> data) => ExerciseDetailScreen(
   unit: WeightUnit.lbs,
 );
 
-Widget _addEntry({ExerciseRecord? initial}) => AddEntryScreen(
-  exerciseName: _sdhp.name,
+Widget _addEntry(Locale locale, {ExerciseRecord? initial}) => AddEntryScreen(
+  exerciseName: _longestName(locale),
   assetPath: _sdhp.assetPath,
   unit: WeightUnit.lbs,
   initial: initial,
@@ -118,6 +137,7 @@ final Map<String, _Scenario> _scenarios = {
       records: _records(_sampleRecords()),
       library: _library(),
       unitService: UnitService.forTesting(unit: WeightUnit.lbs),
+      language: testLanguage(),
     ),
   ),
   'home empty': (t, d) => _pump(
@@ -127,6 +147,7 @@ final Map<String, _Scenario> _scenarios = {
       records: _records(),
       library: testLibrary(),
       unitService: UnitService.forTesting(),
+      language: testLanguage(),
     ),
   ),
   'home with everything hidden': (t, d) => _pump(
@@ -136,38 +157,40 @@ final Map<String, _Scenario> _scenarios = {
       records: _records(),
       library: testLibrary(hidden: {for (final e in defaultExercises) e.id}),
       unitService: UnitService.forTesting(),
+      language: testLanguage(),
     ),
   ),
   'detail with records': (t, d) => _pump(t, d, _detail(_sampleRecords())),
   'detail reps table': (t, d) async {
     await _pump(t, d, _detail(_sampleRecords()));
     await t.scrollUntilVisible(
-      find.byKey(const Key('table-REPS')),
+      find.byKey(const Key('table-reps')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await t.tap(find.byKey(const Key('table-REPS')));
+    await t.tap(find.byKey(const Key('table-reps')));
     await t.pumpAndSettle();
   },
   'detail empty': (t, d) => _pump(t, d, _detail({})),
-  'add entry empty': (t, d) => _pump(t, d, _addEntry()),
+  'add entry empty': (t, d) => _pump(t, d, _addEntry(d.locale)),
   'add entry at the limits with the keyboard open': (t, d) async {
-    await _pump(t, d, _addEntry());
+    await _pump(t, d, _addEntry(d.locale));
     final fields = find.byType(TextFormField);
     await t.enterText(fields.at(0), '${WeightUnit.lbs.maxWeight}');
     await t.enterText(fields.at(1), '$maxReps');
-    d.showKeyboard(t);
+    d.device.showKeyboard(t);
     await t.pumpAndSettle();
     expect(find.byKey(const Key('high-reps-warning')), findsOneWidget);
   },
-  'edit entry': (t, d) => _pump(t, d, _addEntry(initial: _record(140, 3, 20))),
+  'edit entry': (t, d) =>
+      _pump(t, d, _addEntry(d.locale, initial: _record(140, 3, 20))),
   'history': (t, d) => _pump(
     t,
     d,
     HistoryScreen(
-      template: _sdhp,
+      template: _closeGrip,
       records: _records({
-        _sdhp.id: [
+        _closeGrip.id: [
           ..._sampleRecords()[_squat.id]!,
           ..._sampleRecords()[_sdhp.id]!,
         ],
@@ -198,6 +221,7 @@ final Map<String, _Scenario> _scenarios = {
     SettingsScreen(
       unitService: UnitService.forTesting(),
       currentUnit: WeightUnit.kg,
+      language: testLanguage(),
     ),
   ),
   'PR celebration': (t, d) async {
@@ -209,7 +233,7 @@ final Map<String, _Scenario> _scenarios = {
           builder: (context) => TextButton(
             onPressed: () => showPrCelebration(
               context,
-              exerciseName: _sdhp.name,
+              exerciseName: _longestName(d.locale),
               oneRM: calculateOneRM(WeightUnit.kg.maxWeight, maxReps),
               previousBest: 100,
               unit: WeightUnit.lbs,
@@ -252,20 +276,22 @@ Future<void> _scrollThroughEverything(WidgetTester tester) async {
 }
 
 void main() {
-  for (final device in testDevices) {
-    for (final scale in testTextScales) {
-      group('$device · text ${(scale * 100).round()} %', () {
-        _scenarios.forEach((name, scenario) {
-          testWidgets(name, (tester) async {
-            device.apply(tester, textScale: scale);
-            await scenario(tester, device);
-            await _scrollThroughEverything(tester);
-            // Let timed UI (the PR celebration) finish before tear-down.
-            await tester.pump(kPrCelebrationDuration);
-            await tester.pumpAndSettle();
+  for (final locale in AppLocalizations.supportedLocales) {
+    for (final device in testDevices) {
+      for (final scale in testTextScales) {
+        group('$locale · $device · text ${(scale * 100).round()} %', () {
+          _scenarios.forEach((name, scenario) {
+            testWidgets(name, (tester) async {
+              device.apply(tester, textScale: scale);
+              await scenario(tester, (device: device, locale: locale));
+              await _scrollThroughEverything(tester);
+              // Let timed UI (the PR celebration) finish before tear-down.
+              await tester.pump(kPrCelebrationDuration);
+              await tester.pumpAndSettle();
+            });
           });
         });
-      });
+      }
     }
   }
 }

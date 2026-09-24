@@ -128,11 +128,11 @@ void main() {
       final aug = tester.getTopLeft(find.text('AUGUST 2026')).dy;
       expect(sep, lessThan(aug));
       expect(
-        tester.getTopLeft(find.text('110.0 kg × 1 reps')).dy,
-        lessThan(tester.getTopLeft(find.text('105.0 kg × 1 reps')).dy),
+        tester.getTopLeft(find.text('110.0 kg × 1 rep')).dy,
+        lessThan(tester.getTopLeft(find.text('105.0 kg × 1 rep')).dy),
       );
       expect(
-        tester.getTopLeft(find.text('105.0 kg × 1 reps')).dy,
+        tester.getTopLeft(find.text('105.0 kg × 1 rep')).dy,
         lessThan(aug),
       );
     });
@@ -155,7 +155,7 @@ void main() {
       final original = record(100, DateTime(2026, 9, 20));
       final repo = await pump(tester, [original]);
 
-      await tester.tap(find.text('100.0 kg × 1 reps'));
+      await tester.tap(find.text('100.0 kg × 1 rep'));
       await tester.pumpAndSettle();
       expect(find.text('EDIT ENTRY'), findsOneWidget);
 
@@ -166,7 +166,7 @@ void main() {
       final updated = repo.recordsFor(defaultExercises.first.id).single;
       expect(updated.weight, 102.5);
       expect(updated.date, original.date);
-      expect(find.text('102.5 kg × 1 reps'), findsOneWidget);
+      expect(find.text('102.5 kg × 1 rep'), findsOneWidget);
     });
 
     testWidgets('closing the editor leaves the entry untouched', (
@@ -175,7 +175,7 @@ void main() {
       final original = record(100, DateTime(2026, 9, 20));
       final repo = await pump(tester, [original]);
 
-      await tester.tap(find.text('100.0 kg × 1 reps'));
+      await tester.tap(find.text('100.0 kg × 1 rep'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
@@ -187,7 +187,7 @@ void main() {
       final original = record(100, DateTime(2026, 9, 20));
       final repo = await pump(tester, [original]);
 
-      await tester.drag(find.text('100.0 kg × 1 reps'), const Offset(-600, 0));
+      await tester.drag(find.text('100.0 kg × 1 rep'), const Offset(-600, 0));
       await tester.pumpAndSettle();
 
       expect(repo.recordsFor(defaultExercises.first.id), isEmpty);
@@ -201,10 +201,65 @@ void main() {
     testWidgets('swiping right does nothing', (tester) async {
       final repo = await pump(tester, [record(100, DateTime(2026, 9, 20))]);
 
-      await tester.drag(find.text('100.0 kg × 1 reps'), const Offset(600, 0));
+      await tester.drag(find.text('100.0 kg × 1 rep'), const Offset(600, 0));
       await tester.pumpAndSettle();
 
       expect(repo.recordsFor(defaultExercises.first.id), hasLength(1));
+    });
+  });
+  group('HistoryScreen in Spanish', () {
+    final now = DateTime(2026, 9, 23, 10);
+
+    Future<void> pump(WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          HistoryScreen(
+            template: defaultExercises.first,
+            records: RecordsRepository(StorageService.inMemoryForTesting(), {
+              defaultExercises.first.id: [
+                ExerciseRecord(
+                  weight: 100,
+                  reps: 1,
+                  oneRM: 100,
+                  date: DateTime(2026, 9, 21),
+                ),
+                ExerciseRecord(
+                  weight: 102.5,
+                  reps: 3,
+                  oneRM: 112.75,
+                  date: DateTime(2026, 8, 10),
+                ),
+              ],
+            }),
+            unit: WeightUnit.kg,
+            clock: () => now,
+          ),
+          locale: const Locale('es'),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('title, sets, months and dates', (tester) async {
+      await pump(tester);
+
+      expect(find.text('Historial de Sentadilla trasera'), findsOneWidget);
+      expect(find.text('100,0 kg × 1 rep'), findsOneWidget);
+      expect(find.text('102,5 kg × 3 reps'), findsOneWidget);
+      expect(find.text('1RM: 112,8 kg'), findsOneWidget);
+      expect(find.text('SEPTIEMBRE DE 2026'), findsOneWidget);
+      expect(find.text('Hace 2 días'), findsOneWidget);
+      expect(find.byTooltip('Eliminar'), findsNWidgets(2));
+    });
+
+    testWidgets('deleting offers Deshacer', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byTooltip('Eliminar').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Borrado: 100,0 kg × 1 rep'), findsOneWidget);
+      expect(find.text('Deshacer'), findsOneWidget);
     });
   });
 }

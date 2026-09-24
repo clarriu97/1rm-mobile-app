@@ -11,9 +11,13 @@ import 'package:one_rm_mobile/ui/manage_exercises_screen.dart';
 
 import '../helpers/test_app.dart';
 
-Future<void> _pumpManage(WidgetTester tester, ExerciseLibrary library) async {
+Future<void> _pumpManage(
+  WidgetTester tester,
+  ExerciseLibrary library, {
+  Locale? locale,
+}) async {
   await tester.pumpWidget(
-    buildTestApp(ManageExercisesScreen(library: library)),
+    buildTestApp(ManageExercisesScreen(library: library), locale: locale),
   );
   await tester.pumpAndSettle();
 }
@@ -165,6 +169,63 @@ void main() {
       expect(find.text('That exercise already exists'), findsNothing);
     });
 
+    testWidgets('in Spanish, lists translated names and families', (
+      tester,
+    ) async {
+      await _pumpManage(tester, testLibrary(), locale: const Locale('es'));
+
+      expect(find.text('Ejercicios'), findsOneWidget);
+      expect(find.text('Sentadilla trasera'), findsOneWidget);
+      expect(find.text('SENTADILLA'), findsOneWidget);
+      expect(find.text('10 de 34 en Inicio'), findsOneWidget);
+    });
+
+    testWidgets('in Spanish, search matches both the Spanish and the '
+        'English name', (tester) async {
+      await _pumpManage(tester, testLibrary(), locale: const Locale('es'));
+
+      await tester.enterText(
+        find.byKey(const Key('exercise-search')),
+        'muerto',
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('toggle-deadlift')), findsOneWidget);
+      expect(find.byKey(const Key('toggle-romanian_deadlift')), findsOneWidget);
+      expect(find.byKey(const Key('toggle-back_squat')), findsNothing);
+
+      await tester.enterText(find.byKey(const Key('exercise-search')), 'squat');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('toggle-back_squat')), findsOneWidget);
+      expect(find.text('Sentadilla trasera'), findsOneWidget);
+    });
+
+    testWidgets('in Spanish, no matches quotes the search', (tester) async {
+      await _pumpManage(tester, testLibrary(), locale: const Locale('es'));
+
+      await tester.enterText(find.byKey(const Key('exercise-search')), 'zzz');
+      await tester.pumpAndSettle();
+      expect(find.text('Ningún ejercicio coincide con «zzz».'), findsOneWidget);
+    });
+
+    testWidgets('in Spanish, a translated or English name is a duplicate', (
+      tester,
+    ) async {
+      final library = testLibrary();
+      await _pumpManage(tester, library, locale: const Locale('es'));
+
+      await _openDialogAndType(tester, 'peso muerto');
+      expect(find.text('Ese ejercicio ya existe'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('new-exercise-name')),
+        'Deadlift',
+      );
+      await tester.tap(find.byKey(const Key('create-exercise-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Ese ejercicio ya existe'), findsOneWidget);
+      expect(library.all, hasLength(defaultExercises.length));
+    });
+
     testWidgets('cancel creates nothing', (tester) async {
       final library = testLibrary();
       await _pumpManage(tester, library);
@@ -199,6 +260,7 @@ void main() {
             records: RecordsRepository(StorageService.inMemoryForTesting()),
             library: library,
             unitService: UnitService.forTesting(),
+            language: testLanguage(),
           ),
         ),
       );

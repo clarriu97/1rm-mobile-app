@@ -160,7 +160,7 @@ void main() {
       await pumpHistory(tester, records);
       await tester.tap(find.byTooltip('Delete'));
       await tester.pumpAndSettle();
-      expect(find.text('Deleted 100.0 kg × 5'), findsOneWidget);
+      expect(find.text('Deleted 100.0 kg × 5 reps'), findsOneWidget);
 
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
@@ -183,6 +183,7 @@ void main() {
             records: records,
             library: testLibrary(),
             unitService: UnitService.forTesting(),
+            language: testLanguage(),
           ),
         ),
       );
@@ -208,6 +209,7 @@ void main() {
             records: records,
             library: testLibrary(),
             unitService: UnitService.forTesting(),
+            language: testLanguage(),
           ),
         ),
       );

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/weight_unit.dart';
 import '../../utils/formulas.dart';
 import '../theme/app_theme.dart';
@@ -23,7 +24,7 @@ Future<void> showPrCelebration(
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Dismiss',
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: AppColors.background.withValues(alpha: 0.85),
     transitionDuration: reduceMotion
         ? Duration.zero
@@ -93,12 +94,16 @@ class _PrCelebrationState extends State<PrCelebration> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final gain = widget.oneRM - widget.previousBest;
+    final oneRM = formatWeight(
+      widget.oneRM,
+      widget.unit,
+      locale: l10n.localeName,
+    );
     return Semantics(
       liveRegion: true,
-      label:
-          'New personal record: ${widget.exerciseName}, '
-          '${formatWeight(widget.oneRM, widget.unit)}',
+      label: l10n.newPrSemantics(widget.exerciseName, oneRM),
       child: GestureDetector(
         onTap: _close,
         behavior: HitTestBehavior.opaque,
@@ -127,7 +132,7 @@ class _PrCelebrationState extends State<PrCelebration> {
                             ),
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              'NEW PR',
+                              l10n.newPr,
                               style: text.displayMedium?.copyWith(
                                 color: AppColors.accent,
                               ),
@@ -141,7 +146,7 @@ class _PrCelebrationState extends State<PrCelebration> {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                formatWeight(widget.oneRM, widget.unit),
+                                oneRM,
                                 style: text.displayLarge?.copyWith(
                                   fontSize: 64,
                                 ),
@@ -149,7 +154,13 @@ class _PrCelebrationState extends State<PrCelebration> {
                             ),
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              '+${formatWeight(gain, widget.unit)} over your previous best',
+                              l10n.prGain(
+                                formatWeight(
+                                  gain,
+                                  widget.unit,
+                                  locale: l10n.localeName,
+                                ),
+                              ),
                               key: const Key('pr-gain'),
                               textAlign: TextAlign.center,
                               style: text.bodyMedium,

@@ -1,0 +1,1 @@
+Primera versión de 1RM: estima tu repetición máxima a partir de cualquier serie, pesos de trabajo por porcentaje y repeticiones, gráfica de progreso, PR, historial editable y 34 ejercicios más los tuyos.

@@ -1,0 +1,1 @@
+strength,powerlifting,weightlifting,barbell,gym,lifting,tracker,log,percentage,squat,bench,deadlift

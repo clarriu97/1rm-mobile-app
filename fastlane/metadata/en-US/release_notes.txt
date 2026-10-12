@@ -1,0 +1,1 @@
+First version of 1RM: estimate your one-rep max from any set, working weights by percentage and reps, a progress chart, PRs, an editable history and 34 lifts plus your own.

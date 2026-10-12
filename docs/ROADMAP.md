@@ -38,11 +38,25 @@ Android (phones; Android tablets must not break). Owner: Carlos Larriu
 
 **Next step:** Fase 2 · Publicación. It starts with the owner's accounts
 (Apple Developer Program, Google Play Console) and the Android upload
-keystore (docs/RELEASING.md); then TestFlight/Play internal testing, real
-devices (#45), store screenshots and listing. Work one issue per
+keystore (docs/RELEASING.md); then TestFlight/Play internal testing and real
+devices (#45). The store listings are ready in `fastlane/`. Work one issue per
 branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
+
+- **2026-10-12 · Store listings.** Texts, screenshots, the Play feature
+  graphic and icon live in `fastlane/` in the layout of `deliver` and
+  `supply`, so a release job can upload them; fastlane itself is not a
+  dependency yet. English (`en-US`) is the default listing, Spanish
+  (`es-ES`) a translation. Store name «1RM – One Rep Max Calculator» /
+  «1RM – Repetición máxima»; the app keeps «1RM» on the home screen. Six
+  screenshots tell the story (estimate, working weights, progress, PR,
+  library, privacy), each the app's real screen under a headline, rendered
+  by `test/goldens/store_test.dart` as goldens and converted by
+  `tool/store_images.sh` to JPEG, because both stores reject an alpha
+  channel and Flutter goldens always have one. A test checks every store
+  length limit and the keyword format. How to regenerate:
+  `fastlane/README.md`.
 
 - **2026-09-24 · Release builds in the merge gate (#19).** Measured on GitHub:
   the Android app bundle takes 4.0 min even with caches (Gradle, Flutter
@@ -143,4 +157,5 @@ branch and PR, following AGENTS.md → Workflow.
 | Contact address | `info.1rm@larri.dev` |
 | App ids | bundle id / applicationId `dev.larri.onerm`, display name "1RM" |
 | CI | `.github/workflows/`: `flutter.yml` (PR checks), `e2e.yml` (main, nightly, releases), `release.yml` (`v*` tags) |
+| Store listings | `fastlane/` (texts, screenshots, feature graphic, Play icon; `fastlane/README.md`), images from `test/goldens/store_test.dart` → `tool/store_images.sh`, limits checked by `test/platform/store_listing_test.dart` |
 | Branch protection | `main`: required `analyze`, `test`, `goldens`, `local-e2e`; up to date with main; linear history; applies to admins |

@@ -1,0 +1,29 @@
+1RM estima tu repetición máxima a partir de cualquier serie y la convierte en los pesos con los que entrenas. Pensada para el gimnasio: números grandes, una mano, entre series.
+
+TU MÁXIMO A PARTIR DE CUALQUIER SERIE
+Introduce el peso y las repeticiones que has hecho. 1RM usa la fórmula de Epley para estimar tu máximo mientras escribes, sin necesidad de probarlo. Por encima de 10 repeticiones te avisa de que la estimación es menos precisa.
+
+PESOS DE TRABAJO PARA CADA PORCENTAJE
+A partir de tu mejor 1RM, el peso para cada porcentaje del 100 % al 50 %, o lo que deberías mover de 1 a 10 repeticiones. Los pesos se redondean a discos que puedes cargar (1 kg o 5 lbs).
+
+SIGUE TU PROGRESO
+Una gráfica de tu 1RM estimado en los últimos 3 meses, el último año o todo el historial, con tus marcas personales señaladas. En Inicio ves de un vistazo tu mejor 1RM en cada ejercicio.
+
+CELEBRA CADA PR
+Supera tu mejor marca y 1RM te lo dice al momento, con cuánto has ganado.
+
+UN HISTORIAL QUE CONTROLAS
+Apunta series de días anteriores, edita cualquier registro y bórralo con opción de deshacer. Los registros se agrupan por mes y tus PR quedan marcados.
+
+34 EJERCICIOS, Y LOS TUYOS
+Sentadillas, peso muerto y bisagra, banca y fondos, press sobre cabeza, dominadas y remos, y variantes de clean & jerk y snatch. Elige qué ejercicios aparecen en Inicio, oculta el resto sin perder sus registros y crea, renombra o borra los tuyos.
+
+KG O LBS, ESPAÑOL O INGLÉS
+Elige tu unidad y tu idioma.
+
+PRIVADA POR DISEÑO
+Sin cuenta, sin anuncios, sin seguimiento. Todo lo que apuntas se queda en tu móvil y la app funciona sin conexión.
+
+Hecha para el gimnasio: interfaz oscura, números grandes y con buen contraste, y compatible con texto grande y lectores de pantalla.
+
+Dudas o ideas: info.1rm@larri.dev

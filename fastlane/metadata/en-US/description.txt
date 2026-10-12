@@ -1,0 +1,29 @@
+1RM estimates your one-rep max from any set you lift and turns it into the numbers you train with. Built for the gym floor: big numbers, one hand, between sets.
+
+YOUR MAX FROM ANY SET
+Enter the weight and the reps you did. 1RM uses the Epley formula to estimate your max as you type, so you don't have to test it. Above 10 reps it reminds you that the estimate is less accurate.
+
+WORKING WEIGHTS FOR EVERY PERCENTAGE
+From your best 1RM, see the weight for every percentage from 100% down to 50%, or what you should manage for 1 to 10 reps. Weights are rounded to plates you can actually load (1 kg or 5 lbs).
+
+SEE YOUR PROGRESS
+A chart of your estimated 1RM over the last 3 months, the last year or all time, with your personal records marked. Home shows your best 1RM for each lift at a glance.
+
+CELEBRATE EVERY PR
+Beat your best and 1RM tells you right away, with how much you gained.
+
+A HISTORY YOU CONTROL
+Log sets on past dates, edit any entry and delete with undo. Entries are grouped by month and your PRs are marked.
+
+34 LIFTS, PLUS YOUR OWN
+Squats, deadlifts and hinges, bench and dips, overhead, pulls and rows, and clean & jerk and snatch variations. Choose which lifts show on Home, hide the rest without losing their records, and create, rename or delete your own.
+
+KG OR LBS, ENGLISH OR SPANISH
+Pick your unit and your language.
+
+PRIVATE BY DESIGN
+No account, no ads, no tracking. Everything you log stays on your phone, and the app works without a connection.
+
+Made for the gym: a dark interface, large high-contrast numbers, and support for large text and screen readers.
+
+Questions or ideas: info.1rm@larri.dev

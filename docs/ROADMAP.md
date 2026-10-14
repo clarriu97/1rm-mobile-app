@@ -44,6 +44,16 @@ branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
 
+- **2026-10-14 · Uploads to Google Play from CI.** The workflow
+  **Google Play** (`play.yml`) builds the bundle signed with the upload key
+  (rebuilt from secrets), keeps the debug symbols as an artifact and uploads
+  the bundle and the store listing in `fastlane/` with fastlane, as the
+  service account `play-publisher` of the Google Cloud project
+  `larridev-play` (shared with Más Mus). The Release workflow runs it for
+  every tag, to the internal testing track; it can also be run by hand. The
+  upload key (`~/keys/1rm-upload-keystore.jks`) is backed up by the owner;
+  Play App Signing keeps the app signing key. Third-party actions in it are
+  pinned to commits.
 - **2026-10-14 · A smaller app (#66).** What an arm64 phone downloads
   (the arm64 APK, gzip -9) went from 9.68 MB to 8.94 MB (−0.74 MB, −7.6 %);
   the APK from 20.5 MB to 19.1 MB. The Flutter engine (5.5 MB of it) is

@@ -111,6 +111,7 @@ flutter test integration_test/app_test.dart -d <device-id>   # e2e flows on a si
 tool/ci.sh                         # exactly what the PR checks run (~1 min)
 tool/ci.sh all                     # + release builds + e2e on iPhone small/large and Android; reports `local-e2e` (merge gate)
 tool/ci.sh smoke-android-release   # launch the release (R8) build on an emulator: first run, storage, relaunch
+tool/subset_fonts.sh               # rewrite assets/fonts/ from tool/fonts/; fails if a text uses a character without a glyph
 flutter devices
 flutter run -d <device-id>         # iPhone (USB or Wi-Fi) or simulator; keep it running for hot reload
 ```

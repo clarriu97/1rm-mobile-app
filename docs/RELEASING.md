@@ -53,14 +53,18 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
    ```bash
    git tag v1.2.3 && git push origin v1.2.3
    ```
-4. The **Release** workflow must go green. If it doesn't, fix it in a pull
+4. The **Release** workflow must go green. Its last job uploads the signed
+   bundle and the store listing to Google Play's **internal testing** track
+   (workflow **Google Play**). If it doesn't go green, fix it in a pull
    request and release the next patch version; never move a published tag.
-5. Manual smoke test of the release build on a real iPhone (and Android when
+5. Promote the version in Play Console (closed testing, then production)
+   once it has been tried on the internal track.
+6. Manual smoke test of the release build on a real iPhone (and Android when
    available): fresh install, update over the previous version with data,
    Spanish and English, 200 % text size and bold text, and one pass over
    every screen with VoiceOver (and TalkBack): each card, number, chart and
    icon button is announced with a name that makes sense. Phase 2 (#45) adds
-   real devices on Firebase Test Lab and the store uploads to this workflow.
+   real devices on Firebase Test Lab.
 
 ## Debug symbols
 
@@ -87,26 +91,29 @@ Obfuscation renames classes and functions, so code must never depend on a
 type's name at run time (`runtimeType.toString()`, `Type.toString()`), for
 example in saved JSON or logs. Enum `.name` and string literals are safe.
 
-## Android release signing
+## Android release signing and the Play upload
 
-Release builds are signed with the upload key named in `android/key.properties`
-(git-ignored, like the keystore). Without that file they fall back to the debug
-key, which is fine for local and CI builds but rejected by Google Play. Set it
-up once, before the first Play upload (phase 2), and keep both files in a
-password manager backup:
+Release bundles are signed with the upload key; Google Play re-signs them
+with the app signing key it keeps (Play App Signing), so a lost upload key
+can be replaced by asking Play for a new one.
 
-```bash
-keytool -genkey -v -keystore ~/1rm-upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-`android/key.properties`:
-
-```properties
-storeFile=/Users/<you>/1rm-upload-keystore.jks
-storePassword=<password>
-keyAlias=upload
-keyPassword=<password>
-```
+- **Locally**: `android/key.properties` (git-ignored) points at
+  `~/keys/1rm-upload-keystore.jks` (PKCS12, alias `upload`, one password for
+  the store and the key). Without that file release builds fall back to the
+  debug key, fine for local and CI builds but refused by Google Play. The
+  keystore and its `key.properties` are backed up by the owner.
+- **In CI**: the **Google Play** workflow (`play.yml`) rebuilds the keystore
+  and `key.properties` from the secrets `ANDROID_UPLOAD_KEYSTORE_BASE64` and
+  `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, builds with `tool/ci.sh build-android`,
+  keeps the debug symbols as an artifact for 90 days and uploads the bundle
+  and the store listing in `fastlane/` with fastlane's
+  `upload_to_play_store`, authenticated by the service account
+  `play-publisher@larridev-play.iam.gserviceaccount.com` (secret
+  `PLAY_SERVICE_ACCOUNT_JSON`; Google Cloud project `larridev-play`). It can
+  also be run by hand from the Actions tab, choosing the track and whether
+  the release is a draft (required while the app has never been published).
+- Each upload needs a build number (`+N` in `pubspec.yaml`) higher than any
+  uploaded before.
 
 ## When the E2E run on main fails
 

@@ -25,27 +25,34 @@ void main() {
       'labelMedium': text.labelMedium,
       'labelSmall': text.labelSmall,
     };
+    const barlowWeights = [
+      FontWeight.w400,
+      FontWeight.w500,
+      FontWeight.w600,
+      FontWeight.w700,
+    ];
 
     for (final entry in displayStyles.entries) {
-      test('${entry.key} uses Big Shoulders with a matching wght axis', () {
+      test('${entry.key} uses Big Shoulders at its only bundled weight', () {
         final style = entry.value!;
         expect(style.fontFamily, AppTheme.displayFont);
-        expect(
-          style.fontVariations,
-          contains(FontVariation.weight(style.fontWeight!.value.toDouble())),
-        );
+        expect(style.fontWeight, FontWeight.w800);
       });
     }
 
     for (final entry in bodyStyles.entries) {
-      test('${entry.key} uses Barlow with tabular figures', () {
-        final style = entry.value!;
-        expect(style.fontFamily, AppTheme.bodyFont);
-        expect(
-          style.fontFeatures,
-          contains(const FontFeature.tabularFigures()),
-        );
-      });
+      test(
+        '${entry.key} uses Barlow at a bundled weight with tabular figures',
+        () {
+          final style = entry.value!;
+          expect(style.fontFamily, AppTheme.bodyFont);
+          expect(style.fontWeight, isIn(barlowWeights));
+          expect(
+            style.fontFeatures,
+            contains(const FontFeature.tabularFigures()),
+          );
+        },
+      );
     }
 
     test('hero number is the largest style', () {

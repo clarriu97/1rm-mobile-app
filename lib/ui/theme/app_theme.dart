@@ -24,7 +24,6 @@ class AppTheme {
   static const String displayFont = 'BigShoulders';
   static const String bodyFont = 'Barlow';
 
-  /// Big Shoulders is a variable font: the weight axis must be set explicitly.
   static TextStyle _display(
     double size,
     FontWeight weight, {
@@ -34,7 +33,6 @@ class AppTheme {
     fontFamily: displayFont,
     fontSize: size,
     fontWeight: weight,
-    fontVariations: [FontVariation.weight(weight.value.toDouble())],
     height: height,
     letterSpacing: letterSpacing,
     color: AppColors.textPrimary,

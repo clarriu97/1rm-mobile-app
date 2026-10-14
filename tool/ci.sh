@@ -31,6 +31,10 @@ E2E=integration_test/app_test.dart
 # Where `tool/ci.sh all` remembers the commits it passed on.
 STAMPS=.dart_tool/local-e2e
 
+# Release builds are obfuscated; the symbols to read their stack traces go
+# here (docs/RELEASING.md → Debug symbols).
+DEBUG_INFO=build/debug-info
+
 # Set by e2e_android: the API level it ran on.
 ANDROID_API=""
 
@@ -78,12 +82,12 @@ coverage_summary() {
 
 build_android() {
   step "release app bundle"
-  flutter build appbundle --release
+  flutter build appbundle --release --obfuscate --split-debug-info="$DEBUG_INFO/android"
 }
 
 build_ios() {
   step "release iOS build (no code signing)"
-  flutter build ios --release --no-codesign
+  flutter build ios --release --no-codesign --obfuscate --split-debug-info="$DEBUG_INFO/ios"
 }
 
 checks() {
@@ -339,7 +343,7 @@ smoke_android_release() {
     sleep 2
   done
   step "release smoke test on Android $device"
-  flutter build apk --release
+  flutter build apk --release --obfuscate --split-debug-info="$DEBUG_INFO/android"
   {
     adb -s "$device" install -r build/app/outputs/flutter-apk/app-release.apk >/dev/null &&
       adb -s "$device" shell pm clear "$app" >/dev/null &&

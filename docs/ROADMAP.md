@@ -44,6 +44,28 @@ branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
 
+- **2026-10-14 · A smaller app (#66).** What an arm64 phone downloads
+  (the arm64 APK, gzip -9) went from 9.68 MB to 8.94 MB (−0.74 MB, −7.6 %);
+  the APK from 20.5 MB to 19.1 MB. The Flutter engine (5.5 MB of it) is
+  fixed.
+  - **Debug symbols out of the code**: release builds are obfuscated and
+    split their debug info (`tool/ci.sh`), libapp.so 6.95 → 5.77 MB
+    (2.78 → 2.22 MB compressed). The symbols of each release must be kept
+    to read its stack traces (docs/RELEASING.md → Debug symbols). No code
+    reads type names at run time.
+  - **Fonts**: Big Shoulders Display, a variable font, is pinned to the only
+    weight the app uses (800); the four Barlow weights all stay. Each font is
+    subset to Latin, Latin-1, Latin Extended-A, General Punctuation and every
+    character of the ARB files and string literals, keeping the shaping
+    features plus `tnum` and the hinting. 644 → 266 KB (309 → 138 KB
+    compressed). `tool/subset_fonts.sh` rewrites them from the full fonts in
+    `tool/fonts/` with a pinned fonttools, and fails if a text uses a
+    character a font lacks: re-run it after adding one. Glyph shapes are the
+    same; the pinned instance rounds outlines and advances to whole units, so
+    goldens moved by antialiasing at the edges of display text only.
+  - **Dependencies**: every package in `pubspec.yaml` is used and every
+    asset is referenced; nothing to drop.
+
 - **2026-10-12 · Store listings.** Texts, screenshots, the Play feature
   graphic and icon live in `fastlane/` in the layout of `deliver` and
   `supply`, so a release job can upload them; fastlane itself is not a
@@ -153,6 +175,8 @@ branch and PR, following AGENTS.md → Workflow.
 | Testing gates, releasing | docs/RELEASING.md, `tool/ci.sh` |
 | Design references | `docs/design/*.jpg`, goldens in `test/goldens/goldens/` |
 | Icon and illustration generators | `tool/generate_icons.py`, `tool/generate_branding.py` |
+| Fonts | full fonts in `tool/fonts/`, subset into `assets/fonts/` by `tool/subset_fonts.sh` (re-run after adding a text with a new character) |
+| Release debug symbols | `build/debug-info/<platform>` (docs/RELEASING.md → Debug symbols) |
 | Landing page | repo `clarriu97/1rm-landing-page` (static Vite + Tailwind, deployed by Cloudflare on push to `main`), live at https://1rm.larri.dev |
 | Contact address | `info.1rm@larri.dev` |
 | App ids | bundle id / applicationId `dev.larri.onerm`, display name "1RM" |

@@ -39,7 +39,8 @@ flutter:
   fonts:
     - family: BigShoulders
       fonts:
-        - asset: assets/fonts/BigShouldersDisplay-Variable.ttf
+        - asset: assets/fonts/BigShouldersDisplay-ExtraBold.ttf
+          weight: 800
     - family: Barlow
       fonts:
         - asset: assets/fonts/Barlow-Regular.ttf

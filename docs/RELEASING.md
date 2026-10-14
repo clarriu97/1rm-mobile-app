@@ -62,6 +62,31 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
    icon button is announced with a name that makes sense. Phase 2 (#45) adds
    real devices on Firebase Test Lab and the store uploads to this workflow.
 
+## Debug symbols
+
+Release builds are obfuscated and leave their debug symbols out of the app
+(`--obfuscate --split-debug-info`, in `tool/ci.sh`): the code shipped is
+smaller, and a stack trace from it reads as `#00 abs 0000… virt 0000…` with
+made-up names instead of files and lines. The symbols are written to
+`build/debug-info/android` and `build/debug-info/ios` (git-ignored), one
+`app.<arch>.symbols` file per architecture, and only match the exact build
+that wrote them. **Keep the symbols of every release** next to its tag; the
+Release workflow will attach them as an artifact once it builds the store
+binaries (phase 2).
+
+To read a stack trace from a release build (from Play Console, Crashlytics,
+`adb logcat` or an iPhone crash log), save it to a file and symbolize it
+with the file of the device's architecture:
+
+```bash
+flutter symbolize -i trace.txt -d build/debug-info/android/app.android-arm64.symbols
+flutter symbolize -i trace.txt -d build/debug-info/ios/app.ios-arm64.symbols
+```
+
+Obfuscation renames classes and functions, so code must never depend on a
+type's name at run time (`runtimeType.toString()`, `Type.toString()`), for
+example in saved JSON or logs. Enum `.name` and string literals are safe.
+
 ## Android release signing
 
 Release builds are signed with the upload key named in `android/key.properties`

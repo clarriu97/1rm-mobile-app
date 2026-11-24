@@ -59,7 +59,10 @@ branch with `main` (required before merging), needs a new `tool/ci.sh all`.
    request and release the next patch version; never move a published tag.
 5. Promote the version in Play Console (closed testing, then production)
    once it has been tried on the internal track.
-6. Manual smoke test of the release build on a real iPhone (and Android when
+6. Upload the same version to TestFlight: Actions → **TestFlight** → Run
+   workflow, on the tag (see TestFlight below; not part of the Release
+   workflow yet).
+7. Manual smoke test of the release build on a real iPhone (and Android when
    available): fresh install, update over the previous version with data,
    Spanish and English, 200 % text size and bold text, and one pass over
    every screen with VoiceOver (and TalkBack): each card, number, chart and
@@ -74,9 +77,10 @@ smaller, and a stack trace from it reads as `#00 abs 0000… virt 0000…` with
 made-up names instead of files and lines. The symbols are written to
 `build/debug-info/android` and `build/debug-info/ios` (git-ignored), one
 `app.<arch>.symbols` file per architecture, and only match the exact build
-that wrote them. **Keep the symbols of every release** next to its tag; the
-Release workflow will attach them as an artifact once it builds the store
-binaries (phase 2).
+that wrote them. **Keep the symbols of every release** next to its tag: the
+**Google Play** and **TestFlight** workflows keep those of the binary they
+upload as an artifact for 90 days (`debug-symbols-<platform>-<commit>`);
+download them before they expire.
 
 To read a stack trace from a release build (from Play Console, Crashlytics,
 `adb logcat` or an iPhone crash log), save it to a file and symbolize it
@@ -114,6 +118,84 @@ can be replaced by asking Play for a new one.
   the release is a draft (required while the app has never been published).
 - Each upload needs a build number (`+N` in `pubspec.yaml`) higher than any
   uploaded before.
+
+## iOS signing and the TestFlight upload
+
+The App Store `.ipa` is built by `tool/ci.sh build-ipa`: Flutter writes the
+release configuration (obfuscated, debug symbols split, version and build
+number from `pubspec.yaml`), Xcode archives without signing, and the export
+(`ios/ExportOptions.plist`: App Store Connect, automatic signing, team
+`RQ236KP76M`) signs it with **cloud-managed signing**: Apple keeps the
+distribution certificate, so no certificate or provisioning profile lives on
+the machine or in the repository.
+
+- **Locally**: `tool/ci.sh build-ipa` signs as the Apple account signed in to
+  Xcode (Settings → Accounts) and writes `build/ios/ipa/one_rm_mobile.ipa`.
+  To upload it, put the API key's `.p8` outside the repository (e.g.
+  `~/keys/AuthKey_<KEY_ID>.p8`; `*.p8` is git-ignored anyway), install
+  fastlane (`brew install fastlane`) and run:
+  ```bash
+  export ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id> ASC_KEY_PATH=~/keys/AuthKey_<key id>.p8
+  tool/ci.sh build-ipa && tool/ci.sh upload-testflight
+  ```
+  With the three variables set, `build-ipa` also signs as the key instead of
+  the Xcode account, exactly as CI does. Missing variables or a missing
+  `.ipa` fail with a message saying what is missing.
+- **In CI**: the **TestFlight** workflow (`testflight.yml`, macOS runner)
+  writes the key from the secrets to the runner's temp folder, runs the same
+  two commands, and keeps the debug symbols as an artifact for 90 days. Run
+  it by hand from the Actions tab on `main` or on a tag.
+- **The upload** is fastlane's `upload_to_testflight` (the same tool as the
+  Play upload), with `skip_waiting_for_build_processing`: it uploads and
+  returns; App Store Connect processes the build in ~10–30 min and then
+  internal testers get it. Nothing is submitted to Beta App Review or App
+  Review and the store listing in `fastlane/` is not sent.
+- **Build number**: the same `+N` of `pubspec.yaml` as Android's versionCode.
+  App Store Connect refuses a build number already uploaded for that
+  version, so every upload needs a bump through a pull request, as for Play.
+  Re-running the workflow on the same commit fails at the upload with that
+  error, after building.
+
+### The App Store Connect API key
+
+Done once by the Account Holder in App Store Connect:
+
+1. Users and Access → Integrations → App Store Connect API → **Team Keys**
+   (request access the first time). Generate a key named e.g. `CI upload`
+   with access **App Manager**. A key's role cannot be changed later.
+2. Note the **Issuer ID** (above the list) and the **Key ID**, and download
+   the `.p8` (only possible once). Keep it outside the repository, backed up
+   like the Android upload key.
+3. Add three repository secrets (Settings → Secrets and variables →
+   Actions), never committed or printed:
+   - `ASC_KEY_ID`: the Key ID.
+   - `ASC_ISSUER_ID`: the Issuer ID.
+   - `ASC_KEY_P8`: the `.p8` in base64, from
+     `base64 -i AuthKey_<KEY_ID>.p8 | pbcopy`.
+
+**App Manager or Admin.** App Manager is the least privilege that can upload
+to TestFlight. Cloud-managed signing from CI also has to use the team's
+distribution certificate, and Apple documents creating and managing those
+for Account Holders and Admins; whether an App Manager key is enough is
+unverified until the first run. If that run fails in `build-ipa` at the
+export step with a signing or certificate error (for example "Cloud signing
+permission error" or "No signing certificate"), create a new team key with
+access **Admin** and replace the three secrets: nothing else changes.
+
+### Running it on every release
+
+Once a manual run has uploaded a build, the Release workflow can call it for
+every tag, next to the Play job:
+
+```yaml
+  testflight:
+    needs: [version, checks, e2e]
+    uses: ./.github/workflows/testflight.yml
+    secrets: inherit
+```
+
+It isn't wired yet because before the secrets exist that job would fail and
+turn every release red.
 
 ## When the E2E run on main fails
 

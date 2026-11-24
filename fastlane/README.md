@@ -15,6 +15,13 @@ the store gets.
 | `metadata/android/<locale>/images/featureGraphic.jpg` | Google Play feature graphic (1024 × 500), JPEG |
 | `metadata/android/<locale>/images/icon.png` | Google Play icon (512 × 512), the launcher icon `assets/branding/app_icon.png` resized with `sips` |
 
+Not here yet, because they are the owner's decisions and are set in App
+Store Connect: copyright line, primary and secondary category, age rating
+questionnaire, App Privacy answers, App Review contact (name, email, phone)
+and the DSA trader status. On the first App Store version "What's New"
+(`release_notes`) is not shown; it applies from the second one. No job
+uploads the App Store listing yet.
+
 ## Store limits
 
 `test/platform/store_listing_test.dart` checks them, so an edit that would

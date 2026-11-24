@@ -44,6 +44,18 @@ branch and PR, following AGENTS.md → Workflow.
 
 ## Decisions (newest first)
 
+- **2026-11-24 · Uploads to TestFlight from CI.** The workflow
+  **TestFlight** (`testflight.yml`, macOS) runs `tool/ci.sh build-ipa`
+  (Flutter writes the release config, Xcode archives unsigned and signs on
+  export with cloud-managed signing, so no certificate or profile is stored
+  anywhere) and `tool/ci.sh upload-testflight` (fastlane
+  `upload_to_testflight`, same tool as Play; upload only, nothing submitted
+  for review, no metadata). It authenticates with a team App Store Connect
+  API key in the secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`; role
+  App Manager, or Admin if cloud signing refuses it (unverified until the
+  key exists). The build number is pubspec's `+N`, shared with Android. Run
+  by hand for now; the Release workflow calls it once a manual run has
+  passed (docs/RELEASING.md → TestFlight).
 - **2026-10-14 · Uploads to Google Play from CI.** The workflow
   **Google Play** (`play.yml`) builds the bundle signed with the upload key
   (rebuilt from secrets), keeps the debug symbols as an artifact and uploads
@@ -190,6 +202,6 @@ branch and PR, following AGENTS.md → Workflow.
 | Landing page | repo `clarriu97/1rm-landing-page` (static Vite + Tailwind, deployed by Cloudflare on push to `main`), live at https://1rm.larri.dev |
 | Contact address | `info.1rm@larri.dev` |
 | App ids | bundle id / applicationId `dev.larri.onerm`, display name "1RM" |
-| CI | `.github/workflows/`: `flutter.yml` (PR checks), `e2e.yml` (main, nightly, releases), `release.yml` (`v*` tags) |
+| CI | `.github/workflows/`: `flutter.yml` (PR checks), `e2e.yml` (main, nightly, releases), `release.yml` (`v*` tags), `play.yml` (Google Play upload), `testflight.yml` (TestFlight upload, manual) |
 | Store listings | `fastlane/` (texts, screenshots, feature graphic, Play icon; `fastlane/README.md`), images from `test/goldens/store_test.dart` → `tool/store_images.sh`, limits checked by `test/platform/store_listing_test.dart` |
 | Branch protection | `main`: required `analyze`, `test`, `goldens`, `local-e2e`; up to date with main; linear history; applies to admins |

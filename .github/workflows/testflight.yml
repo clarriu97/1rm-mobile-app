@@ -1,0 +1,62 @@
+name: TestFlight
+
+# Builds the App Store .ipa, signed in the cloud with the App Store Connect
+# API key, and uploads it to TestFlight. It only uploads: nothing goes to
+# review, and the store listing in fastlane/ is not sent. Run by hand from
+# the Actions tab (the Release workflow does not call it yet,
+# docs/RELEASING.md → TestFlight). The debug symbols of the build are kept as
+# an artifact, to read crash traces.
+#
+# Secrets: ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 (the .p8 in base64) of a
+# team API key.
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+
+jobs:
+  upload:
+    runs-on: macos-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - name: App Store Connect API key
+        env:
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          echo "$KEY_P8" | base64 -d > "$key_path"
+          echo "ASC_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - run: tool/ci.sh build-ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debug-symbols-ios-${{ github.sha }}
+          path: build/debug-info
+          retention-days: 90
+
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1.329.0
+        with:
+          ruby-version: "3.3"
+
+      - run: gem install fastlane --no-document
+
+      - run: tool/ci.sh upload-testflight

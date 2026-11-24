@@ -1,0 +1,65 @@
+name: TestFlight
+
+# Builds the App Store .ipa, signed in the cloud with the App Store Connect
+# API key, and uploads it to TestFlight with Xcode's altool. It only uploads:
+# nothing goes to review, and the store listing in fastlane/ is not sent. Run
+# by hand from the Actions tab (the Release workflow does not call it yet,
+# docs/RELEASING.md → TestFlight). The debug symbols of the build are kept as
+# an artifact, to read crash traces.
+#
+# Secrets: ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 (the .p8 in base64) of a
+# team API key with the Admin role.
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+
+jobs:
+  upload:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - name: App Store Connect API key
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          if [ -z "$KEY_ID" ] || [ -z "$ISSUER_ID" ] || [ -z "$KEY_P8" ]; then
+            echo "::error::Set the secrets ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 (docs/RELEASING.md)."
+            exit 1
+          fi
+          key="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          echo "$KEY_P8" | base64 -d > "$key"
+          {
+            echo "ASC_KEY_ID=$KEY_ID"
+            echo "ASC_ISSUER_ID=$ISSUER_ID"
+            echo "ASC_KEY_PATH=$key"
+          } >> "$GITHUB_ENV"
+
+      - run: xcodebuild -version
+
+      - run: tool/ci.sh build-ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debug-symbols-ios-${{ github.sha }}
+          path: build/debug-info
+          retention-days: 90
+
+      - run: tool/ci.sh upload-testflight

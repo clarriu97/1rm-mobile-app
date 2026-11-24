@@ -4,6 +4,9 @@
 # Include the e2e flows too:   E2E=1 git push
 # Skip in an emergency:        git push --no-verify
 set -euo pipefail
+# Git exports GIT_DIR to hooks run from a worktree; Flutter then reads its
+# own version from this repository instead of the SDK's and fails.
+unset GIT_DIR
 if [[ "${E2E:-}" == 1 ]]; then
   exec tool/ci.sh all
 fi

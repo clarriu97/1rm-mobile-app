@@ -4,8 +4,8 @@ name: Release
 # passes: the tag matches pubspec.yaml, the checks, the goldens and the e2e
 # flows on all four CI devices. Then the signed bundle and the store listing
 # go to Google Play's internal testing track; promoting a version to other
-# tracks is done in Play Console. The App Store upload comes with the Apple
-# Developer account.
+# tracks is done in Play Console. The TestFlight upload is run by hand
+# (workflow TestFlight, docs/RELEASING.md) until its secrets exist.
 
 on:
   push:

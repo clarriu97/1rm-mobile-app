@@ -22,6 +22,11 @@
 #                              emulator: first run, storage, relaunch
 #   tool/ci.sh build-android   release app bundle (R8), as the store gets it
 #   tool/ci.sh build-ios       release iOS build without code signing
+#   tool/ci.sh build-ipa       signed App Store .ipa (Xcode account, or the
+#                              App Store Connect API key when ASC_KEY_* are set)
+#   tool/ci.sh upload-testflight  upload that .ipa to TestFlight
+#                              with altool (needs ASC_KEY_ID, ASC_ISSUER_ID,
+#                              ASC_KEY_PATH)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -88,6 +93,60 @@ build_android() {
 build_ios() {
   step "release iOS build (no code signing)"
   flutter build ios --release --no-codesign --obfuscate --split-debug-info="$DEBUG_INFO/ios"
+}
+
+# The App Store Connect API key: its id, its issuer and the path of its .p8,
+# which lives outside the repository (docs/RELEASING.md → TestFlight).
+require_asc_key() {
+  local missing=() var
+  for var in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH; do
+    if [[ -z "${!var:-}" ]]; then missing+=("$var"); fi
+  done
+  if ((${#missing[@]})); then
+    echo "Missing ${missing[*]}: the App Store Connect API key (docs/RELEASING.md)." >&2
+    exit 1
+  fi
+  if [[ ! -f "$ASC_KEY_PATH" ]]; then
+    echo "ASC_KEY_PATH: no file at $ASC_KEY_PATH." >&2
+    exit 1
+  fi
+}
+
+# Archives without signing, then signs while exporting, with a certificate
+# Apple keeps (cloud-managed signing): no certificate is needed on the
+# machine. With the API key in the environment Xcode signs as that key (CI);
+# without it, as the account signed in to Xcode (this Mac).
+build_ipa() {
+  local archive=build/ios/archive/Runner.xcarchive auth=()
+  if [[ -n "${ASC_KEY_ID:-}${ASC_ISSUER_ID:-}${ASC_KEY_PATH:-}" ]]; then
+    require_asc_key
+    auth=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID"
+      -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+  fi
+  step "signed App Store .ipa"
+  flutter build ios --release --config-only --obfuscate --split-debug-info="$DEBUG_INFO/ios"
+  rm -rf build/ios/archive build/ios/ipa
+  xcodebuild -quiet -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+    -destination generic/platform=iOS -archivePath "$archive" archive CODE_SIGNING_ALLOWED=NO
+  xcodebuild -quiet -exportArchive -archivePath "$archive" -exportPath build/ios/ipa \
+    -exportOptionsPlist ios/ExportOptions.plist -allowProvisioningUpdates ${auth[@]+"${auth[@]}"}
+  ls build/ios/ipa/*.ipa
+}
+
+# Uploads the .ipa of build-ipa to TestFlight with Xcode's altool. It only
+# uploads: testers get it once App Store Connect has processed it, and
+# nothing is submitted for review.
+upload_testflight() {
+  require_asc_key
+  local ipa
+  ipa=$(find build/ios/ipa -name '*.ipa' 2>/dev/null | head -1 || true)
+  if [[ -z "$ipa" ]]; then
+    echo "No .ipa in build/ios/ipa: run tool/ci.sh build-ipa first." >&2
+    exit 1
+  fi
+  step "upload $ipa to TestFlight"
+  xcrun altool --upload-app -f "$ipa" -t ios \
+    --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID" --p8-file-path "$ASC_KEY_PATH"
 }
 
 checks() {
@@ -439,5 +498,7 @@ case "${1:-}" in
   smoke-android-release) smoke_android_release ;;
   build-android) build_android ;;
   build-ios) build_ios ;;
-  *) sed -n '2,23p' "$0"; exit 1 ;;
+  build-ipa) build_ipa ;;
+  upload-testflight) upload_testflight ;;
+  *) sed -n '2,29p' "$0"; exit 1 ;;
 esac

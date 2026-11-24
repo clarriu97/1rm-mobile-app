@@ -178,8 +178,9 @@ TestFlight, but not enough to sign: checked on 2026-11-24 with an App
 Manager team key, `build-ipa` fails at the export with "Cloud signing
 permission error: You haven't been given access to cloud-managed
 distribution certificates", while the same key authenticates and reads the
-app and its builds. Cloud-managed signing with an API key needs an **Admin**
-key. To switch keys, create the new one and replace the three secrets (and
+app and its builds. With an **Admin** team key the same command signs:
+`Apple Distribution` certificate, `iOS Team Store Provisioning Profile:
+dev.larri.onerm`, `get-task-allow` false. To switch keys, create the new one and replace the three secrets (and
 your local `ASC_*` variables): nothing else changes. Revoke the old key.
 
 ### Running it on every release

@@ -177,3 +177,10 @@ jobs:
           # fallbacks, iOS runs the full motion.
           disable-animations: true
           script: tool/ci.sh e2e-android${{ matrix.release-smoke && ' && tool/ci.sh smoke-android-release' || '' }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure() && matrix.release-smoke
+        with:
+          name: smoke-android-release
+          path: build/smoke-android/
+          if-no-files-found: ignore

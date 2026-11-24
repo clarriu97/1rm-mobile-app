@@ -40,6 +40,10 @@ STAMPS=.dart_tool/local-e2e
 # here (docs/RELEASING.md → Debug symbols).
 DEBUG_INFO=build/debug-info
 
+# What smoke_android_release keeps when it fails: screenshot, last UI dump,
+# activity and window state, logcat.
+SMOKE_EVIDENCE=build/smoke-android
+
 # Set by e2e_android: the API level it ran on.
 ANDROID_API=""
 
@@ -370,8 +374,8 @@ e2e_android() {
 android_find() {
   local device=$1 pattern=$2 bounds _
   for _ in $(seq 30); do
-    bounds=$(adb -s "$device" exec-out uiautomator dump /dev/tty 2>/dev/null |
-      tr '>' '\n' | grep -E "(text|content-desc)=\"($pattern)" |
+    adb -s "$device" exec-out uiautomator dump /dev/tty >"$SMOKE_EVIDENCE/ui.xml" 2>&1 || true
+    bounds=$(tr '>' '\n' <"$SMOKE_EVIDENCE/ui.xml" | grep -E "(text|content-desc)=\"($pattern)" |
       grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | head -1 || true)
     if [[ -n "$bounds" ]]; then
       echo "$bounds" | tr -c '0-9' ' ' | awk '{ print int(($1 + $3) / 2), int(($2 + $4) / 2) }'
@@ -402,6 +406,7 @@ smoke_android_release() {
     sleep 2
   done
   step "release smoke test on Android $device"
+  rm -rf "$SMOKE_EVIDENCE" && mkdir -p "$SMOKE_EVIDENCE"
   flutter build apk --release --obfuscate --split-debug-info="$DEBUG_INFO/android"
   {
     adb -s "$device" install -r build/app/outputs/flutter-apk/app-release.apk >/dev/null &&
@@ -417,6 +422,13 @@ smoke_android_release() {
   } || status=1
   if adb -s "$device" logcat -d | grep -E "FATAL EXCEPTION|MissingPluginException"; then
     status=1
+  fi
+  if ((status != 0)); then
+    adb -s "$device" exec-out screencap -p >"$SMOKE_EVIDENCE/screen.png" || true
+    adb -s "$device" shell dumpsys activity activities >"$SMOKE_EVIDENCE/activities.txt" || true
+    adb -s "$device" shell dumpsys window windows >"$SMOKE_EVIDENCE/windows.txt" || true
+    adb -s "$device" logcat -d -v threadtime >"$SMOKE_EVIDENCE/logcat.txt" || true
+    echo "Evidence in $SMOKE_EVIDENCE/" >&2
   fi
   if [[ -z "$was_running" ]]; then
     adb -s "$device" emu kill >/dev/null 2>&1 || true

@@ -162,7 +162,7 @@ Done once by the Account Holder in App Store Connect:
 
 1. Users and Access → Integrations → App Store Connect API → **Team Keys**
    (request access the first time). Generate a key named e.g. `CI upload`
-   with access **App Manager**. A key's role cannot be changed later.
+   with access **Admin** (see below). A key's role cannot be changed later.
 2. Note the **Issuer ID** (above the list) and the **Key ID**, and download
    the `.p8` (only possible once). Keep it outside the repository, backed up
    like the Android upload key.
@@ -173,14 +173,14 @@ Done once by the Account Holder in App Store Connect:
    - `ASC_KEY_P8`: the `.p8` in base64, from
      `base64 -i AuthKey_<KEY_ID>.p8 | pbcopy`.
 
-**App Manager or Admin.** App Manager is the least privilege that can upload
-to TestFlight. Cloud-managed signing from CI also has to use the team's
-distribution certificate, and Apple documents creating and managing those
-for Account Holders and Admins; whether an App Manager key is enough is
-unverified until the first run. If that run fails in `build-ipa` at the
-export step with a signing or certificate error (for example "Cloud signing
-permission error" or "No signing certificate"), create a new team key with
-access **Admin** and replace the three secrets: nothing else changes.
+**Why Admin.** App Manager is the least privilege that can upload to
+TestFlight, but not enough to sign: checked on 2026-11-24 with an App
+Manager team key, `build-ipa` fails at the export with "Cloud signing
+permission error: You haven't been given access to cloud-managed
+distribution certificates", while the same key authenticates and reads the
+app and its builds. Cloud-managed signing with an API key needs an **Admin**
+key. To switch keys, create the new one and replace the three secrets (and
+your local `ASC_*` variables): nothing else changes. Revoke the old key.
 
 ### Running it on every release
 

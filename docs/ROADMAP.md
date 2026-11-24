@@ -51,9 +51,9 @@ branch and PR, following AGENTS.md → Workflow.
   anywhere) and `tool/ci.sh upload-testflight` (fastlane
   `upload_to_testflight`, same tool as Play; upload only, nothing submitted
   for review, no metadata). It authenticates with a team App Store Connect
-  API key in the secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`; role
-  App Manager, or Admin if cloud signing refuses it (unverified until the
-  key exists). The build number is pubspec's `+N`, shared with Android. Run
+  API key in the secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`, with
+  role **Admin**: an App Manager key authenticates but is refused cloud
+  signing ("Cloud signing permission error", checked 2026-11-24). The build number is pubspec's `+N`, shared with Android. Run
   by hand for now; the Release workflow calls it once a manual run has
   passed (docs/RELEASING.md → TestFlight).
 - **2026-10-14 · Uploads to Google Play from CI.** The workflow

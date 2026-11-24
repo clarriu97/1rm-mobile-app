@@ -1,7 +1,7 @@
 /// Version shown in the app. Must match `version:` in pubspec.yaml (a test
 /// checks it); bump both in the release PR.
-const String appVersion = '0.1.0';
-const int appBuildNumber = 1;
+const String appVersion = '1.0.0';
+const int appBuildNumber = 2;
 
 final Uri websiteUrl = Uri.https('1rm.larri.dev', '/');
 final Uri privacyUrl = Uri.https('1rm.larri.dev', '/privacy/');

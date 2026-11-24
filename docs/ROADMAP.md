@@ -48,13 +48,13 @@ branch and PR, following AGENTS.md → Workflow.
   **TestFlight** (`testflight.yml`, macOS) runs `tool/ci.sh build-ipa`
   (Flutter writes the release config, Xcode archives unsigned and signs on
   export with cloud-managed signing, so no certificate or profile is stored
-  anywhere) and `tool/ci.sh upload-testflight` (fastlane
-  `upload_to_testflight`, same tool as Play; upload only, nothing submitted
-  for review, no metadata). It authenticates with a team App Store Connect
+  anywhere) and `tool/ci.sh upload-testflight` (`xcrun altool
+  --upload-app`, as in Más Mus: comes with Xcode, can only upload a build;
+  nothing submitted for review, no metadata). It authenticates with a team App Store Connect
   API key in the secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`, with
   role **Admin**: an App Manager key authenticates but is refused cloud
-  signing ("Cloud signing permission error", checked 2026-11-24). The build number is pubspec's `+N`, shared with Android. Run
-  by hand for now; the Release workflow calls it once a manual run has
+  signing ("Cloud signing permission error", checked 2026-11-24). The
+  build number is pubspec's `+N`, shared with Android. Run by hand for now; the Release workflow calls it once a manual run has
   passed (docs/RELEASING.md → TestFlight).
 - **2026-10-14 · Uploads to Google Play from CI.** The workflow
   **Google Play** (`play.yml`) builds the bundle signed with the upload key

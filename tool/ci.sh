@@ -25,7 +25,8 @@
 #   tool/ci.sh build-ipa       signed App Store .ipa (Xcode account, or the
 #                              App Store Connect API key when ASC_KEY_* are set)
 #   tool/ci.sh upload-testflight  upload that .ipa to TestFlight
-#                              (needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH)
+#                              with altool (needs ASC_KEY_ID, ASC_ISSUER_ID,
+#                              ASC_KEY_PATH)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -102,11 +103,11 @@ require_asc_key() {
     if [[ -z "${!var:-}" ]]; then missing+=("$var"); fi
   done
   if ((${#missing[@]})); then
-    echo "Missing ${missing[*]}: the App Store Connect API key (docs/RELEASING.md → TestFlight)." >&2
+    echo "Missing ${missing[*]}: the App Store Connect API key (docs/RELEASING.md)." >&2
     exit 1
   fi
   if [[ ! -f "$ASC_KEY_PATH" ]]; then
-    echo "ASC_KEY_PATH=$ASC_KEY_PATH is not a file." >&2
+    echo "ASC_KEY_PATH: no file at $ASC_KEY_PATH." >&2
     exit 1
   fi
 }
@@ -132,28 +133,20 @@ build_ipa() {
   ls build/ios/ipa/*.ipa
 }
 
-# Uploads the .ipa of build-ipa to TestFlight. It only uploads: testers
-# get it once App Store Connect has processed it, and nothing is submitted
-# for review.
+# Uploads the .ipa of build-ipa to TestFlight with Xcode's altool. It only
+# uploads: testers get it once App Store Connect has processed it, and
+# nothing is submitted for review.
 upload_testflight() {
   require_asc_key
-  local ipa key_json
-  ipa=$(find build/ios/ipa -name "*.ipa" 2>/dev/null | head -1)
+  local ipa
+  ipa=$(find build/ios/ipa -name '*.ipa' 2>/dev/null | head -1 || true)
   if [[ -z "$ipa" ]]; then
     echo "No .ipa in build/ios/ipa: run tool/ci.sh build-ipa first." >&2
     exit 1
   fi
-  if ! command -v fastlane >/dev/null; then
-    echo "fastlane is not installed: gem install fastlane (or brew install fastlane)." >&2
-    exit 1
-  fi
-  key_json=$(umask 077 && mktemp)
-  trap 'rm -f "$key_json"' EXIT
-  jq -n --arg id "$ASC_KEY_ID" --arg issuer "$ASC_ISSUER_ID" --rawfile key "$ASC_KEY_PATH" \
-    '{key_id: $id, issuer_id: $issuer, key: $key}' >"$key_json"
   step "upload $ipa to TestFlight"
-  fastlane run upload_to_testflight api_key_path:"$key_json" ipa:"$ipa" \
-    skip_waiting_for_build_processing:true
+  xcrun altool --upload-app -f "$ipa" -t ios \
+    --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID" --p8-file-path "$ASC_KEY_PATH"
 }
 
 checks() {
@@ -507,5 +500,5 @@ case "${1:-}" in
   build-ios) build_ios ;;
   build-ipa) build_ipa ;;
   upload-testflight) upload_testflight ;;
-  *) sed -n '2,28p' "$0"; exit 1 ;;
+  *) sed -n '2,29p' "$0"; exit 1 ;;
 esac

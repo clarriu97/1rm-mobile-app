@@ -132,22 +132,22 @@ the machine or in the repository.
 - **Locally**: `tool/ci.sh build-ipa` signs as the Apple account signed in to
   Xcode (Settings → Accounts) and writes `build/ios/ipa/one_rm_mobile.ipa`.
   To upload it, put the API key's `.p8` outside the repository (e.g.
-  `~/keys/AuthKey_<KEY_ID>.p8`; `*.p8` is git-ignored anyway), install
-  fastlane (`brew install fastlane`) and run:
+  `~/keys/AuthKey_<KEY_ID>.p8`; `*.p8` is git-ignored anyway) and run:
   ```bash
   export ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer id> ASC_KEY_PATH=~/keys/AuthKey_<key id>.p8
   tool/ci.sh build-ipa && tool/ci.sh upload-testflight
   ```
   With the three variables set, `build-ipa` also signs as the key instead of
-  the Xcode account, exactly as CI does. Missing variables or a missing
-  `.ipa` fail with a message saying what is missing.
+  the Xcode account, exactly as CI does. Missing variables, a missing key
+  file or a missing `.ipa` fail with a message saying what is missing.
 - **In CI**: the **TestFlight** workflow (`testflight.yml`, macOS runner)
-  writes the key from the secrets to the runner's temp folder, runs the same
-  two commands, and keeps the debug symbols as an artifact for 90 days. Run
+  fails at once if a secret is missing, writes the key from the secrets to
+  the runner's temp folder, runs the same two commands, and keeps the debug symbols as an artifact for 90 days. Run
   it by hand from the Actions tab on `main` or on a tag.
-- **The upload** is fastlane's `upload_to_testflight` (the same tool as the
-  Play upload), with `skip_waiting_for_build_processing`: it uploads and
-  returns; App Store Connect processes the build in ~10–30 min and then
+- **The upload** is Xcode's `xcrun altool --upload-app` with the API key
+  (`--api-key`, `--api-issuer`, `--p8-file-path`), the same as Más Mus: it
+  ships with Xcode, so nothing else is installed, and it can only upload a
+  build, never touch the listing. It uploads and returns; App Store Connect processes the build in ~10–30 min and then
   internal testers get it. Nothing is submitted to Beta App Review or App
   Review and the store listing in `fastlane/` is not sent.
 - **Build number**: the same `+N` of `pubspec.yaml` as Android's versionCode.

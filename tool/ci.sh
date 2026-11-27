@@ -40,6 +40,12 @@ STAMPS=.dart_tool/local-e2e
 # here (docs/RELEASING.md → Debug symbols).
 DEBUG_INFO=build/debug-info
 
+# What smoke_android_release keeps when it fails: screenshot, last UI dump,
+# activity and window state, logcat.
+SMOKE_EVIDENCE=build/smoke-android
+
+ANDROID_APP=dev.larri.onerm
+
 # Set by e2e_android: the API level it ran on.
 ANDROID_API=""
 
@@ -365,17 +371,35 @@ e2e_android() {
   return "$status"
 }
 
+# The centre ("x y") of the first element in the UI dump $1 whose attributes
+# match $2 (a regex); prints nothing when none does.
+android_center() {
+  tr '>' '\n' <"$1" | grep -E "$2" |
+    grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | head -1 |
+    tr -c '0-9' ' ' | awk '{ print int(($1 + $3) / 2), int(($2 + $4) / 2) }' || true
+}
+
 # Polls the screen of $1 until an element's text or description starts
 # with $2 (a regex); prints its centre ("x y"). Fails after 60 s.
+# On a slow emulator a system app (the launcher) can stop responding, and its
+# "isn't responding" dialog takes the focus, hiding the app from uiautomator:
+# that dialog is closed. One about this app fails the test.
 android_find() {
-  local device=$1 pattern=$2 bounds _
+  local device=$1 pattern=$2 ui=$SMOKE_EVIDENCE/ui.xml at anr _
   for _ in $(seq 30); do
-    bounds=$(adb -s "$device" exec-out uiautomator dump /dev/tty 2>/dev/null |
-      tr '>' '\n' | grep -E "(text|content-desc)=\"($pattern)" |
-      grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | head -1 || true)
-    if [[ -n "$bounds" ]]; then
-      echo "$bounds" | tr -c '0-9' ' ' | awk '{ print int(($1 + $3) / 2), int(($2 + $4) / 2) }'
+    adb -s "$device" exec-out uiautomator dump /dev/tty >"$ui" 2>&1 || true
+    at=$(android_center "$ui" "(text|content-desc)=\"($pattern)")
+    if [[ -n "$at" ]]; then
+      echo "$at"
       return 0
+    fi
+    at=$(android_center "$ui" 'resource-id="android:id/aerr_close"')
+    if [[ -n "$at" ]]; then
+      anr=$(adb -s "$device" shell dumpsys window windows |
+        grep -oE 'Application Not Responding: [A-Za-z0-9._]+' | head -1 || true)
+      echo "⚠︎ ${anr:-Application Not Responding}" >&2
+      if [[ "$anr" == *": $ANDROID_APP" ]]; then return 1; fi
+      adb -s "$device" shell input tap $at
     fi
     sleep 2
   done
@@ -389,7 +413,7 @@ android_find() {
 # and after a relaunch Home comes back. That covers what R8 breaks first:
 # plugins (preferences, file storage) and the app starting at all.
 smoke_android_release() {
-  local device was_running app=dev.larri.onerm status=0 at
+  local device was_running app=$ANDROID_APP status=0 at
   was_running=$(android_device)
   device=$(boot_android)
   if [[ -z "$device" ]]; then
@@ -402,6 +426,7 @@ smoke_android_release() {
     sleep 2
   done
   step "release smoke test on Android $device"
+  rm -rf "$SMOKE_EVIDENCE" && mkdir -p "$SMOKE_EVIDENCE"
   flutter build apk --release --obfuscate --split-debug-info="$DEBUG_INFO/android"
   {
     adb -s "$device" install -r build/app/outputs/flutter-apk/app-release.apk >/dev/null &&
@@ -417,6 +442,13 @@ smoke_android_release() {
   } || status=1
   if adb -s "$device" logcat -d | grep -E "FATAL EXCEPTION|MissingPluginException"; then
     status=1
+  fi
+  if ((status != 0)); then
+    adb -s "$device" exec-out screencap -p >"$SMOKE_EVIDENCE/screen.png" || true
+    adb -s "$device" shell dumpsys activity activities >"$SMOKE_EVIDENCE/activities.txt" || true
+    adb -s "$device" shell dumpsys window windows >"$SMOKE_EVIDENCE/windows.txt" || true
+    adb -s "$device" logcat -d -v threadtime >"$SMOKE_EVIDENCE/logcat.txt" || true
+    echo "Evidence in $SMOKE_EVIDENCE/" >&2
   fi
   if [[ -z "$was_running" ]]; then
     adb -s "$device" emu kill >/dev/null 2>&1 || true

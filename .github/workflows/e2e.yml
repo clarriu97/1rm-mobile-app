@@ -141,16 +141,28 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      # A booted-emulator snapshot, created once per configuration: later runs
-      # resume it in seconds instead of cold-booting.
-      - uses: actions/cache@v4
+      # A snapshot only loads on the emulator version that saved it; on any
+      # other the emulator cold-boots the cached disk.
+      - name: Emulator version
+        if: matrix.snapshot
+        id: emulator
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install emulator --channel=0 </dev/null >/dev/null
+          echo "version=$(sed -n 's/^Pkg.Revision=//p' "$ANDROID_HOME/emulator/source.properties")" >> "$GITHUB_OUTPUT"
+
+      # A booted-emulator snapshot, created once per configuration and
+      # emulator version: later runs resume it in seconds instead of
+      # cold-booting. Saved right after it is created, before any app is
+      # installed: a disk carrying an app signed with another runner's debug
+      # key refuses to install this run's build.
+      - uses: actions/cache/restore@v4
         if: matrix.snapshot
         id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.profile }}
+          key: avd-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.profile }}-emulator-${{ steps.emulator.outputs.version }}
 
       - name: Create emulator snapshot
         if: matrix.snapshot && steps.avd-cache.outputs.cache-hit != 'true'
@@ -164,6 +176,14 @@ jobs:
           emulator-options: ${{ env.EMULATOR_OPTIONS }}
           disable-animations: false
           script: echo "Snapshot saved."
+
+      - uses: actions/cache/save@v4
+        if: matrix.snapshot && steps.avd-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: ${{ steps.avd-cache.outputs.cache-primary-key }}
 
       - uses: reactivecircus/android-emulator-runner@v2
         with:
